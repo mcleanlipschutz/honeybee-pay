@@ -7,12 +7,12 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## First demo
 
-- the buyer approves 3 seperate transactions of 1 test usdc to send to the merchant wallet. 
+- The buyer approves 3 seperate transactions of 1 test USDC to send to the merchant wallet. 
 
-- transaction 1 is successful without issue. transaction 2 is attacked and redirected to the attacker's wallet in an intentionally unprotected demo. transaction 3 is also attacked with the same redirection but is rejected because the recipient differs from the buyer's approval.
+- Transaction 1 is successful without issue. transaction 2 is attacked and redirected to the attacker's wallet in an intentionally unprotected demo. transaction 3 is also attacked with the same redirection but is rejected because the recipient differs from the buyer's approval.
 
-- the buyer receives an AI generated message informing them of the detected change of recipient details and that the transaction was blocked.
+- The buyer receives an AI generated message informing them of the detected change of recipient details and that the transaction was blocked.
  
 ## Current status
 
-I am currently documenting the design and demo. Implementation and demo has not started yet.
+I am currently documenting the design and demo. Implementation and testing has not started yet.
