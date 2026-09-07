@@ -7,7 +7,7 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## first demo
 
--the buyer approves 3 transactions of 1 usdc to send to the merchant wallet. 
+-the buyer approves 3 seperste transactions of 1 test usdc to send to the merchant wallet. 
 
 -transaction 1 is successful without issue. transaction 2 is attacked to a suspect wallet after a malicious attack. transaction 3 is also attacked but the firewall prevents the altered transaction.
 
