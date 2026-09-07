@@ -13,6 +13,8 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 - The buyer receives an AI generated message informing them of the detected change of recipient details and that the transaction was blocked.
  
+- This first demo will test payment authorization and firewall enforcement; ZK privacy will be developed and tested separately.
+
 ## Current status
 
 I am currently documenting the design and demo. Implementation and testing has not started yet.
