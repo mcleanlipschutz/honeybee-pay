@@ -11,5 +11,5 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 -transaction 1 is successful without issue. transaction 2 is attacked to a suspect wallet after a malicious attack. transaction 3 is also attacked but the firewall prevents the altered transaction.
 
--the buyer revoeves an AI generated message informing them of the attack details and thatbthe transaction was blocked.
+-the buyer receives an AI generated message informing them of the attack details and thatbthe transaction was blocked.
  
