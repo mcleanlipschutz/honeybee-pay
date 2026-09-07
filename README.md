@@ -13,3 +13,6 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 - the buyer receives an AI generated message informing them of the detected change of recipient details and that the transaction was blocked.
  
+## Current status
+
+I am currently documenting the design and demo. Implementation and demo has not started yet.
