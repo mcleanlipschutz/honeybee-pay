@@ -1,4 +1,4 @@
-# honeybee-pay
+# Honeybee Pay
 Honeybee Pay is an ETHGlobal hackathon project that aims to simplify crypto payments with AI, protect transaction details using zero-knowledge proofs, and block payments that don’t match the user’s approved rules.
 
 ## The problem
@@ -7,7 +7,7 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## First demo
 
-- the buyer approves 3 seperste transactions of 1 test usdc to send to the merchant wallet. 
+- the buyer approves 3 seperate transactions of 1 test usdc to send to the merchant wallet. 
 
 - transaction 1 is successful without issue. transaction 2 is attacked and redirected to the attacker's wallet in an intentionally unprotected demo. transaction 3 is also attacked with the same redirection but is rejected because the recipient differs from the buyer's approval.
 
