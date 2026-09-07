@@ -141,3 +141,14 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Private keys and wallet backups
+*.key
+*.pem
+keystore.json
+keystores/
+
+# Local ZK inputs and generated artifacts
+Prover.toml
+Verifier.toml
+target/
