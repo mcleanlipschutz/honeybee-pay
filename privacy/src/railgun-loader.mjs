@@ -1,9 +1,15 @@
 import { createPrivateTransferAdapter } from './private-transfer.mjs';
 
-// Integration entry point only. Dependencies and engine setup are NOT installed
-// by the unit-test package. See REVIEW.md for the outstanding integration gate.
+// Real SDK entry point. Dependencies are pinned; engine/prover setup is still
+// outstanding. See SEGMENT-1B-REVIEW.md before integration.
 export async function loadRailgunAdapter() {
   const sdk = await import('@railgun-community/wallet');
   const { TXIDVersion } = await import('@railgun-community/shared-models');
-  return createPrivateTransferAdapter({ sdk, txidVersion: TXIDVersion.V2_PoseidonMerkle });
+  const prepare = createPrivateTransferAdapter({ sdk, txidVersion: TXIDVersion.V2_PoseidonMerkle });
+  return async request => {
+    for (const invoice of [request.approvedInvoice, request.proposedInvoice]) {
+      sdk.assertValidRailgunAddress(invoice?.recipient);
+    }
+    return prepare(request);
+  };
 }

@@ -53,3 +53,17 @@ Current limits:
 Next: confirm a supported test environment, install compatible SDK/prover dependencies, and demonstrate a real proof and test-asset transfer before building confirmed merchant receipts.
 
 AI assistance: Codex prepared the adapter, tests, and review package. McLean reviewed and approved uploading Segment 1A. This build-log update was requested separately.
+
+## September 8, 2026 - Segment 1B reviewed and added
+
+- Installed the real RAILGUN wallet SDK 10.9.0 and shared-models 8.0.1 with a dependency lockfile.
+- Added SDK private-address validation and a read-only test-network preflight.
+- Verified a clean install with scripts disabled, then ran 23 tests: all passed.
+- A live Sepolia check confirmed chain ID 11155111 and bytecode at both configured protocol addresses. Contract identity and a complete payment environment remain unverified.
+- Dependency audit reported 72 advisories, including 3 critical. The report is included for review; exploitability and compatible fixes remain unresolved.
+- No real ZK proof, wallet funding, deployment, or private payment occurred.
+- McLean reviewed and approved Segment 1B for upload to the existing draft PR. Files match the reviewed package; main remains unchanged.
+
+Next: resolve dependency compatibility and advisories, verify deployment identity, and initialize engine storage, prover and wallet synchronization before demonstrating a real test-asset payment.
+
+AI assistance: Codex prepared the code, tests, dependency checks and review package.
