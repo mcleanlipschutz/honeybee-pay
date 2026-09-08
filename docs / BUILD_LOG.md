@@ -26,3 +26,30 @@ Reused code: Foundry's Counter starter and forge-std testing library.
 AI assitance: Setup guidance and troubleshooting.
 
 Next: Implment buyer-approved paymentrules and tests.
+
+## September 8, 2026 - Payment approval prototype and privacy Segment 1A
+
+Goal: prioritize cash-like private payments, then build a merchant-friendly checkout. Payment-rule checks and AI assistance are supporting features.
+
+Work completed:
+- Committed the public payment approval prototype in `contracts/src/HoneybeePay.sol`. This records approvals; it does not execute private payments.
+- Prepared and reviewed a RAILGUN transfer adapter, SDK loader, unit tests, and review guide.
+- Added exact decimal amount handling, invoice matching, expiry checks, and a local lock against overlapping proof requests.
+- Approved Segment 1A for a separate branch and opened [draft pull request #1](https://github.com/mcleanlipschutz/honeybee-pay/pull/1). The main branch has not been changed by this work.
+
+Testing:
+- During Segment 1A preparation, 16 Node unit tests passed and 0 failed.
+- Tests use simulated SDK responses. They check application behavior, not cryptography or settlement.
+- Checked SDK call signatures against the published wallet package version 10.9.0.
+- Verified the uploaded files matched the reviewed ZIP.
+
+Current limits:
+- No real ZK proof has been generated and no private payment has settled.
+- The adapter prepares transaction data but does not broadcast it or mark an invoice paid.
+- Invoice checks are not cryptographic buyer authorization or an onchain firewall.
+- The earlier two passing Foundry tests were starter Counter tests, not tests of HoneybeePay.sol.
+- No deployment or real-fund transaction was performed as part of Segment 1A.
+
+Next: confirm a supported test environment, install compatible SDK/prover dependencies, and demonstrate a real proof and test-asset transfer before building confirmed merchant receipts.
+
+AI assistance: Codex prepared the adapter, tests, and review package. McLean reviewed and approved uploading Segment 1A. This build-log update was requested separately.
