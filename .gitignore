@@ -152,3 +152,7 @@ keystores/
 Prover.toml
 Verifier.toml
 target/
+
+# Foundry generated files
+contracts/cache/
+contracts/out/
