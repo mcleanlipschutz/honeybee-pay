@@ -137,3 +137,17 @@ AI assistance: Codex implemented and checked this segment at McLean's direction.
 - No wallet funding, network synchronization, broadcast, merge or deployment. Next is application wallet initialization, secure key recovery and network/POI synchronization for a test-asset payment.
 
 AI assistance: Codex prepared this implementation, reviewed the source records and ran the checks at McLean's direction. Deployment matching is not an independent security audit or evidence of a settled payment.
+
+## September 9, 2026 - Segment 1G: recoverable demo workspace
+
+- Added create, unlock and encrypted-backup restore commands for buyer, merchant and attacker roles. These are distinct accounts under one demo owner.
+- Passwords enter through a hidden terminal prompt or stdin. The encrypted backup recreates all three identities; existing workspaces cannot be overwritten.
+- Added Sepolia synchronization with deployment and POI checks before SDK network loading, two required history completion events, a 90-second deadline and persisted diagnostic status.
+- Fixed the SDK provider weight requirement and added a regression test using the installed SDK configuration validator.
+- All 49 tests pass, including fresh-process recovery, wrong-password rejection, overwrite protection and backup restoration.
+- Live deployment and POI checks passed. SDK provider loading failed before UTXO or TXID scans completed. The diagnostic retry was interrupted by environment network approval cancellation; the underlying loading error remains unresolved.
+- No dependencies changed. Previous dependency audit findings remain unresolved; no new audit was run in this segment.
+- See privacy/SEGMENT-1G.md and privacy/reports/segment-1g-validation.json. Next: diagnose SDK provider loading, complete history synchronization, then verify spendable test-asset balances.
+- No funds moved, transactions broadcast, merge or deployment performed.
+
+AI assistance: Codex implemented and checked this segment at McLean's direction. Encrypted workspace recovery passed; network synchronization and payment settlement have not.

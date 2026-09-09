@@ -10,7 +10,9 @@
     "artifacts:prepare": "node src/prepare-proof-artifacts.mjs",
     "proof:smoke": "node src/proof-smoke.mjs",
     "wallet:storage:smoke": "node src/wallet-storage-smoke.mjs",
-    "deployment:preflight": "node src/deployment-preflight.mjs"
+    "deployment:preflight": "node src/deployment-preflight.mjs",
+    "wallet": "node src/test-wallet-cli.mjs",
+    "wallet:sync": "node src/test-sync-cli.mjs"
   },
   "engines": {
     "node": ">=22"

@@ -146,6 +146,7 @@ vite.config.ts.timestamp-*
 *.key
 *.pem
 keystore.json
+root.keystore.json
 keystores/
 
 # Local Honeybee proof artifacts and runtime state
