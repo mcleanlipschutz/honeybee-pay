@@ -34,14 +34,15 @@ export function makeReadOnlyRpc(url) {
   if (parsed.protocol !== 'https:' && !(local && parsed.protocol === 'http:')) throw new Error('Use HTTPS or a local HTTP RPC');
   let id = 0;
   return async (method, params) => {
-    if (!['eth_chainId', 'eth_getCode'].includes(method)) throw new Error('RPC method not allowed');
+    if (!['eth_chainId', 'eth_getCode', 'eth_getBlockByNumber', 'eth_getStorageAt', 'eth_call'].includes(method)) throw new Error('RPC method not allowed');
+    const requestID = ++id;
     try {
       const response = await fetch(url, { method: 'POST', redirect: 'error',
         headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(10000),
-        body: JSON.stringify({ jsonrpc: '2.0', id: ++id, method, params }) });
+        body: JSON.stringify({ jsonrpc: '2.0', id: requestID, method, params }) });
       if (!response.ok) throw new Error();
       const body = await response.json();
-      if (body.error || body.id !== id || body.jsonrpc !== '2.0') throw new Error();
+      if (body.error || body.id !== requestID || body.jsonrpc !== '2.0') throw new Error();
       return body.result;
     } catch { throw new Error('Read-only RPC request failed; check endpoint access'); }
   };

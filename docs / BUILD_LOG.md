@@ -123,3 +123,17 @@ AI assistance: Codex prepared this implementation and validation for McLean's re
 - No wallet funding, chain synchronization, settled payment, merge or deployment occurred. Persistent wallet storage and verified network integration remain next.
 
 AI assistance: Codex implemented and checked this segment at McLean's direction. The circuit proof is real; its synthetic transaction does not establish onchain payment readiness or independent firewall enforcement.
+
+## September 9, 2026 - Segment 1F: persistent storage and deployment identity
+
+- Added a LevelDOWN-backed wallet database with private-directory requirements and native database locking.
+- Created two disposable encrypted wallets, exited the creating process, and recovered both in a fresh process. Incorrect keys were rejected; seed phrases and encryption keys were not found as literal plaintext in the database files. The temporary database was removed.
+- Matched the configured Sepolia proxy, implementation and relay runtime bytecodes to Sourcify records. Proxy and relay have exact matches; implementation has a match with compiler-metadata differences.
+- Verified the proxy implementation slot, unpaused state, relay destination and every coordinate of the 01x02 circuit verification key at one finalized block.
+- Added checks that reject changed code, implementation, pause state, relay destination, circuit key, chain or block hash. Fixed concurrent read-only RPC response ID handling.
+- Explicitly pinned the existing engine version 9.6.0 as the ABI dependency. LevelDOWN 6.1.1 is retained for SDK compatibility; platform and deprecation limits are documented.
+- See privacy/SEGMENT-1F.md and privacy/reports/segment-1f-validation.json for reproduction and results.
+- Clean install with lifecycle scripts disabled passed all 46 tests, fresh-process wallet recovery and the existing real-proof checks. Audit remains 28 findings: 0 critical, 10 high, 14 moderate, 4 low.
+- No wallet funding, network synchronization, broadcast, merge or deployment. Next is application wallet initialization, secure key recovery and network/POI synchronization for a test-asset payment.
+
+AI assistance: Codex prepared this implementation, reviewed the source records and ran the checks at McLean's direction. Deployment matching is not an independent security audit or evidence of a settled payment.

@@ -1,0 +1,66 @@
+{
+  "checkedAt": "2026-09-09T13:14:30.356078+00:00",
+  "nodeVersion": "v24.19.0",
+  "platform": "linux",
+  "cleanInstallWithScriptsDisabled": true,
+  "unitTests": {
+    "passed": 46,
+    "failed": 0
+  },
+  "walletStorage": {
+    "status": "persistent-wallet-check-passed",
+    "walletsCreated": 2,
+    "walletsRecoveredInFreshProcess": 2,
+    "wrongKeyRejected": true,
+    "plaintextSeedOrKeyFound": false,
+    "temporaryDatabaseRemoved": true,
+    "funded": false,
+    "networkLoaded": false,
+    "paymentReady": false
+  },
+  "offlineProof": {
+    "status": "offline-joinsplit-proof-check-passed",
+    "proofGenerated": true,
+    "proofVerified": true,
+    "alteredOutputRejected": true,
+    "alteredApprovalRejected": true,
+    "alteredRecipientWitnessRejected": true,
+    "alteredValueWitnessRejected": true,
+    "syntheticInputs": true,
+    "networkLoaded": false,
+    "paymentSettled": false,
+    "paymentReady": false
+  },
+  "deployment": {
+    "status": "reviewed-deployment-and-circuit-matched",
+    "network": "Ethereum_Sepolia",
+    "chainID": 11155111,
+    "blockNumber": "0xb20a6d",
+    "blockHash": "0xa8d09dea92465b86e620c324d6bae2ab8bf2f58b09cc1d0452fa6d62ca3f59cb",
+    "proxy": "0xeCFCf3b4eC647c4Ca6D49108b311b7a7C9543fea",
+    "implementation": "0x16DC2574CC30E4deECfb9ba22d95E5126A2fC0B3",
+    "relay": "0x7e3d929EbD5bDC84d02Bd3205c777578f33A214D",
+    "runtimeCodeHashes": {
+      "proxy": "0xe9bcdc3bea3cda0b9e8e9337899c43175a19aac915d12bde6fa519df72cb95a9",
+      "implementation": "0xd9ed4f83c7592b5a366858ae7a4f6c764543373bf7465ab457b80edc3d74b016",
+      "relay": "0x49ad543ac0ffdd272bc3895a8e383bce0ebb60a043e2c05546bc88704687be37"
+    },
+    "proxyPaused": false,
+    "relayTargetMatches": true,
+    "circuit": "01x02",
+    "verificationKeyMatches": true,
+    "artifactsIPFSHash": "QmWFEVTTH3kdFxA8GLUKnCNZe5JwTVy7nJi2HgnzbVBLF4",
+    "paymentReady": false,
+    "note": "Matches reviewed Sourcify runtime records and circuit at this block; not an audit, synchronization check, or payment settlement."
+  },
+  "audit": {
+    "info": 0,
+    "low": 4,
+    "moderate": 14,
+    "high": 10,
+    "critical": 0,
+    "total": 28
+  },
+  "mergePerformed": false,
+  "deploymentPerformed": false
+}

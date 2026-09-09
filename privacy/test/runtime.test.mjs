@@ -34,3 +34,18 @@ test('RPC wrapper rejects plaintext remote endpoints and write methods', async (
   assert.throws(() => makeReadOnlyRpc('http://example.com'));
   await assert.rejects(makeReadOnlyRpc('http://127.0.0.1:8545')('eth_sendRawTransaction', []), /not allowed/);
 });
+
+test('concurrent read-only RPC responses retain their own request IDs', async t => {
+  const pending = new Map();
+  t.mock.method(globalThis, 'fetch', async (_url, options) => {
+    const request = JSON.parse(options.body);
+    return new Promise(resolve => pending.set(request.id,
+      () => resolve({ ok: true, json: async () => ({ jsonrpc: '2.0', id: request.id, result: request.method }) })));
+  });
+  const rpc = makeReadOnlyRpc('http://127.0.0.1:8545');
+  const first = rpc('eth_chainId', []);
+  const second = rpc('eth_getBlockByNumber', ['finalized', false]);
+  pending.get(2)();
+  pending.get(1)();
+  assert.deepEqual(await Promise.all([first, second]), ['eth_chainId', 'eth_getBlockByNumber']);
+});
