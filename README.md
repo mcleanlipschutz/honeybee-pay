@@ -28,14 +28,16 @@ source records and confirms that the deployed circuit key matches our proof.
 
 Buyer, merchant and attacker demo wallets can now be initialized and restored
 from one password-encrypted backup. The synchronization command verifies the
-deployment first and requires both history scans to complete. Live SDK provider
-loading remains blocked; synchronization has not passed.
+deployment first and requires both history scans to complete. SDK provider
+loading now succeeds through the runtime's proxy-aware transport. The live UTXO
+scan completed; the TXID scan remains incomplete, so synchronization has not passed.
 
 This is a cryptographic development test, not a settled payment. Synchronization,
 test-token funding and merchant receipts remain unfinished. The buyer approval checks are not yet
 an independently enforced onchain firewall.
 
-See [Segment 1G](privacy/SEGMENT-1G.md) for workspace and synchronization commands,
+See [Segment 1H](privacy/SEGMENT-1H.md) for the connection fix,
+[Segment 1G](privacy/SEGMENT-1G.md) for workspace and synchronization commands,
 [Segment 1F](privacy/SEGMENT-1F.md) for storage and deployment checks,
 [Segment 1E](privacy/SEGMENT-1E.md) for the local proof, and
 [the build log](docs%20/%20BUILD_LOG.md) for the implementation history.

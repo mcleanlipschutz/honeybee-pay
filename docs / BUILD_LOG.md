@@ -151,3 +151,14 @@ AI assistance: Codex prepared this implementation, reviewed the source records a
 - No funds moved, transactions broadcast, merge or deployment performed.
 
 AI assistance: Codex implemented and checked this segment at McLean's direction. Encrypted workspace recovery passed; network synchronization and payment settlement have not.
+
+## September 9, 2026 - Segment 1H: SDK RPC connection resolved
+
+- Captured a timeout from the default SDK ethers RPC transport. Added a narrowly scoped Node fetch adapter for the configured RPC, covering both ESM and CommonJS ethers entry points.
+- The adapter uses the runtime's configured proxy routing, preserves request bytes/headers, rejects redirects and enforces cancellation and request timeouts. Endpoint credentials are excluded from error reports.
+- A live SDK RPC request returned Sepolia block 11669725. Deployment verification passed after one transient failed attempt.
+- The final live run passed deployment, POI availability and SDK provider initialization. UTXO history completed; TXID reported Incomplete. The 90-second deadline exited with synchronization false.
+- All 54 tests passed. No dependencies changed, funds moved, transactions broadcast, merge or deployment performed.
+- See privacy/SEGMENT-1H.md and privacy/reports/segment-1h-validation.json. The connection blocker is resolved; TXID history completion is next.
+
+AI assistance: Codex diagnosed and implemented this transport fix at McLean's direction. A connected provider and completed UTXO scan do not establish spendable balances or payment settlement.

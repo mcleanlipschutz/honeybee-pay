@@ -67,5 +67,8 @@ Synchronization, test-token funding, spendable balances and merchant settlement
 are therefore still unverified. Resolve provider loading and complete both scans
 before beginning a test-asset payment. No transactions were broadcast.
 
+Update: [Segment 1H](SEGMENT-1H.md) resolves SDK provider loading. UTXO history
+completed in its live run; TXID history remained incomplete at the deadline.
+
 SDK references: [network providers](https://docs.railgun.org/developer-guide/wallet/getting-started/8.-connect-engine-network-providers)
 and [engine startup](https://docs.railgun.org/developer-guide/wallet/getting-started/5.-start-the-railgun-privacy-engine).

@@ -7,6 +7,7 @@ import { readWorkspaceRoot, startWorkspaceEngine, loadWorkspaceWallets, testNetw
 import { readSecret } from './secret-input.mjs';
 import { createScanTracker } from './sync-state.mjs';
 import { syncProviderConfig } from './sync-config.mjs';
+import { installRpcTransport, connectionErrorCode } from './rpc-transport.mjs';
 import { makeReadOnlyRpc, testNetwork } from './network-preflight.mjs';
 import { inspectDeployment } from './deployment-check.mjs';
 import { createPinnedArtifactStore } from './artifact-store.mjs';
@@ -19,12 +20,14 @@ let tracker;
 let deployment;
 let timer;
 let finishing = false;
+let errorCode;
+let providerConnected = false;
 async function finish(status, code) {
   if (finishing) return;
   finishing = true;
   clearTimeout(timer);
   const result = { status, stage, network: testNetworkName, checkedAt: new Date().toISOString(),
-    scans: tracker?.snapshot(), deployment, synchronized: status === 'history-scans-complete',
+    scans: tracker?.snapshot(), deployment, errorCode, providerConnected, synchronized: status === 'history-scans-complete',
     paymentReady: false };
   // Bound shutdown even when an SDK request cannot be cancelled.
   const hardStop = setTimeout(() => process.exit(code), 3000);
@@ -45,6 +48,7 @@ try {
   if (process.argv.length !== 3 || !process.env.HONEYBEE_RPC_URL) throw new Error();
   const rpcURL = process.env.HONEYBEE_RPC_URL;
   const rpc = makeReadOnlyRpc(rpcURL);
+  installRpcTransport(rpcURL);
   const poiURL = process.env.HONEYBEE_POI_URL || 'https://ppoi.fdi.network';
   if (new URL(poiURL).protocol !== 'https:') throw new Error();
   const root = await readWorkspaceRoot(resolve(process.argv[2]), await readSecret());
@@ -78,9 +82,10 @@ try {
   setOnTXIDMerkletreeScanCallback(event => tracker.update('txid', event));
   stage = 'provider-loading';
   await loadProvider(syncProviderConfig(rpcURL), testNetworkName, 15000);
+  providerConnected = true;
   stage = 'history-scanning';
   await refreshBalances(chain, wallets.map(wallet => wallet.id));
   // SDK completion callbacks may follow the refresh promise asynchronously.
   while (!tracker.complete() && !finishing) await new Promise(resolve => setTimeout(resolve, 100));
   if (!finishing) await finish('history-scans-complete', 0);
-} catch { await finish('sync-failed', 1); }
+} catch (error) { errorCode = connectionErrorCode(error); await finish('sync-failed', 1); }
