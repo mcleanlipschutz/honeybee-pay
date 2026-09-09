@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-09-09T18:49:25.965264+00:00",
+  "tests": {
+    "passed": 58,
+    "failed": 0
+  },
+  "historyProbe": {
+    "count": 3709
+  },
+  "historyTransportResolved": true,
+  "fullSyncValidation": "Blocked by automatic approval review after earlier deployment-preflight failures.",
+  "approvalBlock": {
+    "destination": "https://ppoi.fdi.network",
+    "potentialPayload": "wallet-derived transaction or address data",
+    "reason": "Explicit authorization for payload and destination required."
+  },
+  "synchronized": false,
+  "paymentReady": false,
+  "dependenciesChanged": false,
+  "fundsMoved": false,
+  "temporaryDemoWorkspacesRemoved": true
+}

@@ -36,14 +36,29 @@ export function makeReadOnlyRpc(url) {
   return async (method, params) => {
     if (!['eth_chainId', 'eth_getCode', 'eth_getBlockByNumber', 'eth_getStorageAt', 'eth_call'].includes(method)) throw new Error('RPC method not allowed');
     const requestID = ++id;
-    try {
-      const response = await fetch(url, { method: 'POST', redirect: 'error',
-        headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(10000),
-        body: JSON.stringify({ jsonrpc: '2.0', id: requestID, method, params }) });
-      if (!response.ok) throw new Error();
-      const body = await response.json();
-      if (body.error || body.id !== requestID || body.jsonrpc !== '2.0') throw new Error();
-      return body.result;
-    } catch { throw new Error('Read-only RPC request failed; check endpoint access'); }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const response = await fetch(url, { method: 'POST', redirect: 'error',
+          headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(10000),
+          body: JSON.stringify({ jsonrpc: '2.0', id: requestID, method, params }) });
+        if (!response.ok) {
+          const error = new Error();
+          error.retryable = [429, 502, 503, 504].includes(response.status);
+          throw error;
+        }
+        const body = await response.json();
+        if (body.error || body.id !== requestID || body.jsonrpc !== '2.0') throw new Error();
+        return body.result;
+      } catch (cause) {
+        const retryable = cause.retryable === true || cause instanceof TypeError || cause.name === 'TimeoutError';
+        if (retryable && attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 250 * (attempt + 1)));
+          continue;
+        }
+        const error = new Error('Read-only RPC request failed; check endpoint access');
+        error.code = cause.name === 'TimeoutError' ? 'TIMEOUT' : 'NETWORK_ERROR';
+        throw error;
+      }
+    }
   };
 }

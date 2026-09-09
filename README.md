@@ -30,13 +30,15 @@ Buyer, merchant and attacker demo wallets can now be initialized and restored
 from one password-encrypted backup. The synchronization command verifies the
 deployment first and requires both history scans to complete. SDK provider
 loading now succeeds through the runtime's proxy-aware transport. The live UTXO
-scan completed; the TXID scan remains incomplete, so synchronization has not passed.
+scan completed. TXID history downloads now work, but full scan validation awaits
+approval for the SDK's external POI requests; synchronization has not passed.
 
 This is a cryptographic development test, not a settled payment. Synchronization,
 test-token funding and merchant receipts remain unfinished. The buyer approval checks are not yet
 an independently enforced onchain firewall.
 
-See [Segment 1H](privacy/SEGMENT-1H.md) for the connection fix,
+See [Segment 1I](privacy/SEGMENT-1I.md) for TXID history retrieval and its remaining validation,
+[Segment 1H](privacy/SEGMENT-1H.md) for the RPC connection fix,
 [Segment 1G](privacy/SEGMENT-1G.md) for workspace and synchronization commands,
 [Segment 1F](privacy/SEGMENT-1F.md) for storage and deployment checks,
 [Segment 1E](privacy/SEGMENT-1E.md) for the local proof, and

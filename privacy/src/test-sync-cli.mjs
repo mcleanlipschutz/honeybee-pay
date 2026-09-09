@@ -8,6 +8,7 @@ import { readSecret } from './secret-input.mjs';
 import { createScanTracker } from './sync-state.mjs';
 import { syncProviderConfig } from './sync-config.mjs';
 import { installRpcTransport, connectionErrorCode } from './rpc-transport.mjs';
+import { installTxidTransport } from './txid-transport.mjs';
 import { makeReadOnlyRpc, testNetwork } from './network-preflight.mjs';
 import { inspectDeployment } from './deployment-check.mjs';
 import { createPinnedArtifactStore } from './artifact-store.mjs';
@@ -49,6 +50,7 @@ try {
   const rpcURL = process.env.HONEYBEE_RPC_URL;
   const rpc = makeReadOnlyRpc(rpcURL);
   installRpcTransport(rpcURL);
+  installTxidTransport();
   const poiURL = process.env.HONEYBEE_POI_URL || 'https://ppoi.fdi.network';
   if (new URL(poiURL).protocol !== 'https:') throw new Error();
   const root = await readWorkspaceRoot(resolve(process.argv[2]), await readSecret());

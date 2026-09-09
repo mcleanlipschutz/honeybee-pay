@@ -162,3 +162,16 @@ AI assistance: Codex implemented and checked this segment at McLean's direction.
 - See privacy/SEGMENT-1H.md and privacy/reports/segment-1h-validation.json. The connection blocker is resolved; TXID history completion is next.
 
 AI assistance: Codex diagnosed and implemented this transport fix at McLean's direction. A connected provider and completed UTXO scan do not establish spendable balances or payment settlement.
+
+## September 9, 2026 - Segment 1I: TXID history download fixed
+
+- Identified a proxy-tunnel timeout in the SDK GraphQL history transport, separate from its RPC client.
+- Added a version-guarded mesh transport adapter scoped to the existing Sepolia history service. Kept the SDK queries, cursor, pagination, formatting and validation intact.
+- The installed SDK successfully downloaded 3,709 TXID records in an isolated live query. This does not establish a validated wallet TXID tree.
+- Added bounded retries for transient read-only RPC failures after repeated deployment-preflight timeouts. Protocol errors and deployment mismatches still fail immediately.
+- All 58 tests passed. No dependencies changed.
+- Automatic approval review then rejected full synchronization because the external POI service may receive wallet-derived transaction/address data without explicit payload/destination authorization. No further sync attempt followed rejection.
+- Full scan validation remains blocked pending user approval for disposable-wallet POI requests to https://ppoi.fdi.network. No funded wallets or transactions were used; temporary demo workspaces were removed.
+- See privacy/SEGMENT-1I.md and privacy/reports/segment-1i-validation.json.
+
+AI assistance: Codex diagnosed and implemented this segment at McLean's direction. History retrieval passed; full synchronization and spendable balances remain unverified.
