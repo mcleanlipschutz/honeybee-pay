@@ -108,3 +108,18 @@ AI assistance: Codex prepared the fix, tests and review package, then uploaded t
 - Deployment identity, persistent wallet storage, verified circuit acquisition and proof verification remain outstanding. See privacy/SEGMENT-1D.md.
 
 AI assistance: Codex prepared this implementation and validation for McLean's review.
+
+## September 9, 2026 - Segment 1E: first real local ZK proof
+
+- Replaced the prover's vulnerable Underscore dependency with 1.13.8 through a narrow jsonpath override. No cryptographic source was changed.
+- Downloaded and pinned the upstream 01x02 circuit artifacts. Both WASM and proving-key digests match the installed SDK's expected hashes; the verification key is pinned separately.
+- Generated and verified a real JoinSplit proof through the wallet SDK with synthetic notes and a disposable signing key.
+- Confirmed rejection of altered output commitments, bound parameters, recipient witness and amount witness.
+- All 34 automated tests and the offline wallet check passed. A download into an empty artifact cache also passed.
+- Clean lockfile installation with scripts disabled, all 34 tests, wallet checks and real proof checks passed again. Results are in privacy/reports/segment-1e-validation.json.
+- npm audit: 28 findings, including 10 high and 0 critical. The three new prover-chain findings are resolved; remaining findings and GraphQL peer warnings are not.
+- Sepolia read-only preflight passed chain ID and bytecode-presence checks. Contract identity remains unverified.
+- Updated the README's outdated status and added privacy/SEGMENT-1E.md with reproduction commands and precise limits.
+- No wallet funding, chain synchronization, settled payment, merge or deployment occurred. Persistent wallet storage and verified network integration remain next.
+
+AI assistance: Codex implemented and checked this segment at McLean's direction. The circuit proof is real; its synthetic transaction does not establish onchain payment readiness or independent firewall enforcement.

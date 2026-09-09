@@ -6,7 +6,9 @@
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "preflight": "node src/preflight.mjs",
-    "engine:smoke": "node src/engine-smoke.mjs"
+    "engine:smoke": "node src/engine-smoke.mjs",
+    "artifacts:prepare": "node src/prepare-proof-artifacts.mjs",
+    "proof:smoke": "node src/proof-smoke.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -20,6 +22,9 @@
     "snarkjs": "0.7.5"
   },
   "overrides": {
-    "@railgun-community/circomlibjs": "$@railgun-community/circomlibjs"
+    "@railgun-community/circomlibjs": "$@railgun-community/circomlibjs",
+    "jsonpath": {
+      "underscore": "1.13.8"
+    }
   }
 }

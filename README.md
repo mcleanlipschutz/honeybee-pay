@@ -17,4 +17,15 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
-I am currently documenting the design and demo. Implementation and testing has not started yet.
+The development branch now generates and verifies a real RAILGUN zero-knowledge
+proof locally using synthetic notes. Checks reject altered output commitments,
+bound parameters, recipient inputs and amounts. The transfer adapter and offline
+wallet checks are also implemented.
+
+This is a cryptographic development test, not a settled payment. Test-network
+contract identity, persistent wallet storage, synchronization, test-token funding
+and merchant receipts remain unfinished. The buyer approval checks are not yet
+an independently enforced onchain firewall.
+
+See [Segment 1E](privacy/SEGMENT-1E.md) for setup, results and limitations, and
+[the build log](docs%20/%20BUILD_LOG.md) for the implementation history.
