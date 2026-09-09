@@ -82,3 +82,16 @@ Next: verify deployment identity and configure persistent storage, artifacts and
 AI assistance: Codex prepared code, dependency analysis and tests for McLean's review.
 
 McLean approved uploading Segment 1C to the existing draft pull request. No merge or deployment was performed.
+
+## September 9, 2026 - Dependency fix reviewed and added
+
+- McLean reviewed and approved the dependency fix for the existing draft PR.
+- Added a local packaging fork of circomlibjs 0.0.8 that moves test-only web3 to development dependencies. Upstream cryptographic source files are unchanged; full source, hashes, attribution and GPL-3.0 license are included.
+- Pinned the local package for the application and engine. Removed the obsolete runtime chain containing tar, swarm-js and request, and the now-unneeded request/form-data override.
+- Fresh lockfile installation with scripts disabled passed. All 26 tests passed, including unchanged-source checks and two Poseidon reference vectors.
+- Real offline engine check passed: two disposable wallets created, encrypted reload succeeded, wrong key rejected.
+- Audit reports 28 findings: 0 critical, 10 high, 14 moderate and 4 low. Remaining findings are unresolved.
+- No proof generation, funding, transaction broadcast, merge or deployment occurred. Payment readiness remains unverified.
+- Local fork maintenance and license requirements are documented in privacy/vendor/README.md.
+
+AI assistance: Codex prepared the fix, tests and review package, then uploaded the approved changes.
