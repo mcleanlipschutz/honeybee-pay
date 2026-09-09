@@ -95,3 +95,16 @@ McLean approved uploading Segment 1C to the existing draft pull request. No merg
 - Local fork maintenance and license requirements are documented in privacy/vendor/README.md.
 
 AI assistance: Codex prepared the fix, tests and review package, then uploaded the approved changes.
+
+## September 9, 2026 - Segment 1D artifact and prover foundation
+
+- Resumed from the completed dependency fix and retained the unfinished local snarkjs dependency addition.
+- Registered snarkjs 0.7.5 Groth16 with the real offline engine.
+- Added persistent artifact caching with reviewed SHA-256 pins, atomic writes, and rejection of missing trust entries or corrupted bytes.
+- All 31 tests passed. Offline wallet creation, encrypted reload, wrong-key rejection and prover registration passed.
+- Repeated validation after a clean lockfile install with lifecycle scripts disabled: passed. npm emitted existing GraphQL peer-dependency warnings.
+- Current npm audit reports 31 findings (0 critical, 13 high, 14 moderate, 4 low). These remain unresolved; the prover addition brings in the bfj/jsonpath/underscore advisory chain. This increment is not ready for funded use.
+- No circuit manifest has been trusted, no real proof generated, and no network loaded or payment broadcast.
+- Deployment identity, persistent wallet storage, verified circuit acquisition and proof verification remain outstanding. See privacy/SEGMENT-1D.md.
+
+AI assistance: Codex prepared this implementation and validation for McLean's review.
