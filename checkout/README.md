@@ -237,7 +237,15 @@ whether an exact-amount token approval would be needed. It requires working
 Sepolia deployment and POI checks; mock values are never substituted in the UI.
 
 This is local-only and does not change the currently hosted mobile site. No
-approval, signing or deposit submission is enabled. Gas estimation, fresh
-pre-sign validation, wallet confirmation and live settlement are the next gate.
+approval, signing or deposit submission is enabled. Live pre-sign validation,
+wallet confirmation and deposit settlement are the next gate.
 The review is not a receipt or spendable balance and does not increment the
 homepage payment count. See `privacy/SEGMENT-1Q.md` for the implementation and tests.
+
+Segment 1R adds **Check network fee** to that local review. It requests the exact
+cached review by ID, simulates the next approval/deposit, checks balances and
+shows a short-lived fee cap in Sepolia ETH. If approval is needed, that quote
+covers approval only; the deposit requires a fresh check after actual allowance
+confirmation. Quotes never enable signing in this build. Server restart or review
+expiry requires a new review. Live simulation, explicit wallet confirmation and
+canonical deposit verification remain outstanding; see `privacy/SEGMENT-1R.md`.

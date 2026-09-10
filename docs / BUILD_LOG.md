@@ -335,3 +335,26 @@ in privacy/SEGMENT-1Q.md. KYC stays deferred. Next: local-machine live/fork pref
 gas and explicit wallet confirmation, canonical Shield verification and rescan.
 
 AI assistance: Codex implemented and tested this segment at McLean's direction.
+
+## Segment 1R — deposit simulation and network-fee preview
+
+Connected the local deposit review to a fresh deployment/fee/token check, exact
+transaction simulation and bounded EIP-1559 gas quote. The account service stores
+one expiring review per owner; fee-check requests can name only that stored review
+and cannot substitute calldata. The fee worker receives no recovery password and
+does not open account wallet storage. Approval is simulated separately until a
+fresh allowance read permits simulation of the original shield calldata.
+
+The UI shows the estimated maximum fee and next wallet-confirmation step, with
+short expiry and account-change rejection. Signing and submission stay disabled;
+no private service was published or transaction broadcast. Live Sepolia/fork
+validation remains blocked from this workspace and is a required next gate.
+
+Validation: 48 focused tests passed, including 1,000 bounded gas-rounding samples,
+cache owner/replacement/concurrency cases, token/fee/balance/simulation failures,
+latest-head deployment checks, client account changes and a real worker rejecting
+a local wrong-chain RPC. Successful chain responses are controlled fixtures.
+Checkout client/Worker build passed; existing warnings and dependency findings
+remain. No dependency versions changed. KYC stays deferred.
+
+AI assistance: Codex implemented and tested this segment at McLean's direction.

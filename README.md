@@ -23,10 +23,15 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
+[Segment 1R](privacy/SEGMENT-1R.md) adds a fresh deposit preflight: exact-call
+simulation, bounded gas quotes, account-bound review storage and a preview of the
+next wallet-confirmation step. Focused tests and the build pass; live signing and
+deposit verification remain gated on local-machine Sepolia/fork validation.
+
 [Segment 1Q](privacy/SEGMENT-1Q.md) adds account-bound test-USDC deposit reviews:
 amount, protocol fee, expected private credit and exact unsigned approval terms.
 Offline SDK recovery and tamper checks pass. Submission is disabled pending live
-preflight, gas estimation and explicit wallet confirmation. [Segment 1P](privacy/SEGMENT-1P.md)
+preflight and explicit wallet confirmation. [Segment 1P](privacy/SEGMENT-1P.md)
 provides account-scoped history scanning and spendable-balance snapshots. Live
 account sync, shielding and settled private payments remain the next gates.
 The hosted demo provides public test checkout, receipts and a test-payment counter.

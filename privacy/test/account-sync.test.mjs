@@ -97,6 +97,10 @@ test('real account workers reject unauthorized sync before network access and pr
   assert.equal(calls, 1, 'unauthorized or altered deposit requests must not reach the RPC');
   await assert.rejects(service.execute(review));
   assert.equal(calls, 2, 'valid review fails at the wrong-chain preflight without sending any transaction');
+  for (const extra of [{}, { accessToken: other }, { transaction: {} }, { password }, { review: {} }, { rpcURL: 'https://other.test' }]) {
+    await assert.rejects(service.execute({ action: 'shield-preflight', accessToken: token, reviewId: '0x' + 'aa'.repeat(32), ...extra }));
+  }
+  assert.equal(calls, 2, 'unknown, cross-account or injected preflight requests never reach the network');
   const owner = (await (await createAccountAuthenticator(auth))(token)).ownerId;
   assert.equal(await readFile(join(directory, owner, 'account.backup.json'), 'utf8'), created.encryptedBackup);
   const checked = await service.execute({ action: 'unlock', accessToken: token, password });

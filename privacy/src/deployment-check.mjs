@@ -19,7 +19,8 @@ export function expectedContractKey(vkey) {
     g2(vkey.vk_delta_2), vkey.IC.map(g1)];
 }
 
-export async function inspectDeployment(network, rpc, pins, vkey) {
+export async function inspectDeployment(network, rpc, pins, vkey, { blockTag: head = 'finalized' } = {}) {
+  if (!['finalized', 'latest'].includes(head)) throw new Error('Unsupported deployment head');
   const config = testNetwork(network);
   if (pins.network !== network || pins.chainID !== config.chain.id) throw new Error('No reviewed deployment for network');
   const contracts = pins.contracts;
@@ -30,9 +31,9 @@ export async function inspectDeployment(network, rpc, pins, vkey) {
   const chainID = await rpc('eth_chainId', []);
   if (typeof chainID !== 'string' || !/^0x[0-9a-fA-F]+$/.test(chainID)
       || BigInt(chainID) !== BigInt(config.chain.id)) throw new Error('RPC chain does not match configuration');
-  const block = await rpc('eth_getBlockByNumber', ['finalized', false]);
+  const block = await rpc('eth_getBlockByNumber', [head, false]);
   if (!block || !/^0x[0-9a-fA-F]+$/.test(block.number) || !word(block.hash)) {
-    throw new Error('Finalized block unavailable');
+    throw new Error('Deployment block unavailable');
   }
   const blockTag = block.number;
   for (const contract of Object.values(contracts)) {
@@ -58,7 +59,7 @@ export async function inspectDeployment(network, rpc, pins, vkey) {
   assert.deepEqual(key.slice(1), expectedContractKey(vkey), 'Onchain verification key does not match pinned circuit');
   const finalBlock = await rpc('eth_getBlockByNumber', [blockTag, false]);
   if (!finalBlock || finalBlock.hash !== block.hash) throw new Error('Block changed during deployment inspection');
-  return { status: 'reviewed-deployment-and-circuit-matched', network, chainID: config.chain.id,
+  return { status: 'reviewed-deployment-and-circuit-matched', network, chainID: config.chain.id, head,
     blockNumber: block.number, blockHash: block.hash, proxy: contracts.proxy.address,
     implementation: contracts.implementation.address, relay: contracts.relay.address,
     runtimeCodeHashes: Object.fromEntries(Object.entries(contracts).map(([role, c]) => [role, c.runtimeCodeHash])),

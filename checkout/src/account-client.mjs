@@ -1,4 +1,5 @@
 import { validateShieldReview } from './shield-review.mjs';
+import { validateShieldPreflight } from './shield-preflight.mjs';
 
 const messages = {
   'sign-in-required': 'Sign in again, then refresh your wallet status.',
@@ -8,6 +9,7 @@ const messages = {
   'session-changed': 'Your account changed. Sign in and check your wallet again.',
   'connection-failed': 'The operation was not confirmed. Refresh wallet status before trying again.',
   'local-only': 'Private wallet setup requires the local testnet demo.',
+  'preflight-failed': 'The network fee could not be verified. Check the local connection, test balances and deposit review, then try the fee check again. No funds were moved.',
 };
 export class AccountRequestError extends Error {
   constructor(code) { super(messages[code] || messages['connection-failed']); this.code = code; }
@@ -19,10 +21,11 @@ export function isLocalDemo(origin) {
 export function createAccountWalletClient({ origin, getAccessToken, isCurrent = () => true, fetchImpl = fetch }) {
   if (!isLocalDemo(origin)) throw new AccountRequestError('local-only');
   const current = () => { if (!isCurrent()) throw new AccountRequestError('session-changed'); };
-  return { async execute(action, fields = {}, signal) {
+  const execute = async (action, fields = {}, signal, expectedReview) => {
     current();
     try {
       fields = { ...fields };
+      if (expectedReview) expectedReview = structuredClone(expectedReview);
       const token = await getAccessToken();
       current();
       if (!token || typeof token !== 'string') throw new AccountRequestError('sign-in-required');
@@ -30,7 +33,7 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
         method: 'POST', credentials: 'omit', cache: 'no-store', redirect: 'error',
         headers: { 'Content-Type': 'application/json', 'X-Honeybee-Request': 'wallet-v1', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...fields, action }),
-        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(['sync', 'shield-review'].includes(action) ? 125000 : 35000)]) : AbortSignal.timeout(['sync', 'shield-review'].includes(action) ? 125000 : 35000),
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(['sync', 'shield-review', 'shield-preflight'].includes(action) ? 125000 : 35000)]) : AbortSignal.timeout(['sync', 'shield-review', 'shield-preflight'].includes(action) ? 125000 : 35000),
       });
       current();
       if (!response.headers.get('content-type')?.includes('application/json')) throw new Error();
@@ -54,12 +57,21 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
         result.shieldReview = validateShieldReview(result.shieldReview, { ...fields,
           walletId: result.privateWallet.id, privateAddress: result.privateWallet.privateAddress });
       }
+      if (action === 'shield-preflight') {
+        if (!expectedReview || result.privateWallet.status !== 'locked' || result.networkLoaded !== false
+            || result.spendableBalanceVerified !== false || result.privateWallet.id !== expectedReview.walletId
+            || result.privateWallet.privateAddress !== expectedReview.privateAddress
+            || JSON.stringify(result.shieldReview) !== JSON.stringify(expectedReview)) throw new Error();
+        result.shieldPreflight = validateShieldPreflight(result.shieldPreflight, expectedReview);
+      }
       return result;
     } catch (error) {
+      if (action === 'shield-preflight' && !['session-changed', 'sign-in-required'].includes(error.code)) throw new AccountRequestError('preflight-failed');
       if (error instanceof AccountRequestError) throw error;
       throw new AccountRequestError('connection-failed');
     }
-  } };
+  };
+  return { execute, preflight: (review, signal) => execute('shield-preflight', { reviewId: review.reviewId }, signal, review) };
 }
 
 export async function readRecoveryFile(file) {

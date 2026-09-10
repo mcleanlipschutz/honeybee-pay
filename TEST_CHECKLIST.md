@@ -48,7 +48,10 @@ release.
 - [x] Build account-bound test-USDC deposit review with exact unsigned approval and protocol fee (Segment 1Q; controlled tests).
 - [x] Verify prepared shield-note recovery in a fresh SDK database and rejection by another wallet.
 - [ ] Validate the deposit review against live/forked Sepolia state on the local test machine.
-- [ ] Add fresh pre-sign checks, gas estimation, explicit wallet approvals, and shield submission.
+- [x] Add fresh deployment/token/fee checks, exact-call simulation and bounded gas quotes (Segment 1R; controlled tests).
+- [x] Bind fee checks to the server's account-specific review and preview the next wallet-confirmation step.
+- [ ] Validate simulation and gas quotes against live/forked Sepolia state.
+- [ ] Integrate explicit wallet approval and shield submission, carrying reviewed gas/fee limits and handling pending/unknown outcomes.
 - [ ] Confirm the exact deposit transaction and matching canonical Shield event without automatic resending.
 - [ ] Confirm the new account's shielded balance is spendable before enabling payment.
 - [ ] Restore and resynchronize a wallet after shielding.

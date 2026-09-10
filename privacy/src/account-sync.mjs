@@ -26,7 +26,7 @@ export function accountSyncConfig(config) {
 }
 
 // Trusted parent configuration only; endpoint selection is never accepted from HTTP.
-export async function prepareAccountSync(config, checkSession) {
+export async function prepareAccountSync(config, checkSession, { blockTag = 'finalized' } = {}) {
   checkSession();
   const { rpcURL, poiURL } = accountSyncConfig(config);
   installRpcTransport(rpcURL); installTxidTransport(); installPOITransport(poiURL);
@@ -34,7 +34,7 @@ export async function prepareAccountSync(config, checkSession) {
   const key = await artifacts.get(artifactPrefix + 'vkey.json');
   if (!key) throw new Error('Pinned verification key unavailable');
   const pins = JSON.parse(await readFile(new URL('../config/sepolia-deployment.json', import.meta.url), 'utf8'));
-  const deployment = await inspectDeployment(accountSyncNetwork, makeReadOnlyRpc(rpcURL), pins, JSON.parse(key));
+  const deployment = await inspectDeployment(accountSyncNetwork, makeReadOnlyRpc(rpcURL), pins, JSON.parse(key), { blockTag });
   checkSession();
   const response = await fetch(poiURL, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(15000),
     headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1,

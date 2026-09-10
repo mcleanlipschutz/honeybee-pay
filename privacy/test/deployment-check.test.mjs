@@ -70,3 +70,13 @@ test('unreviewed test networks and production chains cannot use Sepolia pins', a
   await assert.rejects(inspectDeployment('Ethereum', rpc, pins, vkey), /test-network/);
   assert.equal(calls.length, 0);
 });
+
+test('latest-head preflight preserves all deployment checks and rejects caller-selected historical heads', async () => {
+  const good = fixture();
+  const result = await inspectDeployment('Ethereum_Sepolia', good.rpc, good.pins, good.vkey, { blockTag: 'latest' });
+  assert.equal(result.head, 'latest');
+  assert.equal(good.calls.find(c => c.method === 'eth_getBlockByNumber').params[0], 'latest');
+  const changed = fixture({ code: true });
+  await assert.rejects(inspectDeployment('Ethereum_Sepolia', changed.rpc, changed.pins, changed.vkey, { blockTag: 'latest' }), /bytecode/);
+  await assert.rejects(inspectDeployment('Ethereum_Sepolia', good.rpc, good.pins, good.vkey, { blockTag: '0x1234' }), /Unsupported/);
+});

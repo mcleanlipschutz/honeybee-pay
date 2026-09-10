@@ -34,7 +34,8 @@ export function makeReadOnlyRpc(url) {
   if (parsed.protocol !== 'https:' && !(local && parsed.protocol === 'http:')) throw new Error('Use HTTPS or a local HTTP RPC');
   let id = 0;
   return async (method, params) => {
-    if (!['eth_chainId', 'eth_getCode', 'eth_getBlockByNumber', 'eth_getStorageAt', 'eth_call'].includes(method)) throw new Error('RPC method not allowed');
+    if (!['eth_chainId', 'eth_getCode', 'eth_getBlockByNumber', 'eth_getStorageAt', 'eth_call',
+      'eth_getBalance', 'eth_estimateGas', 'eth_maxPriorityFeePerGas'].includes(method)) throw new Error('RPC method not allowed');
     const requestID = ++id;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createAccountWalletClient, isLocalDemo, readRecoveryFile } from './account-client.mjs';
 import { formatUnits } from 'viem';
 import { shieldAmountUnits } from './shield-review.mjs';
+import { shieldConfirmationStep } from './shield-preflight.mjs';
 
 const actionNames = { create: 'Create private wallet', restore: 'Restore my wallet',
   unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance', 'shield-review': 'Review test deposit' };
@@ -29,17 +30,23 @@ export function PrivateWalletPanel({ connection, runtime }) {
   const perform = async (action, fields = {}) => {
     if (!client || inFlight.current) return;
     inFlight.current = true; setBusy(true); setMessage('');
-    setResult(previous => previous ? { ...previous, shieldReview: null } : previous);
+    const savedReview = action === 'shield-preflight' ? result?.shieldReview : null;
+    setResult(previous => previous ? { ...previous, shieldReview: savedReview, shieldPreflight: null } : previous);
     if (action === 'sync') {
       setResult(previous => previous ? { ...previous, synchronization: null, spendableBalance: null, spendableBalanceVerified: false } : previous);
       setMessage('Checking private wallet history and spendable test USDC. This can take up to two minutes.');
     }
     if (action === 'shield-review') setMessage('Checking the test deposit amount, protocol fee and allowance. This can take up to two minutes.');
+    if (action === 'shield-preflight') setMessage('Simulating the next transaction and checking its network fee. No wallet signature is requested.');
     controller.current = new AbortController();
     try {
-      const next = await client.execute(action, fields, controller.current.signal);
+      const next = action === 'shield-preflight' ? await client.preflight(savedReview, controller.current.signal)
+        : await client.execute(action, fields, controller.current.signal);
       if (!alive.current) return;
       if (action === 'shield-review' && fields.publicAddress?.toLowerCase() !== latest.current.wallet?.address?.toLowerCase()) {
+        setMessage('Your funding wallet changed. Review the deposit again.'); return;
+      }
+      if (savedReview && savedReview.publicAddress.toLowerCase() !== latest.current.wallet?.address?.toLowerCase()) {
         setMessage('Your funding wallet changed. Review the deposit again.'); return;
       }
       setResult(next); setUncertain(false);
@@ -52,6 +59,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
       else if (action === 'unlock') setMessage('Wallet and recovery password checked. The wallet is now locked again.');
       else if (action === 'sync') setMessage('Private wallet history checked. The balance below is a snapshot; the wallet is locked again.');
       else if (action === 'shield-review') setMessage('Deposit review prepared. Your wallet is locked again. No funds were moved.');
+      else if (action === 'shield-preflight') setMessage('The next transaction was simulated and its fee checked. No funds were moved.');
     } catch (error) {
       if (alive.current) {
         setMessage(error.message);
@@ -92,6 +100,10 @@ export function PrivateWalletPanel({ connection, runtime }) {
   };
   const existing = result?.privateWallet.status === 'locked';
   const review = result?.shieldReview;
+  const quote = result?.shieldPreflight;
+  const quoteCurrent = quote && clock < quote.expiresAt;
+  const confirmationStep = shieldConfirmationStep({ review, quote, publicAddress: connection?.wallet?.address,
+    chainId: connection?.wallet?.chainId, now: clock });
   const reviewCurrent = review && clock < review.expiresAt
     && connection?.wallet?.address?.toLowerCase() === review.publicAddress.toLowerCase();
   return <section className="checkout wallet-panel" aria-labelledby="wallet-heading">
@@ -136,8 +148,14 @@ export function PrivateWalletPanel({ connection, runtime }) {
           <p>From your public wallet: {formatUnits(BigInt(review.amountUnits), 6)} test USDC</p>
           <p>Protocol fee: {formatUnits(BigInt(review.feeUnits), 6)} test USDC</p>
           <p>Expected in your private wallet: {formatUnits(BigInt(review.receivedUnits), 6)} test USDC</p>
-          <p>{review.approvalRequired ? `A separate approval for exactly ${formatUnits(BigInt(review.amountUnits), 6)} test USDC would be needed.` : 'An existing allowance covers this amount at the reviewed block.'}</p>
-          <p>Network fee: not estimated yet. This is a finalized-block snapshot and needs a fresh check before signing.</p>
+          <p>{(quoteCurrent ? quote.stage === 'approval' : review.approvalRequired) ? `A separate approval for exactly ${formatUnits(BigInt(review.amountUnits), 6)} test USDC would be needed.` : 'An existing allowance covers this amount at the checked block.'}</p>
+          {quoteCurrent ? <>
+            <p>Estimated maximum network fee for {quote.stage === 'approval' ? 'approval' : 'the deposit'}: <strong>{formatUnits(BigInt(quote.maxNetworkFeeWei), 18)} Sepolia ETH</strong></p>
+            <p>{quote.stage === 'approval' ? 'This covers approval only. The deposit needs a separate fee check after approval confirms.' : 'The exact deposit was simulated successfully. This does not mean it has been submitted or confirmed.'}</p>
+            <p>Next wallet step: {confirmationStep === 'switch-network' ? 'switch to Sepolia' : quote.stage === 'approval' ? 'confirm the exact USDC approval' : 'confirm the deposit'}.</p>
+            <p>Fee check expires at {new Date(quote.expiresAt).toLocaleTimeString()}. The actual network fee may be lower.</p>
+          </> : <p>{quote ? 'The network fee check expired.' : 'Network fee: not checked yet.'} Check it before proceeding to wallet confirmation.</p>}
+          {runtime?.shieldPreflightEnabled && <button type="button" className="secondary" disabled={busy} onClick={() => perform('shield-preflight')}>{busy ? 'Checking…' : quoteCurrent ? 'Refresh network fee' : 'Check network fee'}</button>}
           <details className="wallet-details"><summary>Funding wallet and destination</summary>
             <p>Public funding wallet</p><code>{review.publicAddress}</code>
             <button type="button" className="text-button" onClick={() => copyAddress(review.publicAddress)}>Copy funding address</button>

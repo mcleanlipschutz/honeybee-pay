@@ -11,6 +11,7 @@ import { accountBackupLimit, decryptAccountBackup, encryptAccountBackup } from '
 import * as sdk from '@railgun-community/wallet';
 import { prepareAccountSync, scanAccountWallet, accountSyncDeadline, accountSyncNetwork } from './account-sync.mjs';
 import { prepareShieldReview } from './account-shield.mjs';
+import { preflightShield } from './shield-preflight.mjs';
 
 const backupFile = 'account.backup.json';
 function live(session) {
@@ -46,8 +47,17 @@ function readiness(walletStatus, wallet) {
     paymentReady: false, blockers: [...(walletStatus === 'not-created' ? ['private-wallet-not-created'] : []), 'private-payment-not-integrated', 'balance-not-verified'] };
 }
 
-async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress }) {
+async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, review }) {
   live(session);
+  if (action === 'shield-preflight') {
+    // This branch never opens a wallet directory or receives a recovery password.
+    const signal = AbortSignal.timeout(accountSyncDeadline);
+    const checkSession = () => { live(session); signal.throwIfAborted(); };
+    const prepared = await prepareAccountSync(syncConfig, checkSession, { blockTag: 'latest' });
+    const quote = await preflightShield({ review, prepared, checkSession, expiresAt: session.expiresAt });
+    checkSession();
+    return { ...readiness('locked', { id: review.walletId, railgunAddress: review.privateAddress }), ...quote };
+  }
   if (!isAbsolute(directory)) throw new Error();
   await privateDirectory(directory);
   const slot = join(directory, session.ownerId);
