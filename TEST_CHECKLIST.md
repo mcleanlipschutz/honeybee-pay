@@ -22,18 +22,28 @@ release.
 - [x] Configure the real Privy App ID and its public verification key; local startup passed.
 - [x] Email enabled in Privy (confirmed from the user’s dashboard screenshot).
 - [x] Mobile hosted-wallet view implemented; private recovery remains local.
-- [ ] Verify live mobile email login and the same embedded wallet after sign-out/sign-in.
+- [x] Verify live mobile email login and the same embedded wallet after sign-out/sign-in (user screenshots).
 - [ ] Allow the exact local demo origin in Privy and enable email/embedded wallets.
 - [ ] Test actual sign-in, sign-out and independently controlled buyer/merchant accounts.
 - [ ] Complete desktop/mobile browser checks, including password clearing and account changes.
 - [ ] Save a backup through the browser and verify recovery after a restart.
+
+## Public payment and receipt milestone
+
+- [x] Buyer and merchant created separate embedded wallets through email login.
+- [x] Buyer funded with 20 test USDC and 0.05 Sepolia ETH.
+- [x] Live public 1-USDC payment verified onchain; buyer 19 USDC, merchant 1 USDC at verification.
+- [x] In-app Payment received screen confirmed by user screenshot.
+- [x] Receipts history reader and download interface implemented; live reader returns matching sent/received receipt references.
+- [ ] User confirms Receipts tab and downloaded copy on phone, for both accounts.
+- [ ] Implement encrypted private receipts and invoice reconciliation for the ZK flow.
 
 ## Funding and privacy
 
 - [x] Local proof verification and tamper checks passed.
 - [x] Disposable demo wallets completed read-only Sepolia history synchronization.
 - [ ] Connect synchronization to the new account-bound wallets.
-- [ ] Fund the buyer with Sepolia test ETH and test USDC.
+- [x] Fund the buyer’s public wallet with Sepolia test ETH and test USDC.
 - [ ] Build and confirm test-USDC shielding with reviewed approval, amount and fees.
 - [ ] Confirm the new account's shielded balance is spendable before enabling payment.
 - [ ] Restore and resynchronize a wallet after shielding.

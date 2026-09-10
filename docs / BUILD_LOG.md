@@ -264,3 +264,12 @@ AI assistance: Codex implemented and verified this segment at McLean's direction
 AI assistance: Codex implemented phone access at McLean's request. Public wallet onboarding is prepared for a live test; private settlement and remote private-wallet recovery remain unfinished.
 
 Segment 1M hosting outcome: the first attempt timed out creating the managed HTTPS certificate. One retry of saved version 1 succeeded at 2026-09-10T14:33:08Z. Owner-private live URL: https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site . Phone sign-in remains untested. See MOBILE_ACCESS_STATUS.md for reproducible deployment identifiers and the first phone test.
+
+## September 10, 2026 - Segment 1N: returnable receipts
+
+- User completed mobile email login, logout/login with the same buyer address, separate merchant onboarding, faucet funding and a public 1-USDC payment. The receipt screen showed Payment received. Independently verified Sepolia transaction 0x3247ad91ac4f8ee5b735dfeb53bad84e1d5e127be53840f62194034e6d00e9a5: successful pinned-USDC transfer, matching buyer/merchant and amount, with eight confirmations at initial verification. This was a user-signed transaction; Codex did not sign or broadcast it.
+- Added a Receipts tab, All/Sent/Received filters, details, older-page loading, transaction-hash lookup and downloadable text copies. Both parties can reopen the same public transfer reference across sessions/devices using chain history.
+- Verified successful execution, canonical block/hash, pinned token, matching event/wallet and two confirmations. Rejected immature, reverted, removed, mismatched and duplicate evidence. Requests are bounded, cancelled on view/account changes, and failures do not silently advance history.
+- Clearly included public faucet/external transfers rather than claiming every token transfer is a Honeybee purchase. No invoice, goods-delivery, tax or ZK-private receipt claim is made.
+- Eleven checkout tests and the production build passed. Live read-only history found the existing 1-USDC payment in both wallets (same reference, opposite directions). New receipt UI and file download remain to be manually checked on phone.
+- Documented the future private-wallet reader, encrypted invoice/receipt storage, selective sharing and opt-in email design in RECEIPTS_DESIGN.md. No email sent; KYC deferred. No dependencies changed or new funds moved by this segment.

@@ -131,3 +131,32 @@ The latest production dependency audit reports 25 unresolved findings (24 modera
 1 high). The high finding is `ws` memory exhaustion in the Node WebSocket package;
 this deployment serves browser assets without a Node WebSocket server. These
 findings still need review before a broader release. Versions were not changed.
+
+## Receipts (Segment 1N)
+
+The Receipts tab rebuilds this wallet's sent and received USDC history from
+Ethereum Sepolia. The current public chain is the durable source: no local-only
+receipt cache or server inbox is required to reopen a transfer after signing in
+on another device. It includes faucet funding and transfers outside Honeybee;
+it does not claim every transfer is a Honeybee purchase or an invoice.
+
+The reader scans the latest 10,000 confirmed blocks per page, with Load older
+and exact transaction-hash lookup for older activity. Each candidate is checked
+against its successful transaction receipt and canonical block hash, pinned USDC
+contract, matching wallet/event details and at least two confirmations. A failed
+page does not advance the cursor or silently claim a complete history. More than
+60 candidate transactions in a page produces an explicit error and offers hash
+lookup. Dates come from block timestamps. Self-transfers have one receipt.
+
+Recipients and senders can reopen the same transfer reference, view full details,
+follow its explorer link and download a text receipt. Account/wallet changes
+remount the view; requests are cancelled and late results discarded. History is
+public-chain data, not a secret or proof of identity. No email is sent.
+
+Eleven checkout tests passed. A live read-only check rediscovered the September
+10 payment of 1 USDC as Sent for the buyer and Received for the merchant, with
+the same receipt reference. The buyer also sees the 20-USDC faucet transfer.
+The new receipt UI/download flow still needs user browser testing.
+
+See ../RECEIPTS_DESIGN.md for the planned encrypted ZK receipt source. The current
+public log reader cannot recover shielded payment details.
