@@ -372,3 +372,19 @@ Changing or clearing the request discards its check. The hosted mobile site
 remains unchanged. 27 focused tests and the checkout build passed; actual browser
 and live funded-account validation remain pending. See
 [Segment 1W](../privacy/SEGMENT-1W.md).
+
+## Local deposit activity and recovery (Segment 1X)
+
+The local wallet screen now offers **Open saved attempts** under **Deposit
+activity**. It reads this account's browser journal without writing storage or
+contacting a wallet. Select an attempt to check its original transaction through
+the connected funding wallet's read-only provider. If the hash was not saved,
+enter the original hash; exact transaction matching is required before adopting it.
+There is no signing, resend, reset or general transaction import action.
+
+Saved status is historical and latest verification is shown separately. Unknown
+and pending results stay unresolved. Approval and deposit confirmation do not
+establish a spendable balance or a merchant payment. New browsers normally have
+no attempts because the signing controller remains disconnected. Actual browser
+and live deposit tests are still pending. See [Segment 1X](../privacy/SEGMENT-1X.md)
+for the 24-test validation record and the next trusted-computer gate.

@@ -1,6 +1,6 @@
 # BUILD LOG
 
-Current checkpoint: **September 10, 2026, through Segment 1W**. See the
+Current checkpoint: **September 10, 2026, through Segment 1X**. See the
 [project status](../README.md#current-status) and
 [remaining test checklist](../TEST_CHECKLIST.md). Entries below are chronological:
 each records what was true at that milestone. Later entries supersede earlier
@@ -614,4 +614,37 @@ history recovery, live sync/deposit validation, followed by private settlement
 and encrypted receipts. See privacy/SEGMENT-1W.md and its validation report.
 
 AI assistance: Codex completed, tested and documented this segment at McLean's
+direction.
+
+## September 10, 2026 - Segment 1X: deposit activity and read-only recovery
+
+Connected the browser account journal and canonical receipt verifier to the local
+wallet screen. Users can reopen saved approval/deposit attempts, inspect historical
+status, and explicitly recheck the original transaction. A missing hash can be
+provided only for an existing record and must match its sender, nonce, calldata,
+fee bounds and chain before adoption. Unknown or pending results never resend.
+
+The recovery controller exposes only list/recheck and allows only four read RPC
+methods. Account or selected-wallet changes, navigation and a 30-second timeout
+discard late results. Account checks now run inside the Web Lock before queued
+reconciliation writes; listing history does not write or initialize storage.
+The screen shows validated display fields and fixed errors, preserves corrupt
+history, and distinguishes prior saved status from the latest chain observation.
+
+Validation: **24 focused tests passed** (8 new activity checks, 12 controller/
+journal/receipt regressions and 4 account-client regressions). The client/Worker
+build passed. Tests use controlled wallets/providers/storage; actual browser,
+live RPC and funded deposit validation remain pending. Existing dependency/build
+warnings remain; no dependency changes, new audit or full repository run.
+
+No signing path was enabled, no onchain transaction was sent, no private merchant
+payment settled, and no main merge or hosted deployment occurred. KYC remains
+deferred. The 0.5%-1% commercial-fee idea is tabled at McLean's request.
+
+Next required gate: real local sign-in and recovery on the trusted computer,
+followed by live/forked Sepolia deposit validation, gated signing UI integration
+and an explicitly approved small test deposit. Private settlement and encrypted
+merchant receipts remain outstanding. See privacy/SEGMENT-1X.md and its report.
+
+AI assistance: Codex implemented, tested and documented this segment at McLean's
 direction.

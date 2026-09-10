@@ -3,13 +3,13 @@
 Updated September 10, 2026. Checked items are implemented/validated as stated;
 they do not imply a live payment has settled.
 
-## Current checkpoint: Segment 1W
+## Current checkpoint: Segment 1X
 
 The public mobile payment milestone is verified. Private wallet setup/recovery,
 deposit preparation, merchant request files, encrypted request history and
-separate history backup/restore and request-specific private-funds checks are
-implemented with the validation limits below.
-The latest recorded Segment 1W run passed 27 focused tests and the checkout build;
+separate history backup/restore, request-specific private-funds checks and local
+deposit activity/reconciliation are implemented with the validation limits below.
+The latest recorded Segment 1X run passed 24 focused tests and the checkout build;
 it was not a full-repository test run or live private-payment test.
 
 The next gate is actual local browser sign-in and wallet-then-history recovery,
@@ -25,7 +25,7 @@ delivery is still unbuilt. Encrypted receipts for settled private payments remai
 a required part of the full test.
 
 See the [project status](README.md#current-status) and
-[latest validation report](privacy/reports/segment-1w-validation.json).
+[latest validation report](privacy/reports/segment-1x-validation.json).
 
 ## Scope decision
 
@@ -77,7 +77,10 @@ release.
 - [ ] Validate simulation and gas quotes against live/forked Sepolia state.
 - [x] Implement wallet submission controller with exact nonce/gas/fee requests and a closed default signing gate (Segment 1S; fake-wallet tests).
 - [x] Implement browser attempt journal and read-only approval/Shield verifier; controlled tests cover reloads, concurrent attempts, unknown outcomes and canonical event matching.
-- [ ] Wire the controller and account-scoped journal into the local UI after live validation; verify Web Locks/storage and Privy prompts in the actual browser.
+- [x] Connect the account-scoped journal and read-only verifier to local Deposit activity; list historical attempts and recheck original hashes without signing (Segment 1X).
+- [x] Make journal reads non-writing and check account state inside queued reconciliation writes; tests reject late results, wrong wallets and changed transactions.
+- [ ] Test actual browser activity reopening, missing-hash entry, account changes, timeouts, Web Locks and storage failures.
+- [ ] Wire the signing controller into the local UI after live validation; verify actual Privy prompts and browser persistence.
 - [ ] Integrate explicit wallet approval and shield submission, carrying reviewed gas/fee limits and handling pending/unknown outcomes.
 - [ ] Confirm the exact deposit transaction and matching canonical Shield event without automatic resending.
 - [ ] Confirm the new account's shielded balance is spendable before enabling payment.
@@ -122,6 +125,8 @@ release.
 KYC integration, real-money release, broader merchant operations, production
 key custody/recovery, remote hosting of the private-wallet service and any unbuilt sponsor features are outside
 this first controlled test. Sponsor eligibility must match demonstrated features.
+The commercial 0.5%-1% fee idea is tabled for later; no fee implementation is part
+of the current hackathon segment.
 
 The local demo runtime handles decrypted wallet keys and recovery passwords.
 Current checkout payments are public test transfers. Neither local wallet setup

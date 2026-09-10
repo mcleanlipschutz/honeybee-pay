@@ -16,12 +16,12 @@ export function requireLiveShieldValidation() {
 // a different account's scope from user input. No private review is persisted.
 export async function reconcileShieldSubmission({ journal, quoteId, hash, request, assertCurrent }) {
   assertCurrent();
-  const attempt = (await journal.list()).find(a => a.intent.quoteId === quoteId);
+  const attempt = (await journal.list(assertCurrent)).find(a => a.intent.quoteId === quoteId);
   if (!attempt) throw new Error('Deposit attempt unavailable');
   const verification = await checkShieldAttempt({ attempt, hash: hash ?? attempt.hash, request });
   assertCurrent();
   if (['reverted', 'approval-confirmed', 'deposit-confirmed'].includes(attempt.status)) return verification;
-  await journal.update(quoteId, { status: verification.status, hash: verification.hash, verification });
+  await journal.update(quoteId, { status: verification.status, hash: verification.hash, verification }, assertCurrent);
   return { ...verification, quoteId };
 }
 

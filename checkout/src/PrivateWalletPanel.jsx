@@ -6,6 +6,7 @@ import { shieldAmountUnits } from './shield-review.mjs';
 import { PrivatePaymentRequests } from './PrivatePaymentRequests.jsx';
 import { privateRequestAmount } from './private-request.mjs';
 import { shieldConfirmationStep } from './shield-preflight.mjs';
+import { DepositActivity } from './DepositActivity.jsx';
 
 const actionNames = { create: 'Create private wallet', restore: 'Restore my wallet',
   unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance', 'shield-review': 'Review test deposit', 'invoice-create': 'Create payment request', 'invoice-history': 'Open request history', 'invoice-history-export': 'Back up request history', 'invoice-history-restore': 'Restore request history' };
@@ -210,6 +211,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
         wallet={result?.privateWallet} checkPayment={runtime?.privatePaymentCheckEnabled ? checkPayment : null} busy={busy}
         onCloseHistory={() => setResult(previous => previous ? { ...previous, requestHistory: null, paymentRequest: null, encryptedRequestHistory: null } : previous)} isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
       {download && <div className="notice protected"><strong>Your encrypted recovery copy is ready.</strong><p>Save it somewhere you can access if this device is lost. Then use “Verify saved backup” to check your saved file.</p><button className="secondary" onClick={saveBackup} disabled={busy}>Download encrypted backup</button></div>}
+      <DepositActivity key={accountId} connection={connection} accountId={accountId}/>
     </>}
     {message && <p className="status" role="status">{message}</p>}
     <p className="kyc-note">Identity verification is deferred for this testnet demo. Signing in does not mean your identity has been verified.</p>

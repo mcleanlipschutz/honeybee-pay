@@ -37,7 +37,8 @@ export function createShieldAttemptJournal({ scope, storage = globalThis.localSt
     throw new Error('Persistent deposit tracking is unavailable');
   }
   const key = `honeybee.shield-attempts.v1.${scope}`;
-  const transact = operation => locks.request(key, { mode: 'exclusive' }, () => {
+  const transact = (operation, { write = true, assertCurrent = () => {} } = {}) => locks.request(key, { mode: 'exclusive' }, () => {
+    assertCurrent();
     const text = storage.getItem(key);
     if (text !== null && text.length > 1_000_000) throw new Error('Deposit history is too large');
     const data = text === null ? { version: 1, attempts: [] } : JSON.parse(text);
@@ -45,11 +46,12 @@ export function createShieldAttemptJournal({ scope, storage = globalThis.localSt
     data.attempts.forEach(validateShieldAttempt);
     if (new Set(data.attempts.map(a => a.intent.quoteId)).size !== data.attempts.length) throw new Error('Duplicate deposit records');
     const result = operation(data.attempts);
-    storage.setItem(key, JSON.stringify(data)); // Failure stops the caller before signing.
+    assertCurrent();
+    if (write) storage.setItem(key, JSON.stringify(data)); // Failure stops the caller before signing.
     return structuredClone(result);
   });
   return Object.freeze({
-    list: () => transact(attempts => attempts),
+    list: (assertCurrent = () => {}) => transact(attempts => attempts, { write: false, assertCurrent }),
     claim: intent => transact(attempts => {
       const record = validateShieldAttempt({ intent, hash: null, status: 'awaiting-wallet' });
       if (attempts.length >= 128) throw new Error('Deposit history is full; reconcile it before continuing');
@@ -60,7 +62,7 @@ export function createShieldAttemptJournal({ scope, storage = globalThis.localSt
       attempts.push(structuredClone(record));
       return record;
     }),
-    update: (quoteId, patch) => transact(attempts => {
+    update: (quoteId, patch, assertCurrent = () => {}) => transact(attempts => {
       const record = attempts.find(a => a.intent.quoteId === quoteId);
       if (!record || !unsettled.has(record.status) || !states.has(patch.status)
           || patch.status === 'awaiting-wallet'
@@ -72,6 +74,6 @@ export function createShieldAttemptJournal({ scope, storage = globalThis.localSt
       Object.assign(record, structuredClone(patch));
       validateShieldAttempt(record);
       return record;
-    }),
+    }, { assertCurrent }),
   });
 }
