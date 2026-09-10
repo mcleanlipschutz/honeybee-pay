@@ -23,12 +23,19 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
+[Segment 1V](privacy/SEGMENT-1V.md) adds encrypted request-history backup and
+restore. Keep the wallet recovery file and the separate history backup; restore
+the wallet under the same Honeybee account, then merge its saved requests.
+Existing records are retained, duplicates are skipped and conflicts fail.
+33 focused tests and the checkout build pass. Actual browser recovery and live
+private-payment validation remain pending.
+
 [Segment 1U](privacy/SEGMENT-1U.md) saves merchant requests in encrypted local
 account history and adds **Open request history**. Merchants can reopen exact
 terms after signing in again; expired requests remain viewable and payment
 status stays unverified. 24 focused tests and the checkout build pass. This
 history is local to the computer and is not included in the wallet recovery
-backup. Browser testing and encrypted history export/restore remain pending.
+backup. Segment 1V adds the separate history backup/restore flow; browser testing remains pending.
 
 [Segment 1T](privacy/SEGMENT-1T.md) adds local merchant payment requests:
 create from the signed-in account’s recovered private wallet, download a request

@@ -49,7 +49,7 @@ function readiness(walletStatus, wallet) {
     paymentReady: false, blockers: [...(walletStatus === 'not-created' ? ['private-wallet-not-created'] : []), 'private-payment-not-integrated', 'balance-not-verified'] };
 }
 
-async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, review, lifetimeSeconds }) {
+async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, review, lifetimeSeconds, historyBackup }) {
   live(session);
   if (action === 'shield-preflight') {
     // This branch never opens a wallet directory or receives a recovery password.
@@ -112,18 +112,20 @@ async function operate({ directory, session, action, password, backup, syncConfi
     const shieldResult = action === 'shield-review' ? await prepareShieldReview({ wallet, amount, publicAddress,
       prepared, checkSession, expiresAt: session.expiresAt }) : null;
     const invoiceResult = action === 'invoice-create' ? createAccountInvoice({ wallet, amount, lifetimeSeconds, checkSession }) : null;
-    let requestHistory;
-    if (['invoice-create', 'invoice-history'].includes(action)) {
+    let requestHistory, historyBackupResult;
+    if (['invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore'].includes(action)) {
       const store = createRequestHistoryStore({ directory: slot, privateKey: root.privateKey,
         ownerId: session.ownerId, recipient: wallet.railgunAddress, checkSession });
-      requestHistory = action === 'invoice-create' ? await store.append(invoiceResult.paymentRequest) : await store.read();
+      if (action === 'invoice-history-export') historyBackupResult = await store.exportBackup();
+      else if (action === 'invoice-history-restore') historyBackupResult = await store.restoreBackup(historyBackup);
+      else requestHistory = action === 'invoice-create' ? await store.append(invoiceResult.paymentRequest) : await store.read();
     }
     if (action === 'sync') await sdk.unloadProvider(accountSyncNetwork);
     await stopRailgunEngine(); engineStarted = false;
     checkSession();
     completed = true;
     return { ...readiness('locked', wallet), ...syncResult, ...shieldResult, ...invoiceResult,
-      ...(requestHistory ? { requestHistory } : {}),
+      ...(requestHistory ? { requestHistory } : {}), ...historyBackupResult,
       recovery: action === 'create' ? 'backup-created' : action === 'restore' ? 'restored' : 'backup-verified',
       ...(['create', 'backup'].includes(action) ? { encryptedBackup: encrypted } : {}) };
   } finally {

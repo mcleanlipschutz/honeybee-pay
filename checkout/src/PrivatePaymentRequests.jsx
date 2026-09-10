@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits } from 'viem';
 import { createPaymentRequestReader, paymentRequestFile } from './private-request.mjs';
+import { validateHistoryBackup } from '../../shared/request-history-backup.mjs';
 
 function RequestDetails({ request, now }) {
   return <dl className="request-details">
@@ -14,7 +15,7 @@ function RequestDetails({ request, now }) {
 
 // Parent mounts one instance per signed-in account. Decrypted requests remain
 // in page memory; merchant history is encrypted by the local account worker.
-export function PrivatePaymentRequests({ created, history, onCloseHistory, isCurrent }) {
+export function PrivatePaymentRequests({ created, history, encryptedHistory, onCloseHistory, isCurrent }) {
   const [imported, setImported] = useState(null), [message, setMessage] = useState('');
   const [selectedId, setSelectedId] = useState(null), [visible, setVisible] = useState(10);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
@@ -54,6 +55,17 @@ export function PrivatePaymentRequests({ created, history, onCloseHistory, isCur
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) { setMessage(error.message); }
   };
+  const saveHistory = () => {
+    if (!current.current()) return;
+    try {
+      const text = validateHistoryBackup(encryptedHistory);
+      const url = URL.createObjectURL(new Blob([text + '\n'], { type: 'application/json' }));
+      const anchor = document.createElement('a'); anchor.href = url;
+      anchor.download = 'honeybee-request-history.encrypted.json';
+      document.body.append(anchor); anchor.click(); anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) { setMessage(error.message); }
+  };
   return <section className="private-requests" aria-labelledby="request-heading">
     <h3 id="request-heading">Payment requests</h3>
     <p>Create a request for a buyer, or open one you received from a merchant. Private payment submission is still in development.</p>
@@ -66,7 +78,12 @@ export function PrivatePaymentRequests({ created, history, onCloseHistory, isCur
     </div>}
     {history && <div className="request-history" aria-label="Saved merchant requests">
       <h4>Your saved requests</h4>
-      <p>Encrypted on this computer. Your wallet recovery backup does not include this history.</p>
+      <p>Encrypted on this computer. Use “Back up request history” to save a separate encrypted copy alongside your wallet recovery backup.</p>
+      {encryptedHistory && <div className="notice protected">
+        <strong>Your encrypted history backup is ready.</strong>
+        <p>Keep both backup files. To restore on another computer, sign in to the same Honeybee account, restore your wallet, then restore this history file.</p>
+        <button type="button" className="secondary" onClick={saveHistory}>Download encrypted history backup</button>
+      </div>}
       {history.requests.length === 0 ? <p>No saved requests yet. Requests made before history was added will not appear here.</p> : <>
         <p>{history.requests.length} saved · Payment status not checked</p>
         <ul>{history.requests.slice(0, visible).map(request => <li key={request.id}>

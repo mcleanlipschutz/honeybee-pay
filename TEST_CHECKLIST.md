@@ -69,7 +69,8 @@ release.
 - [x] Reject corrupt or cross-account history, preserve prior records on interrupted writes, and keep historical expiry separate from payment validity.
 - [x] Add local history list, exact request details, active-request downloads and explicit unverified payment status.
 - [ ] Verify history reopening and clearing in the actual browser on the trusted computer.
-- [ ] Add and test encrypted history export/restore; wallet recovery alone does not include request history.
+- [x] Add and test encrypted history export/restore with recovered SDK wallets; preserve newer local requests, skip duplicates and reject conflicting records (Segment 1V).
+- [ ] Download both backup files in the actual browser and verify wallet → history recovery on the trusted computer.
 - [ ] Open the invoice from a link or QR code and review its exact terms.
 - [ ] Generate, submit and settle a real test private transfer.
 - [ ] Verify receipt of the matching payment from the merchant's wallet state.

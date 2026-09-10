@@ -311,8 +311,8 @@ show more, up to the 128-request local test limit.
 
 History is encrypted on this computer and scoped to the authenticated account’s
 recovered wallet. It is not included in the wallet recovery backup. Restoring a
-wallet on another installation alone will not restore request history; encrypted
-history export/import is still pending. Requests created before this update are
+wallet on another installation alone will not restore request history; use the separate encrypted
+history backup and restore flow added in Segment 1V. Requests created before this update are
 not automatically backfilled from files.
 
 If creation is not confirmed, open history before trying again: the save may
@@ -321,3 +321,42 @@ never automatically reset. History is not a payment ledger, does not establish
 settlement and does not increase the public transaction count. The hosted mobile
 site and closed private-signing gate are unchanged.
 See [Segment 1U](../privacy/SEGMENT-1U.md) for tests and storage limitations.
+
+## Encrypted history backup and restore (Segment 1V)
+
+Use the existing trusted local wallet runtime; keep it on loopback. With the
+merchant account signed in and its private wallet created or recovered:
+
+1. Choose **Back up request history**, enter the recovery password and select
+   **Download encrypted history backup**. The file is
+   `honeybee-request-history.encrypted.json`.
+2. Keep this file alongside `honeybee-testnet-recovery.json`, the separate wallet
+   recovery copy. Keep the recovery password separately. The history file alone
+   cannot recover the wallet or its funds.
+3. On another trusted local installation, sign in to the same Honeybee account
+   and restore the wallet first using the wallet recovery file and password.
+4. Choose **Restore request history**, select the encrypted history file and
+   enter the wallet’s recovery password. The result shows how many requests were
+   added, already present and saved in total.
+
+Restore only adds missing records. Older snapshots cannot remove newer local
+requests. Repeated imports skip identical records. Conflicting references,
+changed ciphertext, the wrong account/wallet, corrupt local history or a merged
+history beyond 128 requests reject the restore without replacing existing
+records. If a response is lost after saving, open history before trying again.
+
+Native compact JSON backups are capped at 256 KiB. Importing a backup does not
+refresh expired requests or establish payment status. The ordinary unencrypted
+merchant request file is not a history backup. Neither backup belongs in URLs,
+analytics or public receipt storage.
+
+The dedicated `/api/account-history/restore` route accepts only authenticated
+history restore, with a 266240-byte JSON body limit. The ordinary wallet API
+retains its 16 KiB limit. Both share exact loopback origin/header checks, token
+verification, concurrency/rate limits and no-store responses. History crypto
+runs only inside the recovered account’s isolated worker.
+
+33 focused tests and the client/Worker build passed. Real browser file selection,
+downloads, sign-out during restore and cross-computer recovery remain unverified.
+The hosted site and private-signing gate are unchanged. See
+[Segment 1V](../privacy/SEGMENT-1V.md).

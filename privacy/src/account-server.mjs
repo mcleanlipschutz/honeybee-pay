@@ -1,3 +1,4 @@
+import { historyRestoreBodyLimit } from '../../shared/request-history-backup.mjs';
 import { createServer } from 'node:http';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { join, resolve, extname, sep } from 'node:path';
@@ -17,11 +18,11 @@ function json(res, status, value) {
   res.end(JSON.stringify(value));
 }
 function fail(status, code) { return Object.assign(new Error(code), { status, code }); }
-async function body(req) {
+async function body(req, limit) {
   let size = 0; const parts = [];
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 16384) throw fail(413, 'request-too-large');
+    if (size > limit) throw fail(413, 'request-too-large');
     parts.push(chunk);
   }
   try { return JSON.parse(Buffer.concat(parts).toString('utf8')); }
@@ -58,13 +59,15 @@ export async function startAccountServer({ directory, distDirectory, appId, veri
           identityVerification: 'deferred-for-testnet', accountSyncEnabled: !!syncConfig,
           shieldReviewEnabled: !!syncConfig, shieldPreflightEnabled: !!syncConfig, shieldSubmissionEnabled: false, privateRequestsEnabled: true });
       }
-      if (req.url === '/api/account-wallet') {
+      const historyRestore = req.url === '/api/account-history/restore';
+      if (req.url === '/api/account-wallet' || historyRestore) {
+        const requestLimit = historyRestore ? historyRestoreBodyLimit : 16384;
         rateLimit('all', 90);
         if (req.method !== 'POST') throw fail(405, 'post-required');
         if (req.headers.origin !== origin || req.headers['x-honeybee-request'] !== 'wallet-v1') throw fail(403, 'local-origin-required');
         if (!/^application\/json(?:;\s*charset=utf-8)?$/i.test(req.headers['content-type'] ?? '')
             || req.headers['content-encoding']) throw fail(415, 'json-required');
-        if (Number(req.headers['content-length']) > 16384) throw fail(413, 'request-too-large');
+        if (Number(req.headers['content-length']) > requestLimit) throw fail(413, 'request-too-large');
         if (pending >= 4) throw fail(429, 'try-later');
         pending++; counted = true;
         const authorization = req.headers.authorization;
@@ -73,8 +76,9 @@ export async function startAccountServer({ directory, distDirectory, appId, veri
         let session;
         try { session = await authenticate(accessToken); } catch { throw fail(401, 'sign-in-required'); }
         rateLimit(session.ownerId, 30);
-        const request = await body(req);
+        const request = await body(req, requestLimit);
         if (!request || typeof request !== 'object' || Array.isArray(request) || 'accessToken' in request) throw fail(400, 'invalid-request');
+        if (historyRestore !== (request.action === 'invoice-history-restore')) throw fail(400, 'invalid-request');
         try { return json(res, 200, await accounts.execute({ ...request, accessToken })); }
         catch { throw fail(400, 'wallet-operation-failed'); }
       }

@@ -3,6 +3,8 @@
 Implemented September 10, 2026. Merchants can reopen saved payment requests
 after closing the page or restarting the local runtime. This extends Segment 1T;
 private payment signing and settlement remain disabled.
+Later update: [Segment 1V](SEGMENT-1V.md) adds separate encrypted history export/restore;
+the remaining-work notes below record the original Segment 1U boundary.
 
 ## Merchant flow
 

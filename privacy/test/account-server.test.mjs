@@ -8,6 +8,7 @@ import { request as httpRequest } from 'node:http';
 import { startAccountServer } from '../src/account-server.mjs';
 import { accountFixture } from './account-fixture.mjs';
 import { paymentRequestFile, readPaymentRequest } from '../../checkout/src/private-request.mjs';
+import { historyRestoreBodyLimit, historyBackupFormat } from '../../shared/request-history-backup.mjs';
 import { createAccountWalletClient } from '../../checkout/src/account-client.mjs';
 
 async function setup(t, fixture, existingDirectory) {
@@ -72,6 +73,17 @@ test('browser client and local API create, export, verify and restore actual acc
   const restarted = await client(secondServer, await fixture.token()).execute('invoice-create', fields);
   assert.equal(restarted.paymentRequest.recipient, invoice.paymentRequest.recipient);
   assert.notEqual(restarted.paymentRequest.id, invoice.paymentRequest.id);
+  const exportedHistory = await buyer.execute('invoice-history-export', { password });
+  const destination = client(secondServer, await fixture.token());
+  const restoreFields = { password, historyBackup: exportedHistory.encryptedRequestHistory };
+  const restoredHistory = await destination.execute('invoice-history-restore', restoreFields);
+  assert.equal(restoredHistory.historyRestoration.added, 1);
+  assert.equal(restoredHistory.historyRestoration.total, 2);
+  assert.equal(restoredHistory.requestHistory.requests.some(item => item.id === restarted.paymentRequest.id), true);
+  assert.equal((await destination.execute('invoice-history-restore', restoreFields)).historyRestoration.added, 0);
+  assert.deepEqual((await destination.execute('invoice-history', { password })).requestHistory, restoredHistory.requestHistory);
+  await assert.rejects(merchant.execute('invoice-history-restore', { ...restoreFields, password: merchantPassword }));
+  await assert.rejects(buyer.execute('invoice-history-export', { password: randomBytes(24).toString('hex') }));
   const backup = await buyer.execute('backup', { password });
   assert.equal(backup.encryptedBackup, created.encryptedBackup);
   await assert.rejects(buyer.execute('invoice-create', { ...fields, password: randomBytes(24).toString('hex') }));
@@ -129,5 +141,32 @@ test('local API limits repeated authenticated wallet requests', { timeout: 15000
     statuses.push(response.status); await response.arrayBuffer();
   }
   assert.equal(statuses[0], 400); assert.equal(statuses.at(-1), 429);
+  assert.deepEqual(await readdir(server.directory), []);
+});
+
+
+test('history restore has its own bounded authenticated upload route while wallet requests retain 16 KB limit', { timeout: 15000 }, async t => {
+  const fixture = await accountFixture(), server = await setup(t, fixture);
+  const token = await fixture.token();
+  const headers = { Origin: server.origin, 'Content-Type': 'application/json', 'X-Honeybee-Request': 'wallet-v1', Authorization: `Bearer ${token}` };
+  const historyBackup = JSON.stringify({ format: historyBackupFormat, version: 1, cipher: 'aes-256-gcm', kdf: 'hkdf-sha256',
+    salt: '11'.repeat(32), iv: '22'.repeat(12), tag: '33'.repeat(16), ciphertext: '44'.repeat(10000) });
+  const data = { action: 'invoice-history-restore', password: 'fixture-password-long-enough', historyBackup };
+  const post = (path, body = data, extra = {}) => fetch(server.origin + path, { method: 'POST', headers: { ...headers, ...extra }, body: JSON.stringify(body) });
+  assert.equal((await post('/api/account-wallet')).status, 413);
+  assert.equal((await post('/api/account-history/restore')).status, 400); // Body accepted; missing account/unauthentic ciphertext rejected.
+  assert.equal((await post('/api/account-history/restore', data, { Origin: 'https://evil.test' })).status, 403);
+  assert.equal((await post('/api/account-history/restore', data, { Authorization: 'Bearer forged' })).status, 401);
+  assert.equal((await post('/api/account-history/restore', { action: 'status' })).status, 400);
+  assert.equal((await post('/api/account-wallet', { ...data, historyBackup: '{}' })).status, 400);
+  assert.equal((await post('/api/account-history/restore', { ...data, ownerId: '../other-account' })).status, 400);
+  assert.equal((await post('/api/account-history/restore', { ...data, historyBackup: 'x'.repeat(historyRestoreBodyLimit) })).status, 413);
+  const streamed = await new Promise((resolveStatus, reject) => {
+    const request = httpRequest(server.origin + '/api/account-history/restore', { method: 'POST', headers: { ...headers, 'Transfer-Encoding': 'chunked' } }, response => {
+      response.resume(); response.on('end', () => resolveStatus(response.statusCode));
+    });
+    request.on('error', reject); request.end(' '.repeat(historyRestoreBodyLimit + 1));
+  });
+  assert.equal(streamed, 413);
   assert.deepEqual(await readdir(server.directory), []);
 });

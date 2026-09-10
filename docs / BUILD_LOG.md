@@ -473,3 +473,43 @@ No transaction was signed or broadcast; no private runtime or new site version
 was published. KYC remains deferred. See privacy/SEGMENT-1U.md and its report.
 
 AI assistance: Codex implemented and tested this segment at McLean's direction.
+
+## Segment 1V — encrypted history backup and restore
+
+Added separate request-history export and restore using the authenticated account
+worker and the existing root/account-bound encryption. Exports re-encrypt a
+validated snapshot without modifying the source history. Restore authenticates
+and decrypts the file with the recovered wallet, then merges missing records
+under the account lock. Existing records are retained; duplicates do not rewrite
+the file, and conflicts or capacity overflow reject the entire merge. Expired
+requests remain historical and never become payment confirmations.
+
+The local interface now prepares/downloads encrypted history backups and restores
+them after wallet recovery. The form clears passwords immediately, prevents
+concurrent submission during file reads and discards reads after account changes.
+The client validates encrypted envelopes and matches restore results to the
+uploaded backup digest. There is no automatic retry after uncertain results.
+
+A dedicated authenticated restore route permits a bounded 266240-byte body;
+ordinary wallet calls retain the existing 16 KiB limit. Both routes share the
+same origin, token, header, no-store, rate and concurrency protections. The
+shared native envelope parser limits files to 256 KiB and rejects duplicate keys,
+unknown fields, alternate encodings and invalid cryptographic field lengths.
+
+Validation: 33 focused tests passed: eight backup tests, nine history regressions,
+eight request regressions, four HTTP tests and four client regressions. Actual
+SDK/API coverage restores the wallet first, merges its encrypted request history,
+keeps a newer destination request, and verifies a repeated restore adds nothing.
+Additional tests cover changed ciphertext, wrong accounts/roots, conflicting IDs,
+capacity, expired history, interrupted writes, late reads/responses and both
+Content-Length and chunked upload bounds. Checkout client/Worker build passed
+with existing chunk-size and viem worker_threads warnings. Dependencies unchanged.
+
+Keep the wallet recovery file and separate history backup; the same Honeybee
+account, recovered wallet and its recovery password are required. Actual browser,
+cross-computer and Windows/power-loss validation remain pending. These request
+records are not receipts or a settlement ledger. Private signing stays disabled,
+no user transaction was signed or broadcast, and no hosted deployment changed.
+KYC remains deferred. See privacy/SEGMENT-1V.md and its validation report.
+
+AI assistance: Codex implemented and tested this segment at McLean's direction.

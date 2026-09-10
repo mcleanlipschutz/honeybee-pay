@@ -1,9 +1,13 @@
+import { keccak256, stringToHex } from 'viem';
+import { validateHistoryBackup } from '../../shared/request-history-backup.mjs';
 import { privateRequestAmount, validatePaymentRequest, validatePaymentRequestHistory } from './private-request.mjs';
 import { validateShieldReview } from './shield-review.mjs';
 import { validateShieldPreflight } from './shield-preflight.mjs';
 
 const messages = {
   'invoice-create-failed': 'Request creation was not confirmed. Check your recovery password and open request history before trying again.',
+  'invoice-history-export-failed': 'The encrypted history backup could not be prepared. Check your recovery password and local connection.',
+  'invoice-history-restore-failed': 'History restore was not confirmed. Open request history before trying again. Existing records are never replaced by a backup.',
   'invoice-history-failed': 'Request history could not be opened. Check your recovery password and local connection. Existing history was not reset.',
   'sign-in-required': 'Sign in again, then refresh your wallet status.',
   'try-later': 'The local wallet is busy. Wait a moment, then refresh its status.',
@@ -28,11 +32,12 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
     current();
     try {
       fields = { ...fields };
+      if (action === 'invoice-history-restore') fields.historyBackup = validateHistoryBackup(fields.historyBackup);
       if (expectedReview) expectedReview = structuredClone(expectedReview);
       const token = await getAccessToken();
       current();
       if (!token || typeof token !== 'string') throw new AccountRequestError('sign-in-required');
-      const response = await fetchImpl(`${origin}/api/account-wallet`, {
+      const response = await fetchImpl(`${origin}${action === 'invoice-history-restore' ? '/api/account-history/restore' : '/api/account-wallet'}`, {
         method: 'POST', credentials: 'omit', cache: 'no-store', redirect: 'error',
         headers: { 'Content-Type': 'application/json', 'X-Honeybee-Request': 'wallet-v1', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...fields, action }),
@@ -55,10 +60,19 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
           || result.spendableBalance?.token !== '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
           || result.spendableBalance?.source !== 'sdk-spendable-snapshot'
           || !/^(0|[1-9][0-9]{0,77})$/.test(result.spendableBalance?.amountUnits))) throw new Error();
-      if (['invoice-create', 'invoice-history'].includes(action)) {
+      if (['invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore'].includes(action)) {
         if (result.privateWallet.status !== 'locked' || !result.privateWallet.id
             || result.networkLoaded !== false || result.spendableBalanceVerified !== false) throw new Error();
         result.requestHistory = validatePaymentRequestHistory(result.requestHistory, { recipient: result.privateWallet.privateAddress });
+      }
+      if (action === 'invoice-history-export') result.encryptedRequestHistory = validateHistoryBackup(result.encryptedRequestHistory);
+      if (action === 'invoice-history-restore') {
+        const restored = result.historyRestoration;
+        if (!restored || typeof restored !== 'object' || Object.keys(restored).sort().join(',') !== 'added,alreadySaved,backupDigest,total'
+            || restored.backupDigest !== keccak256(stringToHex(fields.historyBackup))
+            || ['added', 'alreadySaved', 'total'].some(key => !Number.isSafeInteger(restored[key]) || restored[key] < 0 || restored[key] > 128)
+            || restored.added + restored.alreadySaved > restored.total
+            || restored.total !== result.requestHistory.requests.length) throw new Error();
       }
       if (action === 'invoice-create') {
         result.paymentRequest = validatePaymentRequest(result.paymentRequest);
@@ -81,7 +95,7 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
       }
       return result;
     } catch (error) {
-      if (['invoice-create', 'invoice-history'].includes(action) && !['session-changed', 'sign-in-required'].includes(error.code)) throw new AccountRequestError(`${action}-failed`);
+      if (['invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore'].includes(action) && !['session-changed', 'sign-in-required'].includes(error.code)) throw new AccountRequestError(`${action}-failed`);
       if (action === 'shield-preflight' && !['session-changed', 'sign-in-required'].includes(error.code)) throw new AccountRequestError('preflight-failed');
       if (error instanceof AccountRequestError) throw error;
       throw new AccountRequestError('connection-failed');

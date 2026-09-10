@@ -1,3 +1,6 @@
+import { keccak256, toUtf8Bytes } from 'ethers';
+import { validateHistoryBackup, requestHistoryFileLimit, historyBackupFormat } from '../../shared/request-history-backup.mjs';
+export { requestHistoryFileLimit } from '../../shared/request-history-backup.mjs';
 import { randomBytes, hkdfSync, createCipheriv, createDecipheriv } from 'node:crypto';
 import { open, lstat, realpath, rename, rm } from 'node:fs/promises';
 import { constants } from 'node:fs';
@@ -7,8 +10,7 @@ import { validatePrivateRequest } from '../../shared/private-request.mjs';
 import { privateRequestHistory, validatePrivateRequestHistory, requestHistoryLimit } from '../../shared/private-request-history.mjs';
 
 export const requestHistoryFilename = 'merchant-requests.v1.json';
-export const requestHistoryFileLimit = 262144;
-const format = 'honeybee-merchant-request-history';
+const format = historyBackupFormat;
 const failure = () => new Error('Saved payment requests could not be opened or saved. Existing history was not reset.');
 const hex = (value, length) => {
   if (typeof value !== 'string' || value.length !== length * 2 || !/^[a-f0-9]+$/.test(value)) throw failure();
@@ -40,11 +42,7 @@ function encrypt(history, privateKey, ownerId) {
 function decrypt(text, privateKey, ownerId, dependencies) {
   let key, plaintext;
   try {
-    if (Buffer.byteLength(text) > requestHistoryFileLimit) throw failure();
-    const value = JSON.parse(text), binding = accountBinding(ownerId);
-    if (!value || Object.keys(value).sort().join(',') !== 'cipher,ciphertext,format,iv,kdf,salt,tag,version'
-        || value.format !== format || value.version !== 1 || value.cipher !== 'aes-256-gcm' || value.kdf !== 'hkdf-sha256'
-        || typeof value.ciphertext !== 'string' || value.ciphertext.length < 2 || value.ciphertext.length % 2 !== 0) throw failure();
+    const value = JSON.parse(validateHistoryBackup(text)), binding = accountBinding(ownerId);
     key = deriveKey(privateKey, hex(value.salt, 32), binding);
     const decipher = createDecipheriv('aes-256-gcm', key, hex(value.iv, 12), { authTagLength: 16 });
     decipher.setAAD(binding); decipher.setAuthTag(hex(value.tag, 16));
@@ -99,17 +97,7 @@ export function createRequestHistoryStore({ directory, privateKey, ownerId, reci
       return decrypt(text, privateKey, ownerId, dependencies());
     } finally { await handle.close(); }
   };
-  const append = async request => {
-    const value = validatePrivateRequest(request, invoiceValidation(now()));
-    const previous = await read();
-    if (value.recipient !== recipient) throw failure();
-    const duplicate = previous.requests.find(item => item.id === value.id);
-    if (duplicate) {
-      if (JSON.stringify(duplicate) !== JSON.stringify(value)) throw failure();
-      return previous;
-    }
-    if (previous.requests.length >= requestHistoryLimit) throw new Error('Local request history has reached its 128-request test limit. No existing request was deleted.');
-    const history = privateRequestHistory([...previous.requests, value], dependencies());
+  const write = async history => {
     const encrypted = encrypt(history, privateKey, ownerId);
     const temporary = join(directory, `.merchant-requests-${randomBytes(16).toString('hex')}.tmp`);
     let handle, created = false;
@@ -133,5 +121,43 @@ export function createRequestHistoryStore({ directory, privateKey, ownerId, reci
       finally { if (created) await rm(temporary, { force: true }); }
     }
   };
-  return Object.freeze({ read, append });
+  const append = async request => {
+    const value = validatePrivateRequest(request, invoiceValidation(now()));
+    const previous = await read();
+    if (value.recipient !== recipient) throw failure();
+    const duplicate = previous.requests.find(item => item.id === value.id);
+    if (duplicate) {
+      if (JSON.stringify(duplicate) !== JSON.stringify(value)) throw failure();
+      return previous;
+    }
+    if (previous.requests.length >= requestHistoryLimit) throw new Error('Local request history has reached its 128-request test limit. No existing request was deleted.');
+    const history = privateRequestHistory([...previous.requests, value], dependencies());
+    return write(history);
+  };
+  const exportBackup = async () => {
+    const requestHistory = await read();
+    const encryptedRequestHistory = encrypt(requestHistory, privateKey, ownerId);
+    checkSession();
+    return { requestHistory, encryptedRequestHistory };
+  };
+  const restoreBackup = async text => {
+    checkSession();
+    const normalized = validateHistoryBackup(text);
+    const imported = decrypt(normalized, privateKey, ownerId, dependencies());
+    const previous = await read(); // Corrupt local state cannot be reset by import.
+    const merged = new Map(previous.requests.map(request => [request.id, request]));
+    let added = 0;
+    for (const request of imported.requests) {
+      const existing = merged.get(request.id);
+      if (existing && JSON.stringify(existing) !== JSON.stringify(request)) throw failure();
+      if (!existing) { merged.set(request.id, request); added++; }
+    }
+    if (merged.size > requestHistoryLimit) throw new Error('Restoring this backup would exceed the 128-request test limit. No requests were changed.');
+    const requestHistory = privateRequestHistory([...merged.values()], dependencies());
+    if (added) await write(requestHistory);
+    checkSession();
+    return { requestHistory, historyRestoration: { backupDigest: keccak256(toUtf8Bytes(normalized)),
+      added, alreadySaved: imported.requests.length - added, total: requestHistory.requests.length } };
+  };
+  return Object.freeze({ read, append, exportBackup, restoreBackup });
 }

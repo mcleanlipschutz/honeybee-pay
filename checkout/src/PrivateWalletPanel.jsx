@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createAccountWalletClient, isLocalDemo, readRecoveryFile } from './account-client.mjs';
+import { createHistoryBackupReader } from '../../shared/request-history-backup.mjs';
 import { formatUnits } from 'viem';
 import { shieldAmountUnits } from './shield-review.mjs';
 import { PrivatePaymentRequests } from './PrivatePaymentRequests.jsx';
@@ -7,7 +8,7 @@ import { privateRequestAmount } from './private-request.mjs';
 import { shieldConfirmationStep } from './shield-preflight.mjs';
 
 const actionNames = { create: 'Create private wallet', restore: 'Restore my wallet',
-  unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance', 'shield-review': 'Review test deposit', 'invoice-create': 'Create payment request', 'invoice-history': 'Open request history' };
+  unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance', 'shield-review': 'Review test deposit', 'invoice-create': 'Create payment request', 'invoice-history': 'Open request history', 'invoice-history-export': 'Back up request history', 'invoice-history-restore': 'Restore request history' };
 
 export function PrivateWalletPanel({ connection, runtime }) {
   const accountId = connection?.ready && connection?.authenticated ? connection.userId : null;
@@ -23,6 +24,10 @@ export function PrivateWalletPanel({ connection, runtime }) {
     origin: window.location.origin, getAccessToken: () => latest.current.getAccessToken(),
     isCurrent: () => alive.current && latest.current?.authenticated && latest.current.userId === accountId,
   }) : null, [supported, accountId]);
+  const historyReader = useMemo(() => createHistoryBackupReader({
+    isCurrent: () => alive.current && latest.current?.authenticated && latest.current.userId === accountId,
+  }), [accountId]);
+  useEffect(() => () => historyReader.clear(), [historyReader]);
   useEffect(() => { alive.current = true; return () => { alive.current = false; controller.current?.abort(); formRef.current?.reset(); }; }, []);
   useEffect(() => {
     if (!result?.shieldReview) return;
@@ -33,7 +38,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
     if (!client || inFlight.current) return;
     inFlight.current = true; setBusy(true); setMessage('');
     const savedReview = action === 'shield-preflight' ? result?.shieldReview : null;
-    setResult(previous => previous ? { ...previous, shieldReview: savedReview, shieldPreflight: null, paymentRequest: null, requestHistory: null } : previous);
+    setResult(previous => previous ? { ...previous, shieldReview: savedReview, shieldPreflight: null, paymentRequest: null, requestHistory: null, encryptedRequestHistory: null } : previous);
     if (action === 'sync') {
       setResult(previous => previous ? { ...previous, synchronization: null, spendableBalance: null, spendableBalanceVerified: false } : previous);
       setMessage('Checking private wallet history and spendable test USDC. This can take up to two minutes.');
@@ -57,6 +62,8 @@ export function PrivateWalletPanel({ connection, runtime }) {
       if (next.encryptedBackup) setDownload(next.encryptedBackup);
       if (action === 'create') setMessage('Wallet created. Download your encrypted backup and keep its password separately.');
       else if (action === 'invoice-create') setMessage('Payment request saved to this account’s encrypted local history. Your wallet is locked again.');
+      else if (action === 'invoice-history-export') setMessage('Encrypted history backup ready. Keep it with your wallet recovery backup.');
+      else if (action === 'invoice-history-restore') setMessage(`${next.historyRestoration.added} requests restored; ${next.historyRestoration.alreadySaved} already saved. ${next.historyRestoration.total} requests in this account’s history.`);
       else if (action === 'invoice-history') setMessage('Request history opened. Payment status has not been checked; these are not receipts.');
       else if (action === 'restore') setMessage('Your private wallet was restored for this account.');
       else if (action === 'verify-backup') setMessage('Recovery copy verified. It opens the wallet saved for this account.');
@@ -78,8 +85,10 @@ export function PrivateWalletPanel({ connection, runtime }) {
     const form = event.currentTarget, values = new FormData(form);
     const password = values.get('password'), repeated = values.get('repeat');
     const file = values.get('backup');
+    const submittedMode = mode;
+    inFlight.current = true; setBusy(true);
     form.reset(); setMessage('');
-    if (mode === 'create' && password !== repeated) { setMessage('The recovery passwords did not match. Please enter them again.'); return; }
+    if (mode === 'create' && password !== repeated) { setMessage('The recovery passwords did not match. Please enter them again.'); inFlight.current = false; setBusy(false); return; }
     try {
       const fields = { password };
       if (mode === 'shield-review') {
@@ -91,10 +100,13 @@ export function PrivateWalletPanel({ connection, runtime }) {
         fields.amount = values.get('amount'); fields.lifetimeSeconds = Number(values.get('lifetime'));
         privateRequestAmount(fields.amount);
       }
-      if (['restore', 'verify-backup'].includes(mode)) fields.backup = await readRecoveryFile(file);
-      if (!alive.current) return;
-      await perform(mode, fields);
+      if (['restore', 'verify-backup'].includes(submittedMode)) fields.backup = await readRecoveryFile(file);
+      if (submittedMode === 'invoice-history-restore') fields.historyBackup = await historyReader.read(values.get('historyBackup'));
+      if (!alive.current || !latest.current?.authenticated || latest.current.userId !== accountId) return;
+      inFlight.current = false;
+      await perform(submittedMode, fields);
     } catch (error) { if (alive.current) setMessage(error.message); }
+    finally { inFlight.current = false; if (alive.current) setBusy(false); }
   };
   const saveBackup = () => {
     const url = URL.createObjectURL(new Blob([download], { type: 'application/json' }));
@@ -129,9 +141,15 @@ export function PrivateWalletPanel({ connection, runtime }) {
       {result?.privateWallet.privateAddress && <details className="wallet-details"><summary>Private wallet address</summary><code>{result.privateWallet.privateAddress}</code><p>Private payments are not enabled yet. This is not a public funding address.</p></details>}
       {result && <>
         <div className="wallet-actions" role="group" aria-label="Private wallet actions">
-          {(existing ? ['unlock', 'backup', 'verify-backup', ...(runtime?.accountSyncEnabled ? ['sync'] : []), ...(runtime?.shieldReviewEnabled ? ['shield-review'] : []), ...(runtime?.privateRequestsEnabled ? ['invoice-create', 'invoice-history'] : [])] : ['create', 'restore']).map(action => <button key={action} type="button" className="secondary" aria-pressed={mode === action} disabled={busy} onClick={() => { setMode(action); formRef.current?.reset(); setMessage(''); setResult(previous => ({ ...previous, shieldReview: null, paymentRequest: null, requestHistory: null })); }}>{actionNames[action]}</button>)}
+          {(existing ? ['unlock', 'backup', 'verify-backup', ...(runtime?.accountSyncEnabled ? ['sync'] : []), ...(runtime?.shieldReviewEnabled ? ['shield-review'] : []), ...(runtime?.privateRequestsEnabled ? ['invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore'] : [])] : ['create', 'restore']).map(action => <button key={action} type="button" className="secondary" aria-pressed={mode === action} disabled={busy} onClick={() => { historyReader.clear(); setMode(action); formRef.current?.reset(); setMessage(''); setResult(previous => ({ ...previous, shieldReview: null, paymentRequest: null, requestHistory: null, encryptedRequestHistory: null })); }}>{actionNames[action]}</button>)}
         </div>
         <form ref={formRef} onSubmit={submit} key={mode}>
+          {mode === 'invoice-history-restore' && <>
+            <label htmlFor="history-backup-file">Encrypted request-history backup</label>
+            <input id="history-backup-file" name="historyBackup" type="file" accept="application/json,.json" required disabled={busy}/>
+            <p className="hint">Restore your wallet first, then choose its separate history backup. Missing requests will be added; current records are kept. Maximum 256 KB.</p>
+          </>}
+          {mode === 'invoice-history-export' && <p className="hint">This creates an encrypted copy of saved requests. Keep it alongside your wallet recovery backup; restoring history requires the same Honeybee account and recovered wallet.</p>}
           {mode === 'invoice-create' && <>
             <label htmlFor="request-amount">Amount to request in test USDC</label>
             <input id="request-amount" name="amount" type="text" inputMode="decimal" defaultValue="1.00" maxLength={16} required disabled={busy}/>
@@ -182,7 +200,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
           <p>Approval and deposit submission are not enabled in this build. Wallet confirmation and live deposit verification come next.</p>
         </> : <p>Choose “Review test deposit” again to check fresh terms.</p>}
       </div>}
-      {runtime?.privateRequestsEnabled && <PrivatePaymentRequests key={accountId} created={result?.paymentRequest} history={result?.requestHistory} onCloseHistory={() => setResult(previous => previous ? { ...previous, requestHistory: null, paymentRequest: null } : previous)} isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
+      {runtime?.privateRequestsEnabled && <PrivatePaymentRequests key={accountId} created={result?.paymentRequest} history={result?.requestHistory} encryptedHistory={result?.encryptedRequestHistory} onCloseHistory={() => setResult(previous => previous ? { ...previous, requestHistory: null, paymentRequest: null, encryptedRequestHistory: null } : previous)} isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
       {download && <div className="notice protected"><strong>Your encrypted recovery copy is ready.</strong><p>Save it somewhere you can access if this device is lost. Then use “Verify saved backup” to check your saved file.</p><button className="secondary" onClick={saveBackup} disabled={busy}>Download encrypted backup</button></div>}
     </>}
     {message && <p className="status" role="status">{message}</p>}
