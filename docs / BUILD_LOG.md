@@ -1,6 +1,12 @@
 # BUILD LOG
 
-# What to include
+Current checkpoint: **September 10, 2026, through Segment 1V**. See the
+[project status](../README.md#current-status) and
+[remaining test checklist](../TEST_CHECKLIST.md). Entries below are chronological:
+each records what was true at that milestone. Later entries supersede earlier
+limitations; for example, Segment 1V adds the history backup missing in 1U.
+
+## September 7, 2026 - Repository and first-demo scope
 
 09/07/2026
 
@@ -513,3 +519,67 @@ no user transaction was signed or broadcast, and no hosted deployment changed.
 KYC remains deferred. See privacy/SEGMENT-1V.md and its validation report.
 
 AI assistance: Codex implemented and tested this segment at McLean's direction.
+
+## September 10, 2026 - Consolidated project checkpoint through Segment 1V
+
+Goal: update the repository to reflect completed implementation, recorded test
+evidence and the remaining work without KYC.
+
+Completed work and evidence:
+
+- Public mobile email login, return to the same embedded wallet, separate buyer
+  and merchant onboarding, test funding and one user-signed 1-USDC Sepolia
+  payment were verified in Segment 1N. Its receipt reader found matching sent
+  and received references. Receipt history/downloads and the Segment 1O shared
+  test-payment counter are implemented; manual phone checks remain outstanding.
+- Real local ZK proof generation, tamper checks, persistent wallet recovery,
+  deployment identity checks and disposable-wallet history synchronization were
+  completed earlier. Account-bound private wallets and the local browser/API
+  setup/recovery flow are implemented and covered by actual SDK/API tests.
+- Segments 1P-1S implement account synchronization, deposit review, simulation,
+  bounded gas/fee checks, submission control, persistent attempt tracking and
+  canonical deposit verification. Successful funding responses in these tests
+  are controlled fixtures. Live account funding and spendability are unverified;
+  the controller is not connected to the UI and private signing remains disabled.
+- Segment 1T implements merchant request creation, file download/import and
+  exact-term review. Segment 1U persists and reopens encrypted account history.
+  Segment 1V adds separate encrypted history backup/restore: recover the same
+  account wallet first, merge missing requests, preserve newer records, skip
+  duplicates and reject conflicts. These records are not private payment receipts.
+
+Latest recorded validation: Segment 1V passed **33 focused tests** and the
+checkout client/Worker build. This count includes overlapping regressions and
+must not be added to earlier segment totals as a unique or full-suite count.
+Actual browser recovery, cross-computer behavior, Windows/power-loss checks and
+the full live private-payment flow remain pending. Existing build warnings and
+dependency findings remain for review; no fresh audit is claimed.
+
+Remaining sequence:
+
+1. Verify local browser sign-in, separate accounts, wallet/history downloads and
+   recovery on the trusted computer.
+2. Validate live account scans, deposit simulation and gas quotes; connect the
+   gated controller and check actual browser wallet behavior. Obtain explicit
+   user approval for a small test deposit, then verify finality, spendability
+   and restore/resynchronization.
+3. Complete reviewed request-to-proof-to-settlement integration, matching
+   merchant receipt of funds, pending/interrupted handling and once-only invoice
+   reconciliation. Add encrypted private receipts for buyer and merchant.
+4. Verify public receipt downloads and shared counter behavior on mobile.
+5. Run the full private test and attack comparison, review dependency/logging
+   blockers, capture reproducible evidence and prepare the submission demo.
+
+Scope decisions: KYC remains postponed until after testing and a timeline
+review. The first private test can use request-file import; QR/payment links
+and email receipt notifications are unbuilt follow-up options. Real-money
+release and production private-wallet hosting are outside this milestone.
+
+Documentation updated: README status/evidence table, planned attack-demo wording,
+test-checklist checkpoint and this build-log entry. Historical records retained.
+This update changes documentation only; validation consists of checking the
+recorded reports, local documentation links and Git diff. No application tests
+or build were rerun for this documentation update, and no new payment, private
+runtime deployment or merge was performed.
+
+AI assistance: Codex consolidated the existing implementation and validation
+records at McLean's request.

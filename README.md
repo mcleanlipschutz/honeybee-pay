@@ -11,96 +11,72 @@ The current checkout still uses public test transfers.
 
 Crypto is often treated as a trading asset, while everyday payments remain a limited use case in the United States. Paying with crypto can be confusing for ordinary users, and transactions on public blockchains can expose payment amounts and wallet activity. Scams and unauthorized transactions create additional risks, including when AI tools are used to deceive users or manipulate payment instructions. Honeybee Pay aims to address these barriers by making payments easier, protecting transaction privacy, and enforcing the user’s approved payment terms.
 
-## First demo
+## Planned attack-comparison demo
 
-- The buyer approves 3 seperate transactions of 1 test USDC to send to the merchant wallet. 
+- The buyer approves three separate transactions of 1 test USDC to send to the merchant wallet.
 
-- Transaction 1 is successful without issue. transaction 2 is attacked and redirected to the attacker's wallet in an intentionally unprotected demo. transaction 3 is also attacked with the same redirection but is rejected because the recipient differs from the buyer's approval.
+- Transaction 1 succeeds normally. Transaction 2 is redirected to the attacker's wallet in an intentionally unprotected demo. Transaction 3 encounters the same redirection attempt, which is rejected because the recipient differs from the buyer's approval.
 
-- The buyer receives an AI generated message informing them of the detected change of recipient details and that the transaction was blocked.
+- The planned AI-assisted explanation tells the buyer that the recipient changed and the transaction was blocked; this explanation is not the authorization control.
  
-- This first demo will test payment authorization and firewall enforcement; ZK privacy will be developed and tested separately.
+- This comparison remains to be run. It will demonstrate payment-rule behavior separately from the complete private-payment test. The existing approval checks are application controls, not an independently enforced onchain firewall.
 
 ## Current status
 
-[Segment 1V](privacy/SEGMENT-1V.md) adds encrypted request-history backup and
-restore. Keep the wallet recovery file and the separate history backup; restore
-the wallet under the same Honeybee account, then merge its saved requests.
-Existing records are retained, duplicates are skipped and conflicts fail.
-33 focused tests and the checkout build pass. Actual browser recovery and live
-private-payment validation remain pending.
+Updated September 10, 2026, through **Segment 1V** on
+`codex/privacy-segment-1a`. The development work remains in
+[draft PR #1](https://github.com/mcleanlipschutz/honeybee-pay/pull/1).
 
-[Segment 1U](privacy/SEGMENT-1U.md) saves merchant requests in encrypted local
-account history and adds **Open request history**. Merchants can reopen exact
-terms after signing in again; expired requests remain viewable and payment
-status stays unverified. 24 focused tests and the checkout build pass. This
-history is local to the computer and is not included in the wallet recovery
-backup. Segment 1V adds the separate history backup/restore flow; browser testing remains pending.
+**A public test payment has been verified. A complete private merchant payment
+has not yet settled.** The hosted mobile demo provides public Sepolia checkout,
+receipt history and a shared test-payment counter through Segment 1O. The newer
+private-wallet features run on a trusted local computer and have not been
+published to the hosted demo.
 
-[Segment 1T](privacy/SEGMENT-1T.md) adds local merchant payment requests:
-create from the signed-in account’s recovered private wallet, download a request
-file, and import it for buyer review. Exact amount/network/expiry/address checks
-and account isolation pass 17 focused tests; the checkout build passes. A request
-is unsigned, does not authenticate the merchant and does not authorize payment.
-Browser testing and live private settlement remain outstanding.
+### Completed implementation and recorded validation
 
-[Segment 1S](privacy/SEGMENT-1S.md) implements the wallet submission controller,
-persistent attempt tracking and matching approval/Shield receipt checks. It is
-tested with controlled wallets and RPC responses and is **not connected to the
-UI**. The default signing gate stays closed until live Sepolia validation and
-browser integration checks pass. No private deposit has been submitted.
+| Area | Work completed | Validation and remaining limits |
+| --- | --- | --- |
+| Mobile login and public checkout | Privy email login, embedded buyer/merchant wallets, reviewed test-USDC transfers and matching receipt verification. | Mobile wallet persistence and one user-signed 1-USDC Sepolia payment verified. [Recorded evidence](checkout/reports/segment-1n-validation.json). |
+| Public receipts and usage counter | Sent/received receipt history and downloads; server-verified shared counter with durable transaction uniqueness. | Receipt reader found the matching payment for both accounts; automated counter checks passed. Phone receipt downloads and counter behavior still need manual validation. |
+| ZK proof and demo-wallet synchronization | Real local RAILGUN proof, tamper rejection, persistent recovery, deployment identity checks and disposable-wallet history scans. | Proof uses synthetic notes. Read-only demo scans passed; this does not establish a funded or spendable account wallet. [1E](privacy/SEGMENT-1E.md), [1F](privacy/SEGMENT-1F.md), [1J](privacy/SEGMENT-1J.md). |
+| Account-bound private wallets | Authenticated local wallet creation/recovery, separate account roots, encrypted wallet backups and browser setup UI. | Real SDK/API isolation and recovery checks passed. Actual local browser recovery remains pending. [1K](privacy/SEGMENT-1K.md), [1L](privacy/SEGMENT-1L.md). |
+| Private deposit preparation | Account history/balance integration, deposit review, fee simulation, bounded gas quotes, submission controller, attempt journal and canonical deposit verifier. | Controlled tests passed. Live account sync, funding and spendability remain unverified. Controller is not connected to the UI; signing stays disabled. [1P](privacy/SEGMENT-1P.md), [1Q](privacy/SEGMENT-1Q.md), [1R](privacy/SEGMENT-1R.md), [1S](privacy/SEGMENT-1S.md). |
+| Merchant payment requests | Account-derived private recipient, exact amount/network/expiry, request download/import and immutable buyer review. | SDK/API and request validation checks passed. Requests are unsigned and do not authenticate a merchant or authorize payment. [1T](privacy/SEGMENT-1T.md). |
+| Encrypted request history and backups | Saved requests, history reopening, separate encrypted history export and merge-only restore. | Restores preserve newer records, skip duplicates and reject conflicts. Actual browser downloads/recovery remain pending. Request history is not a payment receipt or settlement ledger. [1U](privacy/SEGMENT-1U.md), [1V](privacy/SEGMENT-1V.md). |
 
-[Segment 1R](privacy/SEGMENT-1R.md) adds a fresh deposit preflight: exact-call
-simulation, bounded gas quotes, account-bound review storage and a preview of the
-next wallet-confirmation step. Focused tests and the build pass; live signing and
-deposit verification remain gated on local-machine Sepolia/fork validation.
+### Latest validation
 
-[Segment 1Q](privacy/SEGMENT-1Q.md) adds account-bound test-USDC deposit reviews:
-amount, protocol fee, expected private credit and exact unsigned approval terms.
-Offline SDK recovery and tamper checks pass. Submission is disabled pending live
-preflight and explicit wallet confirmation. [Segment 1P](privacy/SEGMENT-1P.md)
-provides account-scoped history scanning and spendable-balance snapshots. Live
-account sync, shielding and settled private payments remain the next gates.
-The hosted demo provides public test checkout, receipts and a test-payment counter.
+Segment 1V recorded **33 focused tests passed** and a successful checkout
+client/Worker build. Tests include real SDK wallet recovery followed by encrypted
+history restore, account isolation, tamper rejection and interrupted-write
+handling. See the [validation report](privacy/reports/segment-1v-validation.json)
+and [reproduction command](privacy/SEGMENT-1V.md#validation).
 
-The local [account-wallet service](privacy/SEGMENT-1K.md) now binds private
-wallets to verified login tokens, creates separate buyer/merchant roots, and
-supports encrypted recovery under the same account. [Segment 1L](privacy/SEGMENT-1L.md)
-connects browser setup and recovery to a protected local API. Automated client/API
-checks use real SDK wallets and local token fixtures. Local browser recovery
-validation remains outstanding; KYC is deferred and private checkout is unbuilt.
+This is the recorded Segment 1V run, not a cumulative test total or a fresh
+full-repository run. Actual browser, cross-computer and Windows/power-loss checks
+remain pending. Existing build warnings and dependency findings still need
+review; no fresh dependency audit is claimed.
 
-A customer-facing [Privy checkout](checkout/README.md) is now implemented with
-email login, an embedded buyer wallet, reviewed Sepolia USDC transfers and
-receipt verification. Mobile email login, persistent public-wallet identity and
-a user-signed 1-USDC Sepolia transfer were verified in Segment 1N.
-This checkout uses public transfers; its RAILGUN private-payment connection is
-not implemented yet.
+Keep **both** the wallet recovery file and separate encrypted request-history
+backup. Sign in to the same account, recover the wallet first, then restore its
+history. History backup alone cannot recover the wallet or funds.
 
-The development branch now generates and verifies a real RAILGUN zero-knowledge
-proof locally using synthetic notes. Checks reject altered output commitments,
-bound parameters, recipient inputs and amounts. The transfer adapter and offline
-wallet checks are also implemented.
+### Remaining work before the complete private-payment test
 
-Disk-backed wallet recovery now passes across fresh processes. A read-only
-Sepolia check matches the proxy, implementation and relay bytecode to reviewed
-source records and confirms that the deployed circuit key matches our proof.
+1. Verify local Privy sign-in, separate accounts, browser downloads and wallet-then-history recovery on the trusted computer.
+2. Validate account synchronization, deposit review and gas simulation against live/forked Sepolia. Integrate the controller, verify browser wallet prompts and obtain explicit user approval before a small test deposit; confirm its canonical event, spendability and recovery.
+3. Connect reviewed merchant requests to proof generation, submission and settlement. Verify the exact received amount/recipient from merchant wallet state and handle pending or interrupted attempts without automatic resending.
+4. Reconcile each paid invoice once and provide encrypted private receipts to both parties.
+5. Verify public receipt downloads and the shared counter on mobile, including reloads and duplicate prevention.
+6. Run the full private flow and attack comparison, review dependency/logging blockers, collect evidence and prepare the submission demo.
 
-Buyer, merchant and attacker demo wallets can now be initialized and restored
-from one password-encrypted backup. The synchronization command verifies the
-deployment first and requires both history scans to complete. SDK provider
-loading now succeeds through the runtime's proxy-aware transport. The approved
-live Sepolia run completed both UTXO and TXID history scans with deployment and
-POI checks enabled. The disposable demo wallets synchronized successfully.
+KYC remains postponed until after testing and a timeline review. Email receipt
+notifications and QR/payment links are not implemented; the existing receipt
+interface and request-file workflow support the initial demo path. Real-money
+release and production hosting of the private-wallet runtime are outside this
+controlled testnet milestone.
 
-This is a cryptographic development test, not a settled private payment. Private
-funding, spendable-balance verification and encrypted merchant receipts remain unfinished. The buyer approval checks are not yet
-an independently enforced onchain firewall.
-
-See [Segment 1J](privacy/SEGMENT-1J.md) for POI transport and successful synchronization results,
-[Segment 1I](privacy/SEGMENT-1I.md) for TXID history retrieval,
-[Segment 1H](privacy/SEGMENT-1H.md) for the RPC connection fix,
-[Segment 1G](privacy/SEGMENT-1G.md) for workspace and synchronization commands,
-[Segment 1F](privacy/SEGMENT-1F.md) for storage and deployment checks,
-[Segment 1E](privacy/SEGMENT-1E.md) for the local proof, and
-[the build log](docs%20/%20BUILD_LOG.md) for the implementation history.
+The [test checklist](TEST_CHECKLIST.md) tracks the individual gates. The
+[build log](docs%20/%20BUILD_LOG.md) preserves the implementation history,
+including dependency work, transport fixes and the latest status checkpoint.

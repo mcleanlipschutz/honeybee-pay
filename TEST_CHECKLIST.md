@@ -3,6 +3,29 @@
 Updated September 10, 2026. Checked items are implemented/validated as stated;
 they do not imply a live payment has settled.
 
+## Current checkpoint: Segment 1V
+
+The public mobile payment milestone is verified. Private wallet setup/recovery,
+deposit preparation, merchant request files, encrypted request history and
+separate history backup/restore are implemented with the validation limits below.
+The latest recorded Segment 1V run passed 33 focused tests and the checkout build;
+it was not a full-repository test run or live private-payment test.
+
+The next gate is actual local browser sign-in and wallet-then-history recovery,
+followed by live account synchronization and deposit validation. Private signing
+remains disabled, the submission controller is not connected to the UI, and no
+complete private merchant payment has settled. The hosted mobile site remains
+on the public checkout/receipt/counter implementation through Segment 1O.
+
+For the first private-payment test, use the implemented request-file import.
+QR/payment links remain a follow-up delivery option. Public receipt history and
+downloads provide the implemented alternative to email notifications; email
+delivery is still unbuilt. Encrypted receipts for settled private payments remain
+a required part of the full test.
+
+See the [project status](README.md#current-status) and
+[latest validation report](privacy/reports/segment-1v-validation.json).
+
 ## Scope decision
 
 **KYC is postponed until testing is complete.** After testing, review the time
@@ -71,7 +94,7 @@ release.
 - [ ] Verify history reopening and clearing in the actual browser on the trusted computer.
 - [x] Add and test encrypted history export/restore with recovered SDK wallets; preserve newer local requests, skip duplicates and reject conflicting records (Segment 1V).
 - [ ] Download both backup files in the actual browser and verify wallet → history recovery on the trusted computer.
-- [ ] Open the invoice from a link or QR code and review its exact terms.
+- [ ] Follow-up delivery option: open the invoice from a link or QR code and review its exact terms; use the implemented file import for the first test.
 - [ ] Generate, submit and settle a real test private transfer.
 - [ ] Verify receipt of the matching payment from the merchant's wallet state.
 - [ ] Reconcile the invoice once and give both parties a receipt.
