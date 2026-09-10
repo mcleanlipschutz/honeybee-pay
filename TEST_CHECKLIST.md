@@ -51,6 +51,9 @@ release.
 - [x] Add fresh deployment/token/fee checks, exact-call simulation and bounded gas quotes (Segment 1R; controlled tests).
 - [x] Bind fee checks to the server's account-specific review and preview the next wallet-confirmation step.
 - [ ] Validate simulation and gas quotes against live/forked Sepolia state.
+- [x] Implement wallet submission controller with exact nonce/gas/fee requests and a closed default signing gate (Segment 1S; fake-wallet tests).
+- [x] Implement browser attempt journal and read-only approval/Shield verifier; controlled tests cover reloads, concurrent attempts, unknown outcomes and canonical event matching.
+- [ ] Wire the controller and account-scoped journal into the local UI after live validation; verify Web Locks/storage and Privy prompts in the actual browser.
 - [ ] Integrate explicit wallet approval and shield submission, carrying reviewed gas/fee limits and handling pending/unknown outcomes.
 - [ ] Confirm the exact deposit transaction and matching canonical Shield event without automatic resending.
 - [ ] Confirm the new account's shielded balance is spendable before enabling payment.

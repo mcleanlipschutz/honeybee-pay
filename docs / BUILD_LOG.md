@@ -358,3 +358,30 @@ Checkout client/Worker build passed; existing warnings and dependency findings
 remain. No dependency versions changed. KYC stays deferred.
 
 AI assistance: Codex implemented and tested this segment at McLean's direction.
+
+## Segment 1S — deposit transaction handling
+
+Implemented a submission controller with separate explicit approval/deposit calls,
+exact nonce and gas/fee requests, persistent browser attempt records and read-only
+transaction reconciliation. Unknown or pending outcomes block another attempt;
+late hashes survive logout/expiry, and completed attempts retain duplicate guards.
+The verifier matches the canonical transaction and exact Approval or Shield event,
+including the original note/ciphertext and reviewed net credit/fee. Deposits require
+finalization and do not count as merchant payments or establish spendability.
+
+The controller is not connected to the UI and its default signing gate stays
+closed. Live Sepolia/fork validation remains blocked in this workspace; no blocked
+route was retried or bypassed. The browser adapter still requires actual Web Locks,
+storage and Privy testing before integration. Persistence is per browser/origin,
+not cross-device or an independent onchain authorization control.
+
+Validation: 32 focused tests passed (12 lifecycle/journal/receipt, one independent
+Engine event-ABI parity check, 15 existing review/preflight/SDK, four account-client).
+The controlled tests cover concurrent attempts, rejections, timeouts, reloads,
+nonce/account changes, storage failures, canonical event mismatches and reorgs.
+Existing 1,000-sample gas arithmetic and real SDK recovery checks pass. Checkout
+client/Worker build passed with existing warnings. No dependencies changed, no
+transaction was signed/broadcast and no private runtime was published. KYC stays
+deferred. See privacy/SEGMENT-1S.md for the explicit remaining live/browser gates.
+
+AI assistance: Codex implemented and tested this segment at McLean's direction.

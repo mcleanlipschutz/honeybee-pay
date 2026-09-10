@@ -249,3 +249,28 @@ covers approval only; the deposit requires a fresh check after actual allowance
 confirmation. Quotes never enable signing in this build. Server restart or review
 expiry requires a new review. Live simulation, explicit wallet confirmation and
 canonical deposit verification remain outstanding; see `privacy/SEGMENT-1R.md`.
+
+## Deposit submission controller (Segment 1S)
+
+`src/shield-submission.mjs` implements separate explicit approval/deposit calls
+and read-only reconciliation. It is not imported by the application UI, and its
+default live-validation gate always rejects signing. Neither a server runtime
+flag nor an environment variable opens that gate. Tests inject a fake wallet and
+test gate. The hosted public checkout is unchanged.
+
+`src/shield-attempts.mjs` stores the public transaction intent before prompting,
+using an account-scoped localStorage key and a Web Lock shared by tabs. It stores
+no email, access token, private wallet address, wallet ID or recovery password.
+Unknown attempts block another deposit; hashes returned after logout are retained.
+Storage corruption, quota errors or missing lock support stop signing. This
+protection is limited to one browser profile/origin and is not an onchain or
+cross-device authorization system.
+
+`src/shield-receipt.mjs` checks the exact transaction and matching event. Approval
+needs two canonical confirmations plus a fresh allowance preflight. Deposit
+confirmation waits for finalization and matches the original note, ciphertext,
+net amount and fee. It never marks funds spendable or increments merchant counts.
+
+Live validation, actual browser persistence/Privy checks, local UI integration,
+private balance synchronization and recovery after a deposit remain required.
+See [Segment 1S](../privacy/SEGMENT-1S.md) for the test record and next-machine steps.

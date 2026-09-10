@@ -23,6 +23,12 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
+[Segment 1S](privacy/SEGMENT-1S.md) implements the wallet submission controller,
+persistent attempt tracking and matching approval/Shield receipt checks. It is
+tested with controlled wallets and RPC responses and is **not connected to the
+UI**. The default signing gate stays closed until live Sepolia validation and
+browser integration checks pass. No private deposit has been submitted.
+
 [Segment 1R](privacy/SEGMENT-1R.md) adds a fresh deposit preflight: exact-call
 simulation, bounded gas quotes, account-bound review storage and a preview of the
 next wallet-confirmation step. Focused tests and the build pass; live signing and
