@@ -9,6 +9,8 @@ import { ReceiptsPanel } from './ReceiptsPanel.jsx';
 import { HostedWalletPanel } from './HostedWalletPanel.jsx';
 import { isLocalDemo } from './account-client.mjs';
 import './style.css';
+import { PaymentCount } from './PaymentCount.jsx';
+import { trackPayment } from './payment-tracking.mjs';
 
 const rpc = createPublicClient({ chain: sepolia, transport: http('https://ethereum-sepolia-rpc.publicnode.com', { timeout: 15000, retryCount: 2 }) });
 const short = address => address ? `${address.slice(0, 6)}…${address.slice(-4)}` : 'Not connected';
@@ -31,6 +33,7 @@ function Checkout({ connection, runtime }) {
   const [blocked, setBlocked] = useState(false);
   const [details, setDetails] = useState(false);
   const inFlight = useRef(false);
+  const trackedIntent = useRef(null);
   const current = useRef(connection); current.current = connection;
   useEffect(() => () => { current.current = null; }, []);
   const wallet = connection?.wallet;
@@ -73,13 +76,23 @@ function Checkout({ connection, runtime }) {
       await rpc.simulateContract({ account: approval.sender, address: USDC, abi: erc20Abi, functionName: 'transfer', args: [approval.recipient, BigInt(approval.amountUnits)] });
       if (!current.current?.authenticated || current.current.wallet?.address !== selected.address) throw new Error('Wallet changed. Review again.');
       const transaction = buildTransfer(approval, approval, selected.address);
+      if (!localWalletSetup) {
+        setMessage('Preparing your payment record…');
+        const intent = await trackPayment('/api/payment-intents', { sender: approval.sender, recipient: approval.recipient, amount: formatUnits(BigInt(approval.amountUnits), 6), expiresAt: approval.expiresAt }, current.current.getAccessToken);
+        trackedIntent.current = intent.id;
+        buildTransfer(approval, approval, current.current?.wallet?.address);
+      }
       setMessage('Confirm the reviewed payment in your Privy wallet.');
       const result = await current.current.sendTransaction(transaction, { address: selected.address, uiOptions: { showWalletUIs: true } });
       submitted = true; setHash(result.hash);
+      if (trackedIntent.current) {
+        // The server also recovers a signed payment if this report is interrupted.
+        void trackPayment('/api/payment-submissions', { id: trackedIntent.current, hash: result.hash }, connection.getAccessToken).catch(() => {});
+      }
       await checkReceipt(result.hash, approval);
     } catch (error) {
       // SDK/provider error objects can contain request details. Show controlled copy.
-      const safe = ['Reconnect', 'Wallet', 'Approval', 'Sepolia', 'Add ', 'Payment blocked'];
+      const safe = ['Reconnect', 'Wallet', 'Approval', 'Sepolia', 'Add ', 'Payment blocked', 'Payment tracking'];
       setMessage(submitted ? 'Transaction submitted; receipt verification is not complete. Recheck below before making another payment.'
         : safe.some(prefix => error.message?.startsWith(prefix)) ? error.message : 'Payment was not confirmed. Check your wallet and try again.');
     } finally { inFlight.current = false; setBusy(false); }
@@ -96,6 +109,7 @@ function Checkout({ connection, runtime }) {
   };
   return <div className="shell">
     <header><a className="brand" href="/" aria-label="Honeybee Pay home"><span className="mark">h.</span>honeybee<span className="brand-light">pay</span></a><span className="network"><i/>Sepolia testnet</span></header>
+    <PaymentCount/>
     <nav className="view-switch" aria-label="Honeybee sections"><button aria-pressed={view === 'wallet'} disabled={busy || (!!hash && !receipt)} onClick={() => setView('wallet')}>Wallet setup</button><button aria-pressed={view === 'checkout'} onClick={() => setView('checkout')}>Public test checkout</button><button aria-pressed={view === 'receipts'} disabled={busy || (!!hash && !receipt)} onClick={() => setView('receipts')}>Receipts</button></nav>
     <main>
       <section className="intro"><span className="eyebrow">A LITTLE SIMPLER. A LITTLE SAFER.</span><h1>Good payments.<br/><span>Your rules.</span></h1><p>A checkout that keeps you in control.<br/>Choose the merchant. Review the amount.<br/>Approve exactly what you mean to pay.</p><div className="intro-note"><span className="circle">✓</span><span>Built for everyday payments.<small>Testing with USDC on Sepolia.</small></span></div><div className="honey-art" aria-hidden="true"><div className="hex one"/><div className="hex two"/><div className="hex three"/><span>MAKE IT<br/>HONEYBEE.</span></div></section>

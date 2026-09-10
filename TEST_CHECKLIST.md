@@ -78,3 +78,14 @@ this first controlled test. Sponsor eligibility must match demonstrated features
 The local demo runtime handles decrypted wallet keys and recovery passwords.
 Current checkout payments are public test transfers. Neither local wallet setup
 nor a valid local proof establishes a settled private merchant payment.
+
+
+### Shared usage counter (Segment 1O)
+- [x] Homepage labels the aggregate as test payments, not real-money adoption.
+- [x] Server validates app login, recorded terms, canonical receipt and finality.
+- [x] Durable uniqueness prevents buyer/merchant or retry double-counting.
+- [x] Automated tests cover recovery after the browser misses hash reporting.
+- [ ] On the phone, check the initial count includes the first mobile payment.
+- [ ] Make one new approved test payment and confirm the total increases once after finality.
+- [ ] Sign out / reload on another device and confirm the same aggregate.
+- [ ] Production launch: external access review, throughput/reconciliation, abuse controls and security review.

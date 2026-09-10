@@ -160,3 +160,69 @@ The new receipt UI/download flow still needs user browser testing.
 
 See ../RECEIPTS_DESIGN.md for the planned encrypted ZK receipt source. The current
 public log reader cannot recover shielded payment details.
+
+
+## Segment 1O — shared test-payment count
+
+The opening page now shows **Test payments completed**, without requiring Privy
+sign-in. The Site itself retains its owner-only access policy. This is a count
+of registered, finalized checkout payments, not transferred dollar value,
+customers, purchases of goods, mainnet activity or a security endorsement.
+
+A Cloudflare Worker and logical D1 `DB` binding now serve `/api/payment-count`,
+`/api/payment-intents` and `/api/payment-submissions`. The existing Vite/React
+checkout is preserved. Builds produce `dist/client` and `dist/server/index.js`;
+Drizzle owns the schema migration. `npm run dev` / `npm run preview` are frontend
+previews only: they do not supply D1 or the hosted tracking API. The local
+private-wallet runtime remains separate and is not deployed.
+
+Before requesting a wallet signature, hosted checkout registers approved terms
+with a server-verified Privy access token. The server pins the app ID and the
+owner-supplied public verification key; key rotation requires updating it. It
+stores a hashed account identifier, public payment terms, registration time and
+chain height. No email, login token, seed or private-wallet data is persisted.
+The token identifies the requester, not legal identity or ownership of an
+arbitrary supplied wallet; a counted transfer must actually be signed by the
+recorded sender onchain. This does not attest that a person used an unmodified
+browser UI, and repeated payments between wallets can still increase usage.
+
+Only a successful direct Sepolia USDC transfer with exactly the recorded sender,
+recipient, amount and calldata, mined after registration and within the approval
+window, becomes complete. It must be at or below the RPC's finalized head and
+match its canonical block. A database uniqueness constraint counts each verified
+transaction once. Candidate hashes never reserve that uniqueness key. Same-wallet
+transfers, failed attempts, unrelated receipts, funding and click activity do not
+count. This counter is specifically testnet-only; a future production counter
+must start separately.
+
+Reconciliation runs on summary reads, at most once per minute per isolate,
+processing two pending records per pass. It can recover an unreported transaction
+from matching Transfer logs after a tab closes. Searches cover at most 1,001
+blocks and inspect two matching candidates per record per pass. Large bursts of
+identical concurrent transfers may require additional reconciliation tooling;
+this small-test implementation must not be advertised as exhaustive production
+analytics. Records without a verified completion can expire after 24 hours;
+provider outages never turn a pending record into a completed one. The count
+normally trails the two-confirmation receipt by Ethereum finality time and may
+trail further during RPC outages or pending-record backlogs.
+
+The single pre-counter import is the reviewed first mobile test recorded in
+Segment 1N. Its exact hash and approved terms are in server code. The Worker
+rechecks it before inserting it, and the same transaction uniqueness rule
+applies. No migration inserts a numeric seed and browsers cannot submit arbitrary
+historical backfills. The public endpoint exposes only the total, network and
+finality label. It never returns account IDs, addresses, amounts or hashes.
+
+For ZK, this public-transfer registry must be replaced with a privacy-aware
+completion source and an explicit aggregation/retention policy. Do not copy
+private receipts, private wallet addresses or decryption keys into this table.
+
+Validation: 16 checkout tests pass, including actual SQLite migration/queries,
+duplicate submissions, account isolation, token verification, wrong network,
+reverted/mismatched/nonfinalized transfers, bounded registrations and recovery
+after a missing submission callback. The Worker/client build passes. Production
+dependency audit still reports 24 moderate and 1 high issue in existing transitive
+dependencies; this task does not resolve that backlog. No new onchain transaction
+was signed or broadcast. A fresh direct RPC check from this workspace was blocked
+by its network policy; hosted RPC access and a new mobile payment still require
+live validation after publication.

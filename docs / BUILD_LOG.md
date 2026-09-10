@@ -273,3 +273,22 @@ Segment 1M hosting outcome: the first attempt timed out creating the managed HTT
 - Clearly included public faucet/external transfers rather than claiming every token transfer is a Honeybee purchase. No invoice, goods-delivery, tax or ZK-private receipt claim is made.
 - Eleven checkout tests and the production build passed. Live read-only history found the existing 1-USDC payment in both wallets (same reference, opposite directions). New receipt UI and file download remain to be manually checked on phone.
 - Documented the future private-wallet reader, encrypted invoice/receipt storage, selective sharing and opt-in email design in RECEIPTS_DESIGN.md. No email sent; KYC deferred. No dependencies changed or new funds moved by this segment.
+
+
+## Segment 1O — homepage test-payment counter
+
+Added a shared test-payment aggregate above the wallet navigation. Preserved the
+Privy checkout, receipts and current owner-private audience. Added authenticated
+pre-payment registration, server receipt/finality verification and a D1 registry
+with unique completed transaction hashes. Summary reads reconcile pending records,
+including a bounded recovery scan when a browser closes before reporting its hash.
+The only historical import is the previously reviewed first mobile payment and
+is reverified before counting. No real payments, token funding or arbitrary wallet
+history are presented as Honeybee usage. ZK-specific aggregation is still future
+work; KYC remains deferred.
+
+Validation: 16 tests passed; generated SQLite migration inspected and exercised;
+client and Worker builds passed. Audit remains 25 production findings (24 moderate,
+1 high) in pre-existing transitive dependencies. No transaction was broadcast by
+the agent. Direct live RPC verification in this workspace was network-blocked;
+new hosted API and phone validation are recorded as outstanding in TEST_CHECKLIST.
