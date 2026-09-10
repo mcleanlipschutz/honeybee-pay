@@ -8,6 +8,8 @@ import { ArtifactStore, startRailgunEngine, stopRailgunEngine,
   createRailgunWallet, loadWalletByID } from '@railgun-community/wallet';
 import { createWalletDatabase } from './wallet-storage.mjs';
 import { accountBackupLimit, decryptAccountBackup, encryptAccountBackup } from './account-backup.mjs';
+import * as sdk from '@railgun-community/wallet';
+import { prepareAccountSync, scanAccountWallet, accountSyncDeadline, accountSyncNetwork } from './account-sync.mjs';
 
 const backupFile = 'account.backup.json';
 function live(session) {
@@ -43,7 +45,7 @@ function readiness(walletStatus, wallet) {
     paymentReady: false, blockers: [...(walletStatus === 'not-created' ? ['private-wallet-not-created'] : []), 'private-payment-not-integrated', 'balance-not-verified'] };
 }
 
-async function operate({ directory, session, action, password, backup }) {
+async function operate({ directory, session, action, password, backup, syncConfig }) {
   live(session);
   if (!isAbsolute(directory)) throw new Error();
   await privateDirectory(directory);
@@ -52,6 +54,8 @@ async function operate({ directory, session, action, password, backup }) {
   // Fail closed on an existing lock, including a stale lock after process death.
   await mkdir(lock, { mode: 0o700 });
   let engineStarted = false, createdSlot = false, completed = false;
+  const signal = AbortSignal.timeout(accountSyncDeadline);
+  const checkSession = () => { live(session); if (action === 'sync') signal.throwIfAborted(); };
   try {
     live(session);
     let exists = true;
@@ -76,26 +80,33 @@ async function operate({ directory, session, action, password, backup }) {
       await mkdir(slot, { mode: 0o700 }); createdSlot = true;
       await writeBackup(join(slot, backupFile), encrypted);
     } else { await privateDirectory(join(slot, 'wallets')); }
+    const prepared = action === 'sync' ? await prepareAccountSync(syncConfig, checkSession) : null;
+    checkSession();
     const db = await createWalletDatabase(join(slot, 'wallets'));
     const unavailable = async () => { throw new Error('Account setup does not load proving artifacts'); };
-    // Each process loads exactly one owner's engine, then exits. No networks or
-    // proof preparation are exposed by this ownership/recovery segment.
+    // Each process loads exactly one owner's engine, then exits. Sync is read-only.
     engineStarted = true;
     await startRailgunEngine('honeybeepay', db, false,
-      new ArtifactStore(unavailable, unavailable, unavailable), false, false);
+      prepared?.artifacts || new ArtifactStore(unavailable, unavailable, unavailable), false, false,
+      prepared ? [prepared.poiURL] : undefined);
     const key = sha256(concat([toUtf8Bytes('honeybee:account-database:v1'), root.privateKey])).slice(2);
     const id = RailgunWallet.generateID(root.mnemonic.phrase, 0);
     const wallet = initializing ? await createRailgunWallet(key, root.mnemonic.phrase, undefined, 0)
       : await loadWalletByID(key, id, false);
     if (wallet.id !== id) throw new Error('Recovered wallet identity mismatch');
+    const syncResult = prepared ? await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal }) : null;
+    if (prepared) await sdk.unloadProvider(accountSyncNetwork);
     await stopRailgunEngine(); engineStarted = false;
-    live(session);
+    checkSession();
     completed = true;
-    return { ...readiness('locked', wallet),
+    return { ...readiness('locked', wallet), ...syncResult,
       recovery: action === 'create' ? 'backup-created' : action === 'restore' ? 'restored' : 'backup-verified',
       ...(['create', 'backup'].includes(action) ? { encryptedBackup: encrypted } : {}) };
   } finally {
-    try { if (engineStarted) await stopRailgunEngine(); }
+    try {
+      if (engineStarted && action === 'sync') { try { await sdk.unloadProvider(accountSyncNetwork); } catch { /* May not have loaded. */ } }
+      if (engineStarted) await stopRailgunEngine();
+    }
     finally {
       try { if (createdSlot && !completed) await rm(slot, { recursive: true, force: true }); }
       finally { await rm(lock, { recursive: true }); }

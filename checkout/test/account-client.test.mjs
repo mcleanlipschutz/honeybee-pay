@@ -41,3 +41,17 @@ test('failed wallet writes are not retried and remote errors cannot echo secrets
   await assert.rejects(misleading.execute('status'), /not confirmed/);
   await assert.rejects(readRecoveryFile({ size: 8193, text: () => { throw new Error('must not read'); } }), /smaller than 8 KB/);
 });
+
+test('private sync client rejects partial scan results and discards a different account result', async () => {
+  const complete = { ...result, spendableBalanceVerified: true,
+    synchronization: { status: 'history-scans-complete', scans: { utxo: 'Complete', txid: 'Complete' }, walletScanned: true, checkedAt: new Date().toISOString() },
+    spendableBalance: { token: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', decimals: 6, amountUnits: '1000000', source: 'sdk-spendable-snapshot' } };
+  let current = true, next = complete;
+  const client = createAccountWalletClient({ origin: 'http://127.0.0.1:4173', getAccessToken: async () => 'fixture', isCurrent: () => current,
+    fetchImpl: async () => new Response(JSON.stringify(next), { headers: { 'content-type': 'application/json' } }) });
+  assert.equal((await client.execute('sync', { password: 'test-password-long-enough' })).spendableBalance.amountUnits, '1000000');
+  next = { ...complete, synchronization: { ...complete.synchronization, scans: { utxo: 'Complete', txid: 'Incomplete' } } };
+  await assert.rejects(client.execute('sync'), /not confirmed/);
+  current = false; next = complete;
+  await assert.rejects(client.execute('sync'), /account changed/);
+});

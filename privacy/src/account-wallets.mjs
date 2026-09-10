@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { isAbsolute, resolve } from 'node:path';
 import { createAccountAuthenticator } from './account-auth.mjs';
 import { checkRecoveryPassword, accountBackupLimit } from './account-backup.mjs';
+import { accountSyncConfig } from './account-sync.mjs';
 
 let activeWorkers = 0;
 function runWorker(message) {
@@ -14,7 +15,7 @@ function runWorker(message) {
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'], execArgv: [],
     });
     let result;
-    const timer = setTimeout(() => child.kill('SIGKILL'), 30000);
+    const timer = setTimeout(() => child.kill('SIGKILL'), message.action === 'sync' ? 120000 : 30000);
     child.once('error', () => { clearTimeout(timer); reject(new Error('Account wallet operation failed')); });
     child.on('message', value => { result = value; });
     child.once('exit', code => {
@@ -27,11 +28,12 @@ function runWorker(message) {
   }).finally(() => { activeWorkers -= 1; });
 }
 
-export async function createAccountWalletService({ directory, appId, verificationKey }) {
+export async function createAccountWalletService({ directory, appId, verificationKey, syncConfig }) {
   if (typeof directory !== 'string' || !isAbsolute(directory) || resolve(directory) !== directory) {
     throw new Error('Account storage path must be absolute and canonical');
   }
   const authenticate = await createAccountAuthenticator({ appId, verificationKey });
+  const synchronization = syncConfig ? accountSyncConfig(syncConfig) : null;
   // The public API accepts a token, never a caller-supplied owner, path or key.
   return Object.freeze({ async execute(request) {
     const session = await authenticate(request?.accessToken);
@@ -41,10 +43,11 @@ export async function createAccountWalletService({ directory, appId, verificatio
       const importsBackup = ['restore', 'verify-backup'].includes(action);
       const allowed = ['action', 'accessToken', ...(action === 'status' ? [] : ['password']), ...(importsBackup ? ['backup'] : [])];
       if (Object.keys(request).some(key => !allowed.includes(key))
-          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup'].includes(action)) throw new Error();
+          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync'].includes(action)) throw new Error();
+      if (action === 'sync' && !synchronization) throw new Error();
       if (action !== 'status') checkRecoveryPassword(password);
       if (importsBackup && (typeof backup !== 'string' || Buffer.byteLength(backup) > accountBackupLimit)) throw new Error();
-      return await runWorker({ directory, session, action, password, backup });
+      return await runWorker({ directory, session, action, password, backup, ...(action === 'sync' ? { syncConfig: synchronization } : {}) });
     } catch { throw new Error('Account wallet operation failed'); }
   } });
 }

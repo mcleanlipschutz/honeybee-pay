@@ -1,7 +1,7 @@
 const messages = {
   'sign-in-required': 'Sign in again, then refresh your wallet status.',
   'try-later': 'The local wallet is busy. Wait a moment, then refresh its status.',
-  'wallet-operation-failed': 'The wallet operation could not complete. Check your password and backup, then refresh wallet status. Existing wallets are never overwritten.',
+  'wallet-operation-failed': 'The wallet operation could not complete. Check your password, backup and local connection, then refresh wallet status. Existing wallets are never overwritten.',
   'request-too-large': 'Choose a Honeybee recovery file smaller than 8 KB.',
   'session-changed': 'Your account changed. Sign in and check your wallet again.',
   'connection-failed': 'The operation was not confirmed. Refresh wallet status before trying again.',
@@ -27,7 +27,7 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
         method: 'POST', credentials: 'omit', cache: 'no-store', redirect: 'error',
         headers: { 'Content-Type': 'application/json', 'X-Honeybee-Request': 'wallet-v1', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...fields, action }),
-        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(35000)]) : AbortSignal.timeout(35000),
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(action === 'sync' ? 125000 : 35000)]) : AbortSignal.timeout(action === 'sync' ? 125000 : 35000),
       });
       current();
       if (!response.headers.get('content-type')?.includes('application/json')) throw new Error();
@@ -38,6 +38,14 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
           || result.paymentReady !== false || result.identityVerification?.verified !== false
           || result.identityVerification?.status !== 'deferred-for-testnet'
           || !['not-created', 'locked'].includes(result.privateWallet?.status)) throw new Error();
+      if (action === 'sync' && (result.privateWallet.status !== 'locked'
+          || result.synchronization?.status !== 'history-scans-complete'
+          || result.synchronization?.scans?.utxo !== 'Complete' || result.synchronization?.scans?.txid !== 'Complete'
+          || result.synchronization?.walletScanned !== true || !Number.isFinite(Date.parse(result.synchronization?.checkedAt))
+          || result.spendableBalanceVerified !== true || result.spendableBalance?.decimals !== 6
+          || result.spendableBalance?.token !== '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
+          || result.spendableBalance?.source !== 'sdk-spendable-snapshot'
+          || !/^(0|[1-9][0-9]{0,77})$/.test(result.spendableBalance?.amountUnits))) throw new Error();
       return result;
     } catch (error) {
       if (error instanceof AccountRequestError) throw error;

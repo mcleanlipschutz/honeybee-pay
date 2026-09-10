@@ -109,7 +109,7 @@ function Checkout({ connection, runtime }) {
   };
   return <div className="shell">
     <header><a className="brand" href="/" aria-label="Honeybee Pay home"><span className="mark">h.</span>honeybee<span className="brand-light">pay</span></a><span className="network"><i/>Sepolia testnet</span></header>
-    <PaymentCount/>
+    {!localWalletSetup && <PaymentCount/>}
     <nav className="view-switch" aria-label="Honeybee sections"><button aria-pressed={view === 'wallet'} disabled={busy || (!!hash && !receipt)} onClick={() => setView('wallet')}>Wallet setup</button><button aria-pressed={view === 'checkout'} onClick={() => setView('checkout')}>Public test checkout</button><button aria-pressed={view === 'receipts'} disabled={busy || (!!hash && !receipt)} onClick={() => setView('receipts')}>Receipts</button></nav>
     <main>
       <section className="intro"><span className="eyebrow">A LITTLE SIMPLER. A LITTLE SAFER.</span><h1>Good payments.<br/><span>Your rules.</span></h1><p>A checkout that keeps you in control.<br/>Choose the merchant. Review the amount.<br/>Approve exactly what you mean to pay.</p><div className="intro-note"><span className="circle">✓</span><span>Built for everyday payments.<small>Testing with USDC on Sepolia.</small></span></div><div className="honey-art" aria-hidden="true"><div className="hex one"/><div className="hex two"/><div className="hex three"/><span>MAKE IT<br/>HONEYBEE.</span></div></section>

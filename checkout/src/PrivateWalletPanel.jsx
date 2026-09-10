@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createAccountWalletClient, isLocalDemo, readRecoveryFile } from './account-client.mjs';
+import { formatUnits } from 'viem';
 
 const actionNames = { create: 'Create private wallet', restore: 'Restore my wallet',
-  unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup' };
+  unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance' };
 
 export function PrivateWalletPanel({ connection, runtime }) {
   const accountId = connection?.ready && connection?.authenticated ? connection.userId : null;
@@ -21,6 +22,10 @@ export function PrivateWalletPanel({ connection, runtime }) {
   const perform = async (action, fields = {}) => {
     if (!client || inFlight.current) return;
     inFlight.current = true; setBusy(true); setMessage('');
+    if (action === 'sync') {
+      setResult(previous => previous ? { ...previous, synchronization: null, spendableBalance: null, spendableBalanceVerified: false } : previous);
+      setMessage('Checking private wallet history and spendable test USDC. This can take up to two minutes.');
+    }
     controller.current = new AbortController();
     try {
       const next = await client.execute(action, fields, controller.current.signal);
@@ -32,6 +37,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
       else if (action === 'restore') setMessage('Your private wallet was restored for this account.');
       else if (action === 'verify-backup') setMessage('Recovery copy verified. It opens the wallet saved for this account.');
       else if (action === 'unlock') setMessage('Wallet and recovery password checked. The wallet is now locked again.');
+      else if (action === 'sync') setMessage('Private wallet history checked. The balance below is a snapshot; the wallet is locked again.');
     } catch (error) {
       if (alive.current) {
         setMessage(error.message);
@@ -77,7 +83,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
       {result?.privateWallet.privateAddress && <details className="wallet-details"><summary>Private wallet address</summary><code>{result.privateWallet.privateAddress}</code><p>Private payments are not enabled yet. This is not a public funding address.</p></details>}
       {result && <>
         <div className="wallet-actions" role="group" aria-label="Private wallet actions">
-          {(existing ? ['unlock', 'backup', 'verify-backup'] : ['create', 'restore']).map(action => <button key={action} type="button" className="secondary" aria-pressed={mode === action} disabled={busy} onClick={() => { setMode(action); formRef.current?.reset(); setMessage(''); }}>{actionNames[action]}</button>)}
+          {(existing ? ['unlock', 'backup', 'verify-backup', ...(runtime?.accountSyncEnabled ? ['sync'] : [])] : ['create', 'restore']).map(action => <button key={action} type="button" className="secondary" aria-pressed={mode === action} disabled={busy} onClick={() => { setMode(action); formRef.current?.reset(); setMessage(''); }}>{actionNames[action]}</button>)}
         </div>
         <form ref={formRef} onSubmit={submit} key={mode}>
           {['restore', 'verify-backup'].includes(mode) && <><label htmlFor="recovery-file">Encrypted Honeybee backup</label><input id="recovery-file" name="backup" type="file" accept="application/json,.json" required disabled={busy}/></>}
@@ -88,6 +94,11 @@ export function PrivateWalletPanel({ connection, runtime }) {
           <button className="primary" disabled={busy || uncertain}>{busy ? 'Working…' : actionNames[mode]}</button>
         </form>
       </>}
+      {result?.spendableBalanceVerified && result.spendableBalance && <div className="notice">
+        <strong>{formatUnits(BigInt(result.spendableBalance.amountUnits), 6)} test USDC available privately</strong>
+        <p>Checked {new Date(result.synchronization.checkedAt).toLocaleString()}. This is a snapshot of spendable private funds, separate from your public wallet balance.</p>
+        <p>{result.spendableBalance.amountUnits === '0' ? 'No spendable test USDC was found. Private funding is the next step.' : 'Private payment checkout is still being built.'}</p>
+      </div>}
       {download && <div className="notice protected"><strong>Your encrypted recovery copy is ready.</strong><p>Save it somewhere you can access if this device is lost. Then use “Verify saved backup” to check your saved file.</p><button className="secondary" onClick={saveBackup} disabled={busy}>Download encrypted backup</button></div>}
     </>}
     {message && <p className="status" role="status">{message}</p>}

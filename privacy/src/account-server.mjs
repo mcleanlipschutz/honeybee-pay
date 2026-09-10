@@ -30,12 +30,12 @@ async function body(req) {
 
 // Serves only a built checkout and a narrow wallet API on IPv4 loopback. There is
 // no configurable public bind address, permissive CORS, or token-in-URL path.
-export async function startAccountServer({ directory, distDirectory, appId, verificationKey, port = 4173 }) {
+export async function startAccountServer({ directory, distDirectory, appId, verificationKey, syncConfig, port = 4173 }) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('Invalid local port');
   const dist = await realpath(resolve(distDirectory));
   if (!(await stat(join(dist, 'index.html'))).isFile()) throw new Error('Build the checkout first');
   const authenticate = await createAccountAuthenticator({ appId, verificationKey });
-  const accounts = await createAccountWalletService({ directory, appId, verificationKey });
+  const accounts = await createAccountWalletService({ directory, appId, verificationKey, syncConfig });
   let origin, pending = 0;
   const limits = new Map();
   function rateLimit(key, maximum) {
@@ -55,7 +55,7 @@ export async function startAccountServer({ directory, distDirectory, appId, veri
       }
       if (req.url === '/api/runtime' && req.method === 'GET') {
         return json(res, 200, { mode: 'local-testnet', apiVersion: 1, chainId: 11155111, appId,
-          identityVerification: 'deferred-for-testnet' });
+          identityVerification: 'deferred-for-testnet', accountSyncEnabled: !!syncConfig });
       }
       if (req.url === '/api/account-wallet') {
         rateLimit('all', 90);

@@ -292,3 +292,21 @@ client and Worker builds passed. Audit remains 25 production findings (24 modera
 1 high) in pre-existing transitive dependencies. No transaction was broadcast by
 the agent. Direct live RPC verification in this workspace was network-blocked;
 new hosted API and phone validation are recorded as outstanding in TEST_CHECKLIST.
+
+
+## Segment 1P — private account synchronization
+
+Connected the authenticated local wallet flow to reviewed Sepolia deployment
+checks, POI availability, both SDK history scans and the loaded account's
+spendable-USDC snapshot. The runtime still handles keys locally, locks the wallet
+after every operation and leaves private payments disabled. Added local browser
+sync action, bounded deadlines and rejection of incomplete or wrong-account
+results. Repaired the local server path after the counter's client/server build
+split. No private runtime was published and no transaction was broadcast.
+
+Validation: nine focused privacy tests and four checkout-client tests passed;
+checkout build passed; built local page served HTTP 200 with sync enabled.
+Real-wallet tests exercised authentication/recovery and a local wrong-chain RPC;
+successful scan/balance behavior used controlled SDK fixtures. Live account sync,
+shielding and private settlement remain unverified. No dependency versions changed.
+See privacy/SEGMENT-1P.md and the remaining test checklist.

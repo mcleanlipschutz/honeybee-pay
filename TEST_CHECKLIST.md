@@ -42,7 +42,8 @@ release.
 
 - [x] Local proof verification and tamper checks passed.
 - [x] Disposable demo wallets completed read-only Sepolia history synchronization.
-- [ ] Connect synchronization to the new account-bound wallets.
+- [x] Connect synchronization to account-bound wallets (Segment 1P implementation and controlled tests).
+- [ ] Run a live account-bound scan and confirm the private balance snapshot on the local test machine.
 - [x] Fund the buyer’s public wallet with Sepolia test ETH and test USDC.
 - [ ] Build and confirm test-USDC shielding with reviewed approval, amount and fees.
 - [ ] Confirm the new account's shielded balance is spendable before enabling payment.

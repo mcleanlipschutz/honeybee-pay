@@ -23,6 +23,12 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
+[Segment 1P](privacy/SEGMENT-1P.md) adds account-scoped private history scanning
+and spendable-balance snapshots to the protected local wallet flow. Focused
+authentication, recovery and synchronization checks pass. Live account sync,
+shielding and settled private payments remain the next gates. The hosted demo
+currently provides public test checkout, receipts and a test-payment counter.
+
 The local [account-wallet service](privacy/SEGMENT-1K.md) now binds private
 wallets to verified login tokens, creates separate buyer/merchant roots, and
 supports encrypted recovery under the same account. [Segment 1L](privacy/SEGMENT-1L.md)
