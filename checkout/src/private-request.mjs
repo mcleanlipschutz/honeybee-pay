@@ -1,3 +1,4 @@
+import { validatePrivateRequestHistory } from '../../shared/private-request-history.mjs';
 import { bech32m } from '@scure/base';
 import { keccak256, stringToHex } from 'viem';
 import { validatePrivateRequest, privateRequestFile, readPrivateRequestFile, privateRequestInvoice } from '../../shared/private-request.mjs';
@@ -14,6 +15,7 @@ export function validatePrivateRecipient(recipient) {
   if (!network.every(value => value === 255) && (network[0] !== 0 || chainId !== 11155111n)) throw new Error('Invalid private recipient');
 }
 const dependencies = now => ({ now, validateRecipient: validatePrivateRecipient, hash: text => keccak256(stringToHex(text)) });
+export const validatePaymentRequestHistory = (value, { recipient, now } = {}) => validatePrivateRequestHistory(value, { ...dependencies(now), recipient });
 export const validatePaymentRequest = (value, now) => validatePrivateRequest(value, dependencies(now));
 export const paymentRequestFile = (value, now) => privateRequestFile(value, dependencies(now));
 export const readPaymentRequest = (text, now) => readPrivateRequestFile(text, dependencies(now));

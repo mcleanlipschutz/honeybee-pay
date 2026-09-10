@@ -1,8 +1,10 @@
-import { privateRequestAmount, validatePaymentRequest } from './private-request.mjs';
+import { privateRequestAmount, validatePaymentRequest, validatePaymentRequestHistory } from './private-request.mjs';
 import { validateShieldReview } from './shield-review.mjs';
 import { validateShieldPreflight } from './shield-preflight.mjs';
 
 const messages = {
+  'invoice-create-failed': 'Request creation was not confirmed. Check your recovery password and open request history before trying again.',
+  'invoice-history-failed': 'Request history could not be opened. Check your recovery password and local connection. Existing history was not reset.',
   'sign-in-required': 'Sign in again, then refresh your wallet status.',
   'try-later': 'The local wallet is busy. Wait a moment, then refresh its status.',
   'wallet-operation-failed': 'The wallet operation could not complete. Check your password, backup and local connection, then refresh wallet status. Existing wallets are never overwritten.',
@@ -53,13 +55,17 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
           || result.spendableBalance?.token !== '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
           || result.spendableBalance?.source !== 'sdk-spendable-snapshot'
           || !/^(0|[1-9][0-9]{0,77})$/.test(result.spendableBalance?.amountUnits))) throw new Error();
-      if (action === 'invoice-create') {
+      if (['invoice-create', 'invoice-history'].includes(action)) {
         if (result.privateWallet.status !== 'locked' || !result.privateWallet.id
             || result.networkLoaded !== false || result.spendableBalanceVerified !== false) throw new Error();
+        result.requestHistory = validatePaymentRequestHistory(result.requestHistory, { recipient: result.privateWallet.privateAddress });
+      }
+      if (action === 'invoice-create') {
         result.paymentRequest = validatePaymentRequest(result.paymentRequest);
         if (result.paymentRequest.recipient !== result.privateWallet.privateAddress
             || result.paymentRequest.amountUnits !== privateRequestAmount(fields.amount)
-            || result.paymentRequest.expiresAt - result.paymentRequest.createdAt !== fields.lifetimeSeconds) throw new Error();
+            || result.paymentRequest.expiresAt - result.paymentRequest.createdAt !== fields.lifetimeSeconds
+            || !result.requestHistory.requests.some(item => JSON.stringify(item) === JSON.stringify(result.paymentRequest))) throw new Error();
       }
       if (action === 'shield-review') {
         if (result.privateWallet.status !== 'locked' || result.spendableBalanceVerified !== false || result.networkLoaded !== false) throw new Error();
@@ -75,6 +81,7 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
       }
       return result;
     } catch (error) {
+      if (['invoice-create', 'invoice-history'].includes(action) && !['session-changed', 'sign-in-required'].includes(error.code)) throw new AccountRequestError(`${action}-failed`);
       if (action === 'shield-preflight' && !['session-changed', 'sign-in-required'].includes(error.code)) throw new AccountRequestError('preflight-failed');
       if (error instanceof AccountRequestError) throw error;
       throw new AccountRequestError('connection-failed');

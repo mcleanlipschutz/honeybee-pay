@@ -65,6 +65,11 @@ release.
 - [x] Implement request-file download and buyer import/review; validate checksum/address, exact terms, expiry and account changes.
 - [x] Test immutable transfer-adapter terms and reject replacement after review before proving.
 - [ ] Verify the request download/import and expiry flow in the actual local browser, including sign-out and account changes.
+- [x] Persist merchant requests in encrypted account history and reopen after runtime restart (Segment 1U; actual SDK/API tests).
+- [x] Reject corrupt or cross-account history, preserve prior records on interrupted writes, and keep historical expiry separate from payment validity.
+- [x] Add local history list, exact request details, active-request downloads and explicit unverified payment status.
+- [ ] Verify history reopening and clearing in the actual browser on the trusted computer.
+- [ ] Add and test encrypted history export/restore; wallet recovery alone does not include request history.
 - [ ] Open the invoice from a link or QR code and review its exact terms.
 - [ ] Generate, submit and settle a real test private transfer.
 - [ ] Verify receipt of the matching payment from the merchant's wallet state.

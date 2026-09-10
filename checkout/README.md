@@ -291,9 +291,33 @@ merchant channel. The digest checks exact terms; it is not a merchant signature.
 The request file is not encrypted and contains the amount and private recipient.
 No password, account ID, email, wallet ID or token is exported.
 
-Request data remains in page memory until cleared, navigation or sign-out. Files
+Decrypted request data remains in page memory until cleared, navigation or sign-out.
+Segment 1U also stores created merchant requests encrypted in the local runtime. Files
 are native compact JSON up to 4 KB; malformed, altered or expired files fail.
 Requests are not receipts, do not increase the payment count and cannot submit
 a private payment. The existing hosted mobile site is unchanged. Actual browser
 file-picker/download and account-change checks remain pending.
 See [Segment 1T](../privacy/SEGMENT-1T.md) for the implementation and validation.
+
+## Saved merchant request history (Segment 1U)
+
+Merchant request creation now saves the exact terms in encrypted account history
+before returning success. Choose **Open request history**, enter your recovery
+password, and select a saved request to see its amount, reference, expiry and
+private recipient. Active requests can be downloaded again; expired requests
+remain viewable without becoming valid for payment. Close history or sign out
+to clear the displayed history. The page initially shows ten records and can
+show more, up to the 128-request local test limit.
+
+History is encrypted on this computer and scoped to the authenticated account’s
+recovered wallet. It is not included in the wallet recovery backup. Restoring a
+wallet on another installation alone will not restore request history; encrypted
+history export/import is still pending. Requests created before this update are
+not automatically backfilled from files.
+
+If creation is not confirmed, open history before trying again: the save may
+have completed before the response was lost. Corrupt or mismatched history is
+never automatically reset. History is not a payment ledger, does not establish
+settlement and does not increase the public transaction count. The hosted mobile
+site and closed private-signing gate are unchanged.
+See [Segment 1U](../privacy/SEGMENT-1U.md) for tests and storage limitations.

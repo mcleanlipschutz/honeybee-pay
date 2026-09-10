@@ -11,6 +11,7 @@ import { accountBackupLimit, decryptAccountBackup, encryptAccountBackup } from '
 import * as sdk from '@railgun-community/wallet';
 import { prepareAccountSync, scanAccountWallet, accountSyncDeadline, accountSyncNetwork } from './account-sync.mjs';
 import { prepareShieldReview } from './account-shield.mjs';
+import { createRequestHistoryStore } from './request-history.mjs';
 import { createAccountInvoice } from './account-invoice.mjs';
 import { preflightShield } from './shield-preflight.mjs';
 
@@ -111,11 +112,18 @@ async function operate({ directory, session, action, password, backup, syncConfi
     const shieldResult = action === 'shield-review' ? await prepareShieldReview({ wallet, amount, publicAddress,
       prepared, checkSession, expiresAt: session.expiresAt }) : null;
     const invoiceResult = action === 'invoice-create' ? createAccountInvoice({ wallet, amount, lifetimeSeconds, checkSession }) : null;
+    let requestHistory;
+    if (['invoice-create', 'invoice-history'].includes(action)) {
+      const store = createRequestHistoryStore({ directory: slot, privateKey: root.privateKey,
+        ownerId: session.ownerId, recipient: wallet.railgunAddress, checkSession });
+      requestHistory = action === 'invoice-create' ? await store.append(invoiceResult.paymentRequest) : await store.read();
+    }
     if (action === 'sync') await sdk.unloadProvider(accountSyncNetwork);
     await stopRailgunEngine(); engineStarted = false;
     checkSession();
     completed = true;
     return { ...readiness('locked', wallet), ...syncResult, ...shieldResult, ...invoiceResult,
+      ...(requestHistory ? { requestHistory } : {}),
       recovery: action === 'create' ? 'backup-created' : action === 'restore' ? 'restored' : 'backup-verified',
       ...(['create', 'backup'].includes(action) ? { encryptedBackup: encrypted } : {}) };
   } finally {

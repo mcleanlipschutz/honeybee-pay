@@ -23,6 +23,13 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
+[Segment 1U](privacy/SEGMENT-1U.md) saves merchant requests in encrypted local
+account history and adds **Open request history**. Merchants can reopen exact
+terms after signing in again; expired requests remain viewable and payment
+status stays unverified. 24 focused tests and the checkout build pass. This
+history is local to the computer and is not included in the wallet recovery
+backup. Browser testing and encrypted history export/restore remain pending.
+
 [Segment 1T](privacy/SEGMENT-1T.md) adds local merchant payment requests:
 create from the signed-in account’s recovered private wallet, download a request
 file, and import it for buyer review. Exact amount/network/expiry/address checks

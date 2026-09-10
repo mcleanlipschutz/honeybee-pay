@@ -49,7 +49,7 @@ export async function createAccountWalletService({ directory, appId, verificatio
       const importsBackup = ['restore', 'verify-backup'].includes(action);
       const allowed = ['action', 'accessToken', ...(needsPassword ? ['password'] : []), ...(importsBackup ? ['backup'] : []), ...(action === 'shield-review' ? ['amount', 'publicAddress'] : []), ...(action === 'shield-preflight' ? ['reviewId'] : []), ...(action === 'invoice-create' ? ['amount', 'lifetimeSeconds'] : [])];
       if (Object.keys(request).some(key => !allowed.includes(key))
-          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync', 'shield-review', 'shield-preflight', 'invoice-create'].includes(action)) throw new Error();
+          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync', 'shield-review', 'shield-preflight', 'invoice-create', 'invoice-history'].includes(action)) throw new Error();
       if (usesNetwork && !synchronization) throw new Error();
       if (action === 'shield-review') shieldInput(amount, publicAddress);
       if (action === 'invoice-create') invoiceInput(amount, lifetimeSeconds);

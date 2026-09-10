@@ -10,10 +10,11 @@ import { accountFixture } from './account-fixture.mjs';
 import { paymentRequestFile, readPaymentRequest } from '../../checkout/src/private-request.mjs';
 import { createAccountWalletClient } from '../../checkout/src/account-client.mjs';
 
-async function setup(t, fixture) {
+async function setup(t, fixture, existingDirectory) {
   const root = await mkdtemp(join(tmpdir(), 'honeybee-http-'));
-  const directory = join(root, 'accounts'), distDirectory = join(root, 'dist');
-  await mkdir(directory, { mode: 0o700 }); await mkdir(distDirectory);
+  const directory = existingDirectory ?? join(root, 'accounts'), distDirectory = join(root, 'dist');
+  if (!existingDirectory) await mkdir(directory, { mode: 0o700 });
+  await mkdir(distDirectory);
   await writeFile(join(distDirectory, 'index.html'), '<!doctype html><title>Local test fixture</title>');
   const server = await startAccountServer({ directory, distDirectory, ...fixture, port: 0 });
   t.after(async () => { await server.close(); await rm(root, { recursive: true, force: true }); });
@@ -55,9 +56,19 @@ test('browser client and local API create, export, verify and restore actual acc
   const invoice = await buyer.execute('invoice-create', fields);
   assert.equal(invoice.paymentRequest.recipient, created.privateWallet.privateAddress);
   assert.equal(invoice.networkLoaded, false); assert.equal(invoice.paymentReady, false);
+  assert.equal(invoice.requestHistory.requests[0].digest, invoice.paymentRequest.digest);
+  const opened = await buyer.execute('invoice-history', { password });
+  assert.deepEqual(opened.requestHistory, invoice.requestHistory);
+  const restartedServer = await setup(t, fixture, server.directory);
+  const reopened = await client(restartedServer, await fixture.token('buyer', { sid: 'new-session' })).execute('invoice-history', { password });
+  assert.deepEqual(reopened.requestHistory, invoice.requestHistory);
+  await assert.rejects(buyer.execute('invoice-history', { password: randomBytes(24).toString('hex') }));
+  await assert.rejects(buyer.execute('invoice-history', { password, ownerId: 'merchant' }));
+  assert.equal((await buyer.execute('status')).requestHistory, undefined);
   assert.deepEqual(readPaymentRequest(paymentRequestFile(invoice.paymentRequest)), invoice.paymentRequest);
   const otherInvoice = await merchant.execute('invoice-create', { ...fields, password: merchantPassword });
   assert.notEqual(otherInvoice.paymentRequest.recipient, invoice.paymentRequest.recipient);
+  assert.equal(otherInvoice.requestHistory.requests.some(item => item.id === invoice.paymentRequest.id), false);
   const restarted = await client(secondServer, await fixture.token()).execute('invoice-create', fields);
   assert.equal(restarted.paymentRequest.recipient, invoice.paymentRequest.recipient);
   assert.notEqual(restarted.paymentRequest.id, invoice.paymentRequest.id);

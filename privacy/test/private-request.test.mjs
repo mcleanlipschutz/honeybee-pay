@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { RailgunEngine } from '@railgun-community/engine';
 import { bech32m } from '@scure/base';
 import { createAccountInvoice, invoiceInput, invoiceValidation, validatePrivateRecipient as validateServer } from '../src/account-invoice.mjs';
+import { privateRequestHistory } from '../../shared/private-request-history.mjs';
 import { privateRequestBody, validatePrivateRequest } from '../../shared/private-request.mjs';
 import { validatePaymentRequest, paymentRequestFile, readPaymentRequest, paymentRequestInvoice,
   validatePrivateRecipient as validateBrowser, createPaymentRequestReader } from '../../checkout/src/private-request.mjs';
@@ -118,7 +119,7 @@ test('account client binds request to returned wallet, amount and lifetime, reje
   const response = { account: { authenticated: true }, network: 'Ethereum_Sepolia',
     identityVerification: { verified: false, status: 'deferred-for-testnet' },
     privateWallet: { status: 'locked', id: wallet.id, privateAddress: wallet.railgunAddress },
-    paymentReady: false, networkLoaded: false, spendableBalanceVerified: false, paymentRequest };
+    paymentReady: false, networkLoaded: false, spendableBalanceVerified: false, paymentRequest, requestHistory: privateRequestHistory([paymentRequest], { ...invoiceValidation(Math.floor(Date.now() / 1000)), recipient: wallet.railgunAddress }) };
   let next = response, current = true, changeDuringFetch = false;
   const client = createAccountWalletClient({ origin: 'http://127.0.0.1:4173', getAccessToken: async () => 'fixture', isCurrent: () => current,
     fetchImpl: async () => { if (changeDuringFetch) current = false; return new Response(JSON.stringify(next), { headers: { 'content-type': 'application/json' } }); } });

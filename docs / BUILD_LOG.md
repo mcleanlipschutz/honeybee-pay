@@ -436,3 +436,40 @@ no private runtime was published, and the hosted site is unchanged. KYC remains
 deferred. See privacy/SEGMENT-1T.md and its validation report.
 
 AI assistance: Codex implemented and tested this segment at McLean's direction.
+
+## Segment 1U — encrypted local merchant request history
+
+Request creation now saves the exact request into an encrypted per-account
+history before returning success. The existing authenticated worker recovers the
+wallet, derives a separate history key and holds its account lock across the
+read/append operation. Added password-protected invoice-history with no caller
+selectors, chain RPC or payment signing. The UI lists saved requests, reopens
+exact terms, redownloads active requests and keeps expiry separate from payment
+status. Displayed history clears on close, account changes and other operations.
+
+Storage uses AES-256-GCM with a fresh salt/IV and HKDF-SHA256 scoped to the
+recovered root and authenticated account. Private files are bounded and checked
+for unsafe links, ownership and permissions. Replacement uses an exclusively
+created temporary file, file sync, atomic rename and POSIX directory sync.
+Corruption fails closed; duplicate identical records do not rewrite history;
+conflicting IDs or the 128-record limit reject additions without dropping records.
+A response lost after a save is recoverable by opening history before retrying.
+
+Validation: 24 focused tests passed (nine new storage/history/client tests,
+eight request regressions, three local HTTP tests and four account-client tests).
+HTTP coverage uses real SDK wallets and reopens the same account history through
+a new server with a new login session. Storage tests cover wrong accounts/keys,
+corruption, unsafe files, interrupted replacement, late responses, historical
+expiry and capacity. The nine history tests passed again after bounding file-read
+allocation. Checkout client/Worker build passed with existing chunk-size and
+viem worker_threads warnings. No dependency versions changed or fresh audit ran.
+
+History is local to this installation and is not included in the wallet recovery
+backup; encrypted history export/restore is not built. File size/timing remain
+visible, and encryption does not detect rollback/deletion by the filesystem
+owner. This is not a settlement ledger, merchant receipt or once-only payment
+reconciliation. Actual browser, Windows and power-loss validation remain pending.
+No transaction was signed or broadcast; no private runtime or new site version
+was published. KYC remains deferred. See privacy/SEGMENT-1U.md and its report.
+
+AI assistance: Codex implemented and tested this segment at McLean's direction.

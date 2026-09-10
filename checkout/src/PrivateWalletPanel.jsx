@@ -7,7 +7,7 @@ import { privateRequestAmount } from './private-request.mjs';
 import { shieldConfirmationStep } from './shield-preflight.mjs';
 
 const actionNames = { create: 'Create private wallet', restore: 'Restore my wallet',
-  unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance', 'shield-review': 'Review test deposit', 'invoice-create': 'Create payment request' };
+  unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance', 'shield-review': 'Review test deposit', 'invoice-create': 'Create payment request', 'invoice-history': 'Open request history' };
 
 export function PrivateWalletPanel({ connection, runtime }) {
   const accountId = connection?.ready && connection?.authenticated ? connection.userId : null;
@@ -33,7 +33,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
     if (!client || inFlight.current) return;
     inFlight.current = true; setBusy(true); setMessage('');
     const savedReview = action === 'shield-preflight' ? result?.shieldReview : null;
-    setResult(previous => previous ? { ...previous, shieldReview: savedReview, shieldPreflight: null, paymentRequest: null } : previous);
+    setResult(previous => previous ? { ...previous, shieldReview: savedReview, shieldPreflight: null, paymentRequest: null, requestHistory: null } : previous);
     if (action === 'sync') {
       setResult(previous => previous ? { ...previous, synchronization: null, spendableBalance: null, spendableBalanceVerified: false } : previous);
       setMessage('Checking private wallet history and spendable test USDC. This can take up to two minutes.');
@@ -56,7 +56,8 @@ export function PrivateWalletPanel({ connection, runtime }) {
       setMode(next.privateWallet.status === 'not-created' ? 'create' : 'unlock');
       if (next.encryptedBackup) setDownload(next.encryptedBackup);
       if (action === 'create') setMessage('Wallet created. Download your encrypted backup and keep its password separately.');
-      else if (action === 'invoice-create') setMessage('Payment request created. Your wallet is locked again.');
+      else if (action === 'invoice-create') setMessage('Payment request saved to this account’s encrypted local history. Your wallet is locked again.');
+      else if (action === 'invoice-history') setMessage('Request history opened. Payment status has not been checked; these are not receipts.');
       else if (action === 'restore') setMessage('Your private wallet was restored for this account.');
       else if (action === 'verify-backup') setMessage('Recovery copy verified. It opens the wallet saved for this account.');
       else if (action === 'unlock') setMessage('Wallet and recovery password checked. The wallet is now locked again.');
@@ -128,7 +129,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
       {result?.privateWallet.privateAddress && <details className="wallet-details"><summary>Private wallet address</summary><code>{result.privateWallet.privateAddress}</code><p>Private payments are not enabled yet. This is not a public funding address.</p></details>}
       {result && <>
         <div className="wallet-actions" role="group" aria-label="Private wallet actions">
-          {(existing ? ['unlock', 'backup', 'verify-backup', ...(runtime?.accountSyncEnabled ? ['sync'] : []), ...(runtime?.shieldReviewEnabled ? ['shield-review'] : []), ...(runtime?.privateRequestsEnabled ? ['invoice-create'] : [])] : ['create', 'restore']).map(action => <button key={action} type="button" className="secondary" aria-pressed={mode === action} disabled={busy} onClick={() => { setMode(action); formRef.current?.reset(); setMessage(''); setResult(previous => ({ ...previous, shieldReview: null, paymentRequest: null })); }}>{actionNames[action]}</button>)}
+          {(existing ? ['unlock', 'backup', 'verify-backup', ...(runtime?.accountSyncEnabled ? ['sync'] : []), ...(runtime?.shieldReviewEnabled ? ['shield-review'] : []), ...(runtime?.privateRequestsEnabled ? ['invoice-create', 'invoice-history'] : [])] : ['create', 'restore']).map(action => <button key={action} type="button" className="secondary" aria-pressed={mode === action} disabled={busy} onClick={() => { setMode(action); formRef.current?.reset(); setMessage(''); setResult(previous => ({ ...previous, shieldReview: null, paymentRequest: null, requestHistory: null })); }}>{actionNames[action]}</button>)}
         </div>
         <form ref={formRef} onSubmit={submit} key={mode}>
           {mode === 'invoice-create' && <>
@@ -181,7 +182,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
           <p>Approval and deposit submission are not enabled in this build. Wallet confirmation and live deposit verification come next.</p>
         </> : <p>Choose “Review test deposit” again to check fresh terms.</p>}
       </div>}
-      {runtime?.privateRequestsEnabled && <PrivatePaymentRequests key={accountId} created={result?.paymentRequest} isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
+      {runtime?.privateRequestsEnabled && <PrivatePaymentRequests key={accountId} created={result?.paymentRequest} history={result?.requestHistory} onCloseHistory={() => setResult(previous => previous ? { ...previous, requestHistory: null, paymentRequest: null } : previous)} isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
       {download && <div className="notice protected"><strong>Your encrypted recovery copy is ready.</strong><p>Save it somewhere you can access if this device is lost. Then use “Verify saved backup” to check your saved file.</p><button className="secondary" onClick={saveBackup} disabled={busy}>Download encrypted backup</button></div>}
     </>}
     {message && <p className="status" role="status">{message}</p>}
