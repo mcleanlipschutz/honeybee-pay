@@ -221,3 +221,18 @@ AI assistance: Codex implemented and checked this adjustment at McLean's directi
 - Documentation-only change; checked the diff and links to local files. No application code or dependencies changed, and no new runtime tests were needed.
 
 AI assistance: Codex recorded this product and architecture decision at McLean's direction. No identity documents collected, funds moved, transactions broadcast, merge or deployment performed.
+
+## September 10, 2026 - Segment 1K: account-bound private wallets
+
+- Added a local account-wallet service that verifies signed Privy-format access tokens using a configured public key and selects ownership only from verified app/subject claims.
+- Created independently random RAILGUN wallet roots per account, with one account loaded per short-lived child process. No shared buyer/merchant recovery root is used.
+- Added AES-256-GCM encrypted backups with bounded scrypt parameters and account-bound authenticated data. Recovery preserves the private address and wallet ID; a different account cannot restore the backup through this service, even with its correct password.
+- Rejected caller-supplied account selectors, forged/expired/wrong-app tokens, identity-token substitution, tampered backups, overwrite attempts and unsafe filesystem paths. Concurrent creation produces one wallet; expensive workers are bounded.
+- Kept account, wallet and identity-verification states distinct. All results retain KYC not-configured and paymentReady false. No identity documents are collected, and there is no public HTTP or browser connection to the key-handling code.
+- All 66 privacy tests passed, including six new focused tests and actual SDK recovery across fresh processes. Tests use disposable local signing keys, not a live Privy login.
+- Added only jose 6.2.12, pinned in package and lockfile. Audit completed with 28 unresolved findings: 10 high, 14 moderate, 4 low; none attributed to jose. Existing SDK versions are unchanged.
+- Documented host access to decrypted keys, account/password recovery requirements, token-revocation limits and crash behavior in privacy/SEGMENT-1K.md. Saved privacy/reports/segment-1k-validation.json.
+- Next: implement and validate the browser key-handling and recovery path, connect live authentication, then integrate provider-based verification and test-only private checkout. Existing public test checkout remains public.
+- No wallet networks loaded by this segment, funds moved, transactions broadcast, merge or deployment performed.
+
+AI assistance: Codex implemented and tested this segment at McLean's direction. Local account isolation and encrypted recovery pass; this is not production custody, live KYC or a settled private payment.

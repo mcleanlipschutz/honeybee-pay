@@ -8,8 +8,9 @@ is not established until a working live flow is demonstrated.
 The [product direction](../PRODUCT_DIRECTION.md) keeps wallet creation inside
 Honeybee and defines the planned verified-profile and private merchant checkout
 flow. Email login is not KYC, and this checkout's public wallet is not itself a
-privacy mechanism. The next integration starts with authenticated ownership and
-recovery for each user's private wallet.
+privacy mechanism. The local [account-wallet service](../privacy/SEGMENT-1K.md)
+now implements authenticated ownership and encrypted recovery. Connecting that
+boundary to browser onboarding and validating live login remain outstanding.
 
 ## Run
 

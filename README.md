@@ -22,6 +22,11 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
+The local [account-wallet service](privacy/SEGMENT-1K.md) now binds private
+wallets to verified login tokens, creates separate buyer/merchant roots, and
+supports encrypted recovery under the same account. It has not been connected
+to browser onboarding, a live identity-verification provider or private checkout.
+
 A customer-facing [Privy checkout](checkout/README.md) is now implemented with
 email login, an embedded buyer wallet, reviewed Sepolia USDC transfers and
 receipt verification. Its build and payment tests pass. A Privy App ID, browser

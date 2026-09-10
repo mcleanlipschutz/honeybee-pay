@@ -98,8 +98,12 @@ public test checkout labeled public until that private flow is implemented.
   payment review and receipt verification; four payment tests and build passed.
 - Implemented separately: encrypted demo-wallet recovery, local RAILGUN proof
   validation and successful read-only Sepolia history synchronization.
+- Implemented locally in [Segment 1K](privacy/SEGMENT-1K.md): access-token
+  verification, independently generated account wallets, account-bound encrypted
+  recovery and truthful readiness states. This is a trusted local-process API;
+  live Privy validation and browser integration remain outstanding.
 - Unfinished: live Privy validation, production user/account service, KYC,
-  authenticated private-wallet ownership and recovery, in-app shielding, private
+  browser private-wallet ownership and recovery, in-app shielding, private
   checkout, merchant reconciliation, and independent payment-policy enforcement.
 
 This decision records the product scope. It adds no identity collection, live
