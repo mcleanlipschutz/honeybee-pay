@@ -211,3 +211,13 @@ AI assistance: Codex ran and recorded the approved validation at McLean's direct
 - No secrets added, funds moved, merge or deployment performed.
 
 AI assistance: Codex implemented and checked this adjustment at McLean's direction. The frontend is built; browser validation, live Privy payment, RAILGUN bridging and independent policy enforcement remain outstanding.
+
+## September 10, 2026 - In-app wallet and verified-profile product direction
+
+- Recorded the user's clarification in PRODUCT_DIRECTION.md: create a profile and wallet inside Honeybee, complete provider-based identity verification, and use a shielded balance for merchant checkout.
+- Distinguished account login, KYC and payment privacy; documented public funding/withdrawal boundaries and the information known to verification and application services.
+- Defined independent buyer/merchant ownership, private-key recovery, authenticated verification states, invoice-bound authorization and merchant receipt requirements for the next integration.
+- Preserved the existing in-app email/embedded-wallet configuration. No external-wallet-first change was made. KYC and private checkout remain unimplemented and are labeled accordingly.
+- Documentation-only change; checked the diff and links to local files. No application code or dependencies changed, and no new runtime tests were needed.
+
+AI assistance: Codex recorded this product and architecture decision at McLean's direction. No identity documents collected, funds moved, transactions broadcast, merge or deployment performed.

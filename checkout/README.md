@@ -5,6 +5,12 @@ reviewed Sepolia USDC transfers and receipt verification. It targets Privy's
 financial-flow prize through an actual wallet/payment integration. Eligibility
 is not established until a working live flow is demonstrated.
 
+The [product direction](../PRODUCT_DIRECTION.md) keeps wallet creation inside
+Honeybee and defines the planned verified-profile and private merchant checkout
+flow. Email login is not KYC, and this checkout's public wallet is not itself a
+privacy mechanism. The next integration starts with authenticated ownership and
+recovery for each user's private wallet.
+
 ## Run
 
 ```sh
