@@ -17,6 +17,13 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
+A customer-facing [Privy checkout](checkout/README.md) is now implemented with
+email login, an embedded buyer wallet, reviewed Sepolia USDC transfers and
+receipt verification. Its build and payment tests pass. A Privy App ID, browser
+verification and a funded test transaction are still needed for live validation.
+This checkout uses public transfers; its RAILGUN private-payment connection is
+not implemented yet.
+
 The development branch now generates and verifies a real RAILGUN zero-knowledge
 proof locally using synthetic notes. Checks reject altered output commitments,
 bound parameters, recipient inputs and amounts. The transfer adapter and offline

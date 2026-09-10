@@ -198,3 +198,16 @@ AI assistance: Codex implemented and validated this segment at McLean's directio
 - Next: establish the payment-test workspace and verified test asset, fund with test tokens, and check spendable balances before preparing a merchant payment.
 
 AI assistance: Codex ran and recorded the approved validation at McLean's direction. Successful history synchronization is not evidence of payment settlement or an independently enforced firewall.
+
+## September 10, 2026 - Privy checkout integration
+
+- Added a React checkout with Privy email authentication and embedded Ethereum buyer wallets, configured for Sepolia only.
+- Implemented immutable payment review, an explicit recipient-change rejection test, balance/network checks, USDC transfer simulation, Privy confirmation and receipt verification after two confirmations.
+- Pinned Circle's published Sepolia USDC address. Restricted test payments to at most 10 USDC. Submitted hashes remain available for receipt rechecks instead of automatically resending.
+- Created a responsive cream-and-honey interface with explicit public-transfer labeling. The RAILGUN implementation remains in the privacy package; private checkout and key recovery through Privy are not claimed.
+- Four payment tests and the production build passed. Browser verification was blocked when browser installation hit the environment's usage limit. A real Privy App ID and test funds remain necessary for live validation.
+- Initial checkout audit: 27 findings (25 moderate, 2 high, 0 critical). Updated Axios via override to 1.18.0. The ws update and final audit remain blocked by the same environment limit. No dependency-audit pass is claimed.
+- See checkout/README.md and checkout/reports/validation.json. The target sponsor integration is Privy's financial-flow track; no prize eligibility or completed live integration is claimed yet.
+- No secrets added, funds moved, merge or deployment performed.
+
+AI assistance: Codex implemented and checked this adjustment at McLean's direction. The frontend is built; browser validation, live Privy payment, RAILGUN bridging and independent policy enforcement remain outstanding.
