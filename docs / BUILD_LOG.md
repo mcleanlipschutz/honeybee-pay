@@ -385,3 +385,20 @@ transaction was signed/broadcast and no private runtime was published. KYC stays
 deferred. See privacy/SEGMENT-1S.md for the explicit remaining live/browser gates.
 
 AI assistance: Codex implemented and tested this segment at McLean's direction.
+
+## Segment 1T — merchant request design; implementation interrupted
+
+Prepared the account-bound merchant request design while live wallet testing
+waits for the user's computer access. The proposed local flow creates a request
+from the authenticated merchant's recovered private wallet and lets a buyer
+review a compact request file with fixed amount, token, network, expiry and
+reference. Its digest is an integrity check, not merchant authentication or
+proof of payment. Signing, private receipts and payment counting remain disabled.
+
+The coding workspace disconnected during the implementation patch and remained
+unavailable on the follow-up check. No Segment 1T code or tests were completed or
+pushed. This commit saves the design and resume checklist only. Segment 1S remains
+the latest verified implementation. Inspect the local working tree for partial
+changes before resuming. See privacy/SEGMENT-1T-PLAN.md.
+
+AI assistance: Codex prepared this design at McLean's direction.
