@@ -262,3 +262,5 @@ AI assistance: Codex implemented and verified this segment at McLean's direction
 - Registered an owner-private Sites deployment for mobile access; deployment completion is recorded by the hosting status, not by this source entry. The deployment source is a snapshot of checkout only. GitHub PR remains draft and unmerged.
 
 AI assistance: Codex implemented phone access at McLean's request. Public wallet onboarding is prepared for a live test; private settlement and remote private-wallet recovery remain unfinished.
+
+Segment 1M hosting outcome: the first attempt timed out creating the managed HTTPS certificate. One retry of saved version 1 succeeded at 2026-09-10T14:33:08Z. Owner-private live URL: https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site . Phone sign-in remains untested. See MOBILE_ACCESS_STATUS.md for reproducible deployment identifiers and the first phone test.
