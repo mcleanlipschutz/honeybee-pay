@@ -45,7 +45,11 @@ release.
 - [x] Connect synchronization to account-bound wallets (Segment 1P implementation and controlled tests).
 - [ ] Run a live account-bound scan and confirm the private balance snapshot on the local test machine.
 - [x] Fund the buyer’s public wallet with Sepolia test ETH and test USDC.
-- [ ] Build and confirm test-USDC shielding with reviewed approval, amount and fees.
+- [x] Build account-bound test-USDC deposit review with exact unsigned approval and protocol fee (Segment 1Q; controlled tests).
+- [x] Verify prepared shield-note recovery in a fresh SDK database and rejection by another wallet.
+- [ ] Validate the deposit review against live/forked Sepolia state on the local test machine.
+- [ ] Add fresh pre-sign checks, gas estimation, explicit wallet approvals, and shield submission.
+- [ ] Confirm the exact deposit transaction and matching canonical Shield event without automatic resending.
 - [ ] Confirm the new account's shielded balance is spendable before enabling payment.
 - [ ] Restore and resynchronize a wallet after shielding.
 

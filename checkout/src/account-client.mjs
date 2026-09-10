@@ -1,3 +1,5 @@
+import { validateShieldReview } from './shield-review.mjs';
+
 const messages = {
   'sign-in-required': 'Sign in again, then refresh your wallet status.',
   'try-later': 'The local wallet is busy. Wait a moment, then refresh its status.',
@@ -20,6 +22,7 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
   return { async execute(action, fields = {}, signal) {
     current();
     try {
+      fields = { ...fields };
       const token = await getAccessToken();
       current();
       if (!token || typeof token !== 'string') throw new AccountRequestError('sign-in-required');
@@ -27,7 +30,7 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
         method: 'POST', credentials: 'omit', cache: 'no-store', redirect: 'error',
         headers: { 'Content-Type': 'application/json', 'X-Honeybee-Request': 'wallet-v1', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...fields, action }),
-        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(action === 'sync' ? 125000 : 35000)]) : AbortSignal.timeout(action === 'sync' ? 125000 : 35000),
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(['sync', 'shield-review'].includes(action) ? 125000 : 35000)]) : AbortSignal.timeout(['sync', 'shield-review'].includes(action) ? 125000 : 35000),
       });
       current();
       if (!response.headers.get('content-type')?.includes('application/json')) throw new Error();
@@ -46,6 +49,11 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
           || result.spendableBalance?.token !== '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
           || result.spendableBalance?.source !== 'sdk-spendable-snapshot'
           || !/^(0|[1-9][0-9]{0,77})$/.test(result.spendableBalance?.amountUnits))) throw new Error();
+      if (action === 'shield-review') {
+        if (result.privateWallet.status !== 'locked' || result.spendableBalanceVerified !== false || result.networkLoaded !== false) throw new Error();
+        result.shieldReview = validateShieldReview(result.shieldReview, { ...fields,
+          walletId: result.privateWallet.id, privateAddress: result.privateWallet.privateAddress });
+      }
       return result;
     } catch (error) {
       if (error instanceof AccountRequestError) throw error;

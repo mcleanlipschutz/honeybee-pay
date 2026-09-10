@@ -55,7 +55,8 @@ export async function startAccountServer({ directory, distDirectory, appId, veri
       }
       if (req.url === '/api/runtime' && req.method === 'GET') {
         return json(res, 200, { mode: 'local-testnet', apiVersion: 1, chainId: 11155111, appId,
-          identityVerification: 'deferred-for-testnet', accountSyncEnabled: !!syncConfig });
+          identityVerification: 'deferred-for-testnet', accountSyncEnabled: !!syncConfig,
+          shieldReviewEnabled: !!syncConfig, shieldSubmissionEnabled: false });
       }
       if (req.url === '/api/account-wallet') {
         rateLimit('all', 90);

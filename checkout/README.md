@@ -226,3 +226,18 @@ dependencies; this task does not resolve that backlog. No new onchain transactio
 was signed or broadcast. A fresh direct RPC check from this workspace was blocked
 by its network policy; hosted RPC access and a new mobile payment still require
 live validation after publication.
+
+## Local test-deposit review (Segment 1Q)
+
+Build checkout, then start `npm run wallet:web` in `privacy/` with the existing
+local configuration. After account sign-in and private-wallet creation/recovery,
+choose **Review test deposit**, enter up to 10 test USDC and the recovery password.
+The finalized-block review shows protocol fee, expected private credit and
+whether an exact-amount token approval would be needed. It requires working
+Sepolia deployment and POI checks; mock values are never substituted in the UI.
+
+This is local-only and does not change the currently hosted mobile site. No
+approval, signing or deposit submission is enabled. Gas estimation, fresh
+pre-sign validation, wallet confirmation and live settlement are the next gate.
+The review is not a receipt or spendable balance and does not increment the
+homepage payment count. See `privacy/SEGMENT-1Q.md` for the implementation and tests.

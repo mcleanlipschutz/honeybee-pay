@@ -86,6 +86,17 @@ test('real account workers reject unauthorized sync before network access and pr
   // Wrong-chain RPC is local and deterministic. No external network or payment.
   await assert.rejects(service.execute({ action: 'sync', accessToken: token, password }));
   assert.equal(calls, 1);
+  const review = { action: 'shield-review', accessToken: token, password, amount: '1', publicAddress: '0x1111111111111111111111111111111111111111' };
+  await assert.rejects(service.execute({ ...review, accessToken: 'forged' }));
+  await assert.rejects(service.execute({ ...review, accessToken: other }));
+  await assert.rejects(service.execute({ ...review, password: 'wrong-password-has-sixteen-characters' }));
+  for (const extra of [{ recipient: created.privateWallet.privateAddress }, { token: 'other-token' },
+    { network: 'Ethereum' }, { rpcURL: 'https://other.test' }, { amount: '10.000001' }, { action: 'shield-submit' }]) {
+    await assert.rejects(service.execute({ ...review, ...extra }));
+  }
+  assert.equal(calls, 1, 'unauthorized or altered deposit requests must not reach the RPC');
+  await assert.rejects(service.execute(review));
+  assert.equal(calls, 2, 'valid review fails at the wrong-chain preflight without sending any transaction');
   const owner = (await (await createAccountAuthenticator(auth))(token)).ownerId;
   assert.equal(await readFile(join(directory, owner, 'account.backup.json'), 'utf8'), created.encryptedBackup);
   const checked = await service.execute({ action: 'unlock', accessToken: token, password });

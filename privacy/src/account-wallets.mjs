@@ -4,6 +4,7 @@ import { isAbsolute, resolve } from 'node:path';
 import { createAccountAuthenticator } from './account-auth.mjs';
 import { checkRecoveryPassword, accountBackupLimit } from './account-backup.mjs';
 import { accountSyncConfig } from './account-sync.mjs';
+import { shieldInput } from './account-shield.mjs';
 
 let activeWorkers = 0;
 function runWorker(message) {
@@ -15,7 +16,7 @@ function runWorker(message) {
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'], execArgv: [],
     });
     let result;
-    const timer = setTimeout(() => child.kill('SIGKILL'), message.action === 'sync' ? 120000 : 30000);
+    const timer = setTimeout(() => child.kill('SIGKILL'), ['sync', 'shield-review'].includes(message.action) ? 120000 : 30000);
     child.once('error', () => { clearTimeout(timer); reject(new Error('Account wallet operation failed')); });
     child.on('message', value => { result = value; });
     child.once('exit', code => {
@@ -39,15 +40,19 @@ export async function createAccountWalletService({ directory, appId, verificatio
     const session = await authenticate(request?.accessToken);
     try {
       if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error();
-      const { action, password, backup } = request;
+      const { action, password, backup, amount, publicAddress } = request;
+      const usesNetwork = ['sync', 'shield-review'].includes(action);
       const importsBackup = ['restore', 'verify-backup'].includes(action);
-      const allowed = ['action', 'accessToken', ...(action === 'status' ? [] : ['password']), ...(importsBackup ? ['backup'] : [])];
+      const allowed = ['action', 'accessToken', ...(action === 'status' ? [] : ['password']), ...(importsBackup ? ['backup'] : []), ...(action === 'shield-review' ? ['amount', 'publicAddress'] : [])];
       if (Object.keys(request).some(key => !allowed.includes(key))
-          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync'].includes(action)) throw new Error();
-      if (action === 'sync' && !synchronization) throw new Error();
+          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync', 'shield-review'].includes(action)) throw new Error();
+      if (usesNetwork && !synchronization) throw new Error();
+      if (action === 'shield-review') shieldInput(amount, publicAddress);
       if (action !== 'status') checkRecoveryPassword(password);
       if (importsBackup && (typeof backup !== 'string' || Buffer.byteLength(backup) > accountBackupLimit)) throw new Error();
-      return await runWorker({ directory, session, action, password, backup, ...(action === 'sync' ? { syncConfig: synchronization } : {}) });
+      return await runWorker({ directory, session, action, password, backup,
+        ...(action === 'shield-review' ? { amount, publicAddress } : {}),
+        ...(usesNetwork ? { syncConfig: synchronization } : {}) });
     } catch { throw new Error('Account wallet operation failed'); }
   } });
 }

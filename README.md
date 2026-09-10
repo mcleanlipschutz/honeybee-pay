@@ -23,23 +23,25 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
-[Segment 1P](privacy/SEGMENT-1P.md) adds account-scoped private history scanning
-and spendable-balance snapshots to the protected local wallet flow. Focused
-authentication, recovery and synchronization checks pass. Live account sync,
-shielding and settled private payments remain the next gates. The hosted demo
-currently provides public test checkout, receipts and a test-payment counter.
+[Segment 1Q](privacy/SEGMENT-1Q.md) adds account-bound test-USDC deposit reviews:
+amount, protocol fee, expected private credit and exact unsigned approval terms.
+Offline SDK recovery and tamper checks pass. Submission is disabled pending live
+preflight, gas estimation and explicit wallet confirmation. [Segment 1P](privacy/SEGMENT-1P.md)
+provides account-scoped history scanning and spendable-balance snapshots. Live
+account sync, shielding and settled private payments remain the next gates.
+The hosted demo provides public test checkout, receipts and a test-payment counter.
 
 The local [account-wallet service](privacy/SEGMENT-1K.md) now binds private
 wallets to verified login tokens, creates separate buyer/merchant roots, and
 supports encrypted recovery under the same account. [Segment 1L](privacy/SEGMENT-1L.md)
 connects browser setup and recovery to a protected local API. Automated client/API
-checks use real SDK wallets and local token fixtures. Live Privy and browser
-validation remain outstanding; KYC is deferred and private checkout is unbuilt.
+checks use real SDK wallets and local token fixtures. Local browser recovery
+validation remains outstanding; KYC is deferred and private checkout is unbuilt.
 
 A customer-facing [Privy checkout](checkout/README.md) is now implemented with
 email login, an embedded buyer wallet, reviewed Sepolia USDC transfers and
-receipt verification. Its build and payment tests pass. A Privy App ID, browser
-verification and a funded test transaction are still needed for live validation.
+receipt verification. Mobile email login, persistent public-wallet identity and
+a user-signed 1-USDC Sepolia transfer were verified in Segment 1N.
 This checkout uses public transfers; its RAILGUN private-payment connection is
 not implemented yet.
 
@@ -59,8 +61,8 @@ loading now succeeds through the runtime's proxy-aware transport. The approved
 live Sepolia run completed both UTXO and TXID history scans with deployment and
 POI checks enabled. The disposable demo wallets synchronized successfully.
 
-This is a cryptographic development test, not a settled payment. Test-token
-funding, spendable-balance verification and merchant receipts remain unfinished. The buyer approval checks are not yet
+This is a cryptographic development test, not a settled private payment. Private
+funding, spendable-balance verification and encrypted merchant receipts remain unfinished. The buyer approval checks are not yet
 an independently enforced onchain firewall.
 
 See [Segment 1J](privacy/SEGMENT-1J.md) for POI transport and successful synchronization results,

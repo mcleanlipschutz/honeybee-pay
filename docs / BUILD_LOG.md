@@ -310,3 +310,28 @@ Real-wallet tests exercised authentication/recovery and a local wrong-chain RPC;
 successful scan/balance behavior used controlled SDK fixtures. Live account sync,
 shielding and private settlement remain unverified. No dependency versions changed.
 See privacy/SEGMENT-1P.md and the remaining test checklist.
+
+## Segment 1Q — test-USDC deposit review
+
+Added an account-authenticated local deposit review that recovers only the
+current account's private destination. The prepared single-note shield call
+uses installed RAILGUN Engine primitives, pinned Sepolia/USDC/proxy parameters,
+finalized-block fee and allowance reads, and a separate exact-amount approval
+when needed. The browser independently decodes the call and rejects altered
+terms, expired reviews and changed accounts. The local UI shows protocol fees
+and expected private credit, with gas explicitly unestimated and submission
+disabled. No local key-handling runtime was published or transaction broadcast.
+
+Validation: 21 focused tests passed (8 new deposit/SDK/client checks, 9 account/API/
+sync tests including added deposit isolation checks, 4 checkout-client regressions).
+Fresh-database recovery decrypts the prepared note; another wallet cannot.
+Success chain-state responses are controlled fixtures, not live Sepolia evidence.
+Checkout client/Worker build passed; existing warnings and dependency findings
+remain. No dependency versions or Solidity contracts changed.
+
+Read the user-required ETHSkills guidance before implementation. Recorded the
+local trust, public-deposit privacy, MIT source and incomplete exit-path tradeoffs
+in privacy/SEGMENT-1Q.md. KYC stays deferred. Next: local-machine live/fork preflight,
+gas and explicit wallet confirmation, canonical Shield verification and rescan.
+
+AI assistance: Codex implemented and tested this segment at McLean's direction.
