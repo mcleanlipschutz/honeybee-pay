@@ -61,7 +61,10 @@ release.
 
 ## Merchant payment
 
-- [ ] Create a merchant invoice with private recipient, amount, token, chain, expiry and unique ID.
+- [x] Create an account-bound local merchant request with private recipient, amount, token, chain, expiry and unique ID (Segment 1T; actual SDK/API tests).
+- [x] Implement request-file download and buyer import/review; validate checksum/address, exact terms, expiry and account changes.
+- [x] Test immutable transfer-adapter terms and reject replacement after review before proving.
+- [ ] Verify the request download/import and expiry flow in the actual local browser, including sign-out and account changes.
 - [ ] Open the invoice from a link or QR code and review its exact terms.
 - [ ] Generate, submit and settle a real test private transfer.
 - [ ] Verify receipt of the matching payment from the merchant's wallet state.

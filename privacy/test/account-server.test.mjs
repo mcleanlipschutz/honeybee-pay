@@ -7,6 +7,7 @@ import { randomBytes } from 'node:crypto';
 import { request as httpRequest } from 'node:http';
 import { startAccountServer } from '../src/account-server.mjs';
 import { accountFixture } from './account-fixture.mjs';
+import { paymentRequestFile, readPaymentRequest } from '../../checkout/src/private-request.mjs';
 import { createAccountWalletClient } from '../../checkout/src/account-client.mjs';
 
 async function setup(t, fixture) {
@@ -24,7 +25,7 @@ function client(server, accessToken) {
     fetchImpl: (url, options) => fetch(url, { ...options, headers: { ...options.headers, Origin: server.origin } }) });
 }
 
-test('browser client and local API create, export, verify and restore actual account wallets', { timeout: 60000 }, async t => {
+test('browser client and local API create, export, verify and restore actual account wallets', { timeout: 120000 }, async t => {
   const fixture = await accountFixture(), server = await setup(t, fixture);
   const buyer = client(server, await fixture.token()), merchant = client(server, await fixture.token('merchant'));
   const password = randomBytes(24).toString('hex');
@@ -40,7 +41,8 @@ test('browser client and local API create, export, verify and restore actual acc
   assert.deepEqual(verified.privateWallet, created.privateWallet);
   assert.equal(verified.paymentReady, false);
   await assert.rejects(merchant.execute('restore', { password, backup: created.encryptedBackup }));
-  const other = await merchant.execute('create', { password: randomBytes(24).toString('hex') });
+  const merchantPassword = randomBytes(24).toString('hex');
+  const other = await merchant.execute('create', { password: merchantPassword });
   assert.notEqual(other.privateWallet.privateAddress, created.privateWallet.privateAddress);
   await assert.rejects(buyer.execute('verify-backup', { password, backup: other.encryptedBackup }));
   await assert.rejects(buyer.execute('create', { password }));
@@ -48,6 +50,24 @@ test('browser client and local API create, export, verify and restore actual acc
   const recovered = await client(secondServer, await fixture.token('buyer', { sid: 'new-session' })).execute('restore', { password, backup: created.encryptedBackup });
   assert.deepEqual(recovered.privateWallet, created.privateWallet);
   assert.equal(recovered.recovery, 'restored');
+  // Actual SDK recovery through HTTP and browser validation, with no RPC configured.
+  const fields = { password, amount: '1.00', lifetimeSeconds: 3600 };
+  const invoice = await buyer.execute('invoice-create', fields);
+  assert.equal(invoice.paymentRequest.recipient, created.privateWallet.privateAddress);
+  assert.equal(invoice.networkLoaded, false); assert.equal(invoice.paymentReady, false);
+  assert.deepEqual(readPaymentRequest(paymentRequestFile(invoice.paymentRequest)), invoice.paymentRequest);
+  const otherInvoice = await merchant.execute('invoice-create', { ...fields, password: merchantPassword });
+  assert.notEqual(otherInvoice.paymentRequest.recipient, invoice.paymentRequest.recipient);
+  const restarted = await client(secondServer, await fixture.token()).execute('invoice-create', fields);
+  assert.equal(restarted.paymentRequest.recipient, invoice.paymentRequest.recipient);
+  assert.notEqual(restarted.paymentRequest.id, invoice.paymentRequest.id);
+  const backup = await buyer.execute('backup', { password });
+  assert.equal(backup.encryptedBackup, created.encryptedBackup);
+  await assert.rejects(buyer.execute('invoice-create', { ...fields, password: randomBytes(24).toString('hex') }));
+  for (const selector of ['recipient', 'token', 'network', 'ownerId', 'directory', 'id', 'createdAt', 'expiresAt']) {
+    await assert.rejects(buyer.execute('invoice-create', { ...fields, [selector]: 'injected' }));
+  }
+  await assert.rejects(client(server, 'forged').execute('invoice-create', fields));
 });
 
 test('local HTTP boundary rejects other origins, forged tokens, selectors and secret-file paths', { timeout: 15000 }, async t => {
@@ -78,7 +98,10 @@ test('local HTTP boundary rejects other origins, forged tokens, selectors and se
   const runtime = await fetch(server.origin + '/api/runtime');
   assert.equal(runtime.headers.get('cache-control'), 'no-store');
   assert.equal(runtime.headers.has('access-control-allow-origin'), false);
-  assert.equal((await runtime.json()).identityVerification, 'deferred-for-testnet');
+  const capabilities = await runtime.json();
+  assert.equal(capabilities.identityVerification, 'deferred-for-testnet');
+  assert.equal(capabilities.privateRequestsEnabled, true);
+  assert.equal(capabilities.shieldSubmissionEnabled, false);
   const page = await fetch(server.origin + '/'); assert.equal(page.status, 200);
   assert.equal(page.headers.get('x-frame-options'), 'DENY');
   assert.deepEqual(await readdir(server.directory), []);

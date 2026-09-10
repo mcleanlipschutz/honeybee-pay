@@ -2,10 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createAccountWalletClient, isLocalDemo, readRecoveryFile } from './account-client.mjs';
 import { formatUnits } from 'viem';
 import { shieldAmountUnits } from './shield-review.mjs';
+import { PrivatePaymentRequests } from './PrivatePaymentRequests.jsx';
+import { privateRequestAmount } from './private-request.mjs';
 import { shieldConfirmationStep } from './shield-preflight.mjs';
 
 const actionNames = { create: 'Create private wallet', restore: 'Restore my wallet',
-  unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance', 'shield-review': 'Review test deposit' };
+  unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance', 'shield-review': 'Review test deposit', 'invoice-create': 'Create payment request' };
 
 export function PrivateWalletPanel({ connection, runtime }) {
   const accountId = connection?.ready && connection?.authenticated ? connection.userId : null;
@@ -21,7 +23,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
     origin: window.location.origin, getAccessToken: () => latest.current.getAccessToken(),
     isCurrent: () => alive.current && latest.current?.authenticated && latest.current.userId === accountId,
   }) : null, [supported, accountId]);
-  useEffect(() => () => { alive.current = false; controller.current?.abort(); formRef.current?.reset(); }, []);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; controller.current?.abort(); formRef.current?.reset(); }; }, []);
   useEffect(() => {
     if (!result?.shieldReview) return;
     const timer = setInterval(() => setClock(Date.now()), 1000);
@@ -31,7 +33,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
     if (!client || inFlight.current) return;
     inFlight.current = true; setBusy(true); setMessage('');
     const savedReview = action === 'shield-preflight' ? result?.shieldReview : null;
-    setResult(previous => previous ? { ...previous, shieldReview: savedReview, shieldPreflight: null } : previous);
+    setResult(previous => previous ? { ...previous, shieldReview: savedReview, shieldPreflight: null, paymentRequest: null } : previous);
     if (action === 'sync') {
       setResult(previous => previous ? { ...previous, synchronization: null, spendableBalance: null, spendableBalanceVerified: false } : previous);
       setMessage('Checking private wallet history and spendable test USDC. This can take up to two minutes.');
@@ -54,6 +56,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
       setMode(next.privateWallet.status === 'not-created' ? 'create' : 'unlock');
       if (next.encryptedBackup) setDownload(next.encryptedBackup);
       if (action === 'create') setMessage('Wallet created. Download your encrypted backup and keep its password separately.');
+      else if (action === 'invoice-create') setMessage('Payment request created. Your wallet is locked again.');
       else if (action === 'restore') setMessage('Your private wallet was restored for this account.');
       else if (action === 'verify-backup') setMessage('Recovery copy verified. It opens the wallet saved for this account.');
       else if (action === 'unlock') setMessage('Wallet and recovery password checked. The wallet is now locked again.');
@@ -82,6 +85,10 @@ export function PrivateWalletPanel({ connection, runtime }) {
         fields.amount = values.get('amount'); fields.publicAddress = latest.current.wallet?.address;
         shieldAmountUnits(fields.amount);
         if (!fields.publicAddress) throw new Error('Wait for your public wallet to connect, then review the deposit.');
+      }
+      if (mode === 'invoice-create') {
+        fields.amount = values.get('amount'); fields.lifetimeSeconds = Number(values.get('lifetime'));
+        privateRequestAmount(fields.amount);
       }
       if (['restore', 'verify-backup'].includes(mode)) fields.backup = await readRecoveryFile(file);
       if (!alive.current) return;
@@ -121,9 +128,16 @@ export function PrivateWalletPanel({ connection, runtime }) {
       {result?.privateWallet.privateAddress && <details className="wallet-details"><summary>Private wallet address</summary><code>{result.privateWallet.privateAddress}</code><p>Private payments are not enabled yet. This is not a public funding address.</p></details>}
       {result && <>
         <div className="wallet-actions" role="group" aria-label="Private wallet actions">
-          {(existing ? ['unlock', 'backup', 'verify-backup', ...(runtime?.accountSyncEnabled ? ['sync'] : []), ...(runtime?.shieldReviewEnabled ? ['shield-review'] : [])] : ['create', 'restore']).map(action => <button key={action} type="button" className="secondary" aria-pressed={mode === action} disabled={busy} onClick={() => { setMode(action); formRef.current?.reset(); setMessage(''); setResult(previous => ({ ...previous, shieldReview: null })); }}>{actionNames[action]}</button>)}
+          {(existing ? ['unlock', 'backup', 'verify-backup', ...(runtime?.accountSyncEnabled ? ['sync'] : []), ...(runtime?.shieldReviewEnabled ? ['shield-review'] : []), ...(runtime?.privateRequestsEnabled ? ['invoice-create'] : [])] : ['create', 'restore']).map(action => <button key={action} type="button" className="secondary" aria-pressed={mode === action} disabled={busy} onClick={() => { setMode(action); formRef.current?.reset(); setMessage(''); setResult(previous => ({ ...previous, shieldReview: null, paymentRequest: null })); }}>{actionNames[action]}</button>)}
         </div>
         <form ref={formRef} onSubmit={submit} key={mode}>
+          {mode === 'invoice-create' && <>
+            <label htmlFor="request-amount">Amount to request in test USDC</label>
+            <input id="request-amount" name="amount" type="text" inputMode="decimal" defaultValue="1.00" maxLength={16} required disabled={busy}/>
+            <label htmlFor="request-lifetime">Request expires in</label>
+            <select id="request-lifetime" name="lifetime" defaultValue="3600" disabled={busy}><option value="900">15 minutes</option><option value="3600">1 hour</option><option value="86400">24 hours</option></select>
+            <p className="hint">Maximum 10 test USDC. The request uses this account’s private receiving address.</p>
+          </>}
           {mode === 'shield-review' && <>
             <label htmlFor="shield-amount">Test USDC to move into your private wallet</label>
             <input id="shield-amount" name="amount" type="text" inputMode="decimal" defaultValue="1.00" maxLength={16} required disabled={busy}/>
@@ -167,6 +181,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
           <p>Approval and deposit submission are not enabled in this build. Wallet confirmation and live deposit verification come next.</p>
         </> : <p>Choose “Review test deposit” again to check fresh terms.</p>}
       </div>}
+      {runtime?.privateRequestsEnabled && <PrivatePaymentRequests key={accountId} created={result?.paymentRequest} isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
       {download && <div className="notice protected"><strong>Your encrypted recovery copy is ready.</strong><p>Save it somewhere you can access if this device is lost. Then use “Verify saved backup” to check your saved file.</p><button className="secondary" onClick={saveBackup} disabled={busy}>Download encrypted backup</button></div>}
     </>}
     {message && <p className="status" role="status">{message}</p>}

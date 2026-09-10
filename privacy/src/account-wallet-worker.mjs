@@ -11,6 +11,7 @@ import { accountBackupLimit, decryptAccountBackup, encryptAccountBackup } from '
 import * as sdk from '@railgun-community/wallet';
 import { prepareAccountSync, scanAccountWallet, accountSyncDeadline, accountSyncNetwork } from './account-sync.mjs';
 import { prepareShieldReview } from './account-shield.mjs';
+import { createAccountInvoice } from './account-invoice.mjs';
 import { preflightShield } from './shield-preflight.mjs';
 
 const backupFile = 'account.backup.json';
@@ -47,7 +48,7 @@ function readiness(walletStatus, wallet) {
     paymentReady: false, blockers: [...(walletStatus === 'not-created' ? ['private-wallet-not-created'] : []), 'private-payment-not-integrated', 'balance-not-verified'] };
 }
 
-async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, review }) {
+async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, review, lifetimeSeconds }) {
   live(session);
   if (action === 'shield-preflight') {
     // This branch never opens a wallet directory or receives a recovery password.
@@ -109,11 +110,12 @@ async function operate({ directory, session, action, password, backup, syncConfi
     const syncResult = action === 'sync' ? await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal }) : null;
     const shieldResult = action === 'shield-review' ? await prepareShieldReview({ wallet, amount, publicAddress,
       prepared, checkSession, expiresAt: session.expiresAt }) : null;
+    const invoiceResult = action === 'invoice-create' ? createAccountInvoice({ wallet, amount, lifetimeSeconds, checkSession }) : null;
     if (action === 'sync') await sdk.unloadProvider(accountSyncNetwork);
     await stopRailgunEngine(); engineStarted = false;
     checkSession();
     completed = true;
-    return { ...readiness('locked', wallet), ...syncResult, ...shieldResult,
+    return { ...readiness('locked', wallet), ...syncResult, ...shieldResult, ...invoiceResult,
       recovery: action === 'create' ? 'backup-created' : action === 'restore' ? 'restored' : 'backup-verified',
       ...(['create', 'backup'].includes(action) ? { encryptedBackup: encrypted } : {}) };
   } finally {

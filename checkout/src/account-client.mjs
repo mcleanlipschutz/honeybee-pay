@@ -1,3 +1,4 @@
+import { privateRequestAmount, validatePaymentRequest } from './private-request.mjs';
 import { validateShieldReview } from './shield-review.mjs';
 import { validateShieldPreflight } from './shield-preflight.mjs';
 
@@ -52,6 +53,14 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
           || result.spendableBalance?.token !== '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
           || result.spendableBalance?.source !== 'sdk-spendable-snapshot'
           || !/^(0|[1-9][0-9]{0,77})$/.test(result.spendableBalance?.amountUnits))) throw new Error();
+      if (action === 'invoice-create') {
+        if (result.privateWallet.status !== 'locked' || !result.privateWallet.id
+            || result.networkLoaded !== false || result.spendableBalanceVerified !== false) throw new Error();
+        result.paymentRequest = validatePaymentRequest(result.paymentRequest);
+        if (result.paymentRequest.recipient !== result.privateWallet.privateAddress
+            || result.paymentRequest.amountUnits !== privateRequestAmount(fields.amount)
+            || result.paymentRequest.expiresAt - result.paymentRequest.createdAt !== fields.lifetimeSeconds) throw new Error();
+      }
       if (action === 'shield-review') {
         if (result.privateWallet.status !== 'locked' || result.spendableBalanceVerified !== false || result.networkLoaded !== false) throw new Error();
         result.shieldReview = validateShieldReview(result.shieldReview, { ...fields,

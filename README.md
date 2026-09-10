@@ -23,6 +23,13 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
+[Segment 1T](privacy/SEGMENT-1T.md) adds local merchant payment requests:
+create from the signed-in account’s recovered private wallet, download a request
+file, and import it for buyer review. Exact amount/network/expiry/address checks
+and account isolation pass 17 focused tests; the checkout build passes. A request
+is unsigned, does not authenticate the merchant and does not authorize payment.
+Browser testing and live private settlement remain outstanding.
+
 [Segment 1S](privacy/SEGMENT-1S.md) implements the wallet submission controller,
 persistent attempt tracking and matching approval/Shield receipt checks. It is
 tested with controlled wallets and RPC responses and is **not connected to the

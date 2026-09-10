@@ -402,3 +402,37 @@ the latest verified implementation. Inspect the local working tree for partial
 changes before resuming. See privacy/SEGMENT-1T-PLAN.md.
 
 AI assistance: Codex prepared this design at McLean's direction.
+
+## Segment 1T — local merchant requests implemented after recovery
+
+Restored the workspace, found no partial implementation, and reconciled the
+saved design with the current GitHub tree. Added authenticated invoice-create
+through the isolated account worker: derive the recovered account’s private
+recipient, generate a random reference and second-based expiry, and return a
+locked wallet. No caller-selected recipient, network, token or account path is
+accepted and no RPC is required for request creation.
+
+The local UI now creates/downloads merchant requests and opens buyer request
+files for review. Shared strict validation bounds amount, expiry, schema and
+file size; independent browser/Engine address checks enforce canonical Sepolia
+or all-chain addresses. Late file/API responses are discarded after account
+changes. The immutable adapter snapshot prevents changing reviewed terms.
+The digest is explicitly unsigned and does not authenticate a merchant. Request
+files expose amount/private recipient to their recipient and omit account data
+and secrets. They are not encrypted receipts and do not count as payments.
+
+Validation: 17 focused tests passed: eight request/format/adapter/client tests,
+four account-client regressions, three real local HTTP tests (extended with
+actual SDK request creation, recovery and cross-account checks), and two account
+wallet regressions. The initial run exposed an incorrect Engine named import;
+using its exported RailgunEngine static address API fixed it before the passing
+run. Checkout client/Worker build passed with existing chunk-size and viem
+worker_threads warnings. Declared already-locked @scure/base 1.2.6 directly;
+no resolved versions changed and no fresh dependency audit was performed.
+
+Actual browser request download/import and live private settlement are pending.
+Private signing stays disabled; no user transaction was signed or broadcast,
+no private runtime was published, and the hosted site is unchanged. KYC remains
+deferred. See privacy/SEGMENT-1T.md and its validation report.
+
+AI assistance: Codex implemented and tested this segment at McLean's direction.

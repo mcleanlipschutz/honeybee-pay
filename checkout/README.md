@@ -274,3 +274,26 @@ net amount and fee. It never marks funds spendable or increments merchant counts
 Live validation, actual browser persistence/Privy checks, local UI integration,
 private balance synchronization and recovery after a deposit remain required.
 See [Segment 1S](../privacy/SEGMENT-1S.md) for the test record and next-machine steps.
+
+## Local merchant payment requests (Segment 1T)
+
+After building checkout and starting the existing local `npm run wallet:web`
+runtime in `privacy/`, sign in and create or recover the merchant’s private wallet.
+Choose **Create payment request**, enter up to 10 test USDC, choose a 15-minute,
+one-hour or 24-hour expiry, and enter the recovery password. The request uses
+that account’s recovered private address. Download it and share it with the
+intended buyer. This action does not need a configured chain RPC.
+
+The buyer signs in to the local demo and chooses **Open a merchant’s request**
+under Payment requests. The page shows the amount, Sepolia network, full request
+reference, expiry and private receiving address. Confirm these through a trusted
+merchant channel. The digest checks exact terms; it is not a merchant signature.
+The request file is not encrypted and contains the amount and private recipient.
+No password, account ID, email, wallet ID or token is exported.
+
+Request data remains in page memory until cleared, navigation or sign-out. Files
+are native compact JSON up to 4 KB; malformed, altered or expired files fail.
+Requests are not receipts, do not increase the payment count and cannot submit
+a private payment. The existing hosted mobile site is unchanged. Actual browser
+file-picker/download and account-change checks remain pending.
+See [Segment 1T](../privacy/SEGMENT-1T.md) for the implementation and validation.

@@ -1,16 +1,19 @@
 # Segment 1T plan: merchant payment requests
 
-Status: design prepared; implementation and tests unfinished.
+Status: implemented and tested after workspace recovery; see [Segment 1T](SEGMENT-1T.md).
+The design and outage notes below preserve the original handoff. Actual browser
+and live private-payment validation remain pending.
 Prepared September 10, 2026.
 
 The user will not have access to their computer until later. Live wallet
 validation remains deferred. Merchant request development does not depend on
 that live test, so this is the next independent build task.
 
-The coding workspace disconnected while a patch was being applied. The tool
+At the original handoff, the coding workspace disconnected while a patch was being applied. The tool
 reported environment_offline, and a subsequent execution attempt also failed.
-No Segment 1T implementation has been pushed or tested. This commit saves only
-the design and handoff. Segment 1S remains the latest verified code milestone.
+At that point no Segment 1T implementation had been pushed or tested; the
+handoff commit saved only the design. The workspace was subsequently restored,
+its clean tree reconciled with GitHub, and implementation completed.
 
 ## Merchant and buyer flow
 
@@ -118,26 +121,27 @@ flow remains simpler than this trusted local test setup. KYC stays deferred.
 
 ## Required validation before calling Segment 1T complete
 
-- [ ] Actual authenticated service creates a request using the account's recovered
+- [x] Actual authenticated service creates a request using the account's recovered
       SDK wallet without requiring an RPC configuration.
-- [ ] Separate accounts produce distinct recipients; a wrong password, forged
+- [x] Separate accounts produce distinct recipients; a wrong password, forged
       login or injected selector cannot create a request for another account.
-- [ ] Restart/recovery produces the same recipient with a new unpredictable
+- [x] Restart/recovery produces the same recipient with a new unpredictable
       request reference; request generation does not overwrite the backup.
-- [ ] Browser and SDK decoders agree on valid all-chain/Sepolia addresses and
+- [x] Browser and SDK decoders agree on valid all-chain/Sepolia addresses and
       reject altered checksums, incorrect lengths, versions and other networks.
-- [ ] Amount, expiry, token, network, extra-field and recomputed-digest tampering
+- [x] Amount, expiry, token, network, extra-field and recomputed-digest tampering
       tests distinguish checksum integrity from actual merchant authentication.
-- [ ] File bounds, duplicate keys, malformed JSON and expired imports fail safely.
-- [ ] The adapter receives exact immutable terms and rejects changes after review.
-- [ ] Account changes or late file/API responses clear pending request details.
-- [ ] Downloaded files omit secrets and account identifiers.
-- [ ] Focused account/API/client regressions and the checkout build pass.
-- [ ] Record actual browser QA separately; do not claim it from Node fixtures.
-- [ ] Update TEST_CHECKLIST.md, the build log and a truthful validation report.
+- [x] File bounds, duplicate keys, malformed JSON and expired imports fail safely.
+- [x] The adapter receives exact immutable terms and rejects changes after review.
+- [x] Controlled reader/client tests discard late file/API responses after account changes.
+- [ ] Confirm actual browser request clearing, file selection and downloads across sign-out.
+- [x] Downloaded files omit secrets and account identifiers.
+- [x] Focused account/API/client regressions and the checkout build pass.
+- [x] Record actual browser QA separately; do not claim it from Node fixtures.
+- [x] Update TEST_CHECKLIST.md, the build log and a truthful validation report.
 
-Do not mark tests passed, enable signing, publish a new site version, merge the
-draft PR or count a private payment based on this design.
+Only the recorded automated checks are marked passed. Signing, publishing,
+merging and private-payment counting are not authorized by a passing request test.
 
 ## Resume procedure
 
