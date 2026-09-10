@@ -236,3 +236,17 @@ AI assistance: Codex recorded this product and architecture decision at McLean's
 - No wallet networks loaded by this segment, funds moved, transactions broadcast, merge or deployment performed.
 
 AI assistance: Codex implemented and tested this segment at McLean's direction. Local account isolation and encrypted recovery pass; this is not production custody, live KYC or a settled private payment.
+
+## September 10, 2026 - Segment 1L: browser wallet setup and KYC deferral
+
+- Recorded the user's decision to postpone KYC until testing is complete and review the time before final hackathon submission. It may wait until after the contest. KYC is unverified and no longer a testnet readiness blocker; payment readiness remains false.
+- Added browser account/private-wallet setup, recovery-password entry, encrypted-backup download, saved-file verification and restoration under the same authenticated account. The public test checkout remains labeled public.
+- Connected the browser client to a protected local API that binds only to 127.0.0.1. It checks exact Host/Origin, signed access tokens, JSON/request headers, request sizes and rate limits; it serves only the built checkout and approved assets.
+- Added verify-backup without overwriting stored wallets and returned the initial encrypted recovery copy on wallet creation. Password fields reset on submission, account changes clear the view, and stale responses cannot update another account's state. Failed writes are not automatically retried.
+- Tested the browser client's wire protocol against actual SDK wallet workers using disposable local token fixtures: create, backup, verify and fresh-runtime restore preserve the wallet. Cross-account recovery, hostile origins/hosts, forged tokens, selectors and secret-file requests are rejected.
+- All 69 privacy tests and 7 checkout tests passed. The production build passed with the existing chunk-size warning. Browser/mobile interaction and live Privy login remain unverified; real public Privy configuration is still required.
+- No dependency versions changed or new audit run. Prior findings remain unresolved. The local runtime handles decrypted keys and recovery passwords; it is not a production browser self-custody or remote-hosting implementation.
+- Added TEST_CHECKLIST.md and privacy/SEGMENT-1L.md; recorded privacy/reports/segment-1l-validation.json. Next: live authentication and browser recovery checks, then account synchronization, test funding, shielding and a private merchant payment. KYC is deferred.
+- No wallet networks loaded, funds moved, transactions broadcast, merge or deployment performed.
+
+AI assistance: Codex implemented and verified this segment at McLean's direction. Automated local wallet integration passes; live browser onboarding and private settlement remain to be tested.

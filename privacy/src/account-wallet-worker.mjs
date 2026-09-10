@@ -37,10 +37,10 @@ async function writeBackup(path, encrypted) {
 }
 function readiness(walletStatus, wallet) {
   return { account: { authenticated: true },
-    identityVerification: { status: 'not-configured', verified: false },
+    identityVerification: { status: 'deferred-for-testnet', verified: false, requiredForTestnet: false },
     privateWallet: { status: walletStatus, ...(wallet ? { id: wallet.id, privateAddress: wallet.railgunAddress } : {}) },
     network: 'Ethereum_Sepolia', networkLoaded: false, spendableBalanceVerified: false,
-    paymentReady: false, blockers: ['identity-verification-not-configured', 'private-payment-not-integrated', 'balance-not-verified'] };
+    paymentReady: false, blockers: [...(walletStatus === 'not-created' ? ['private-wallet-not-created'] : []), 'private-payment-not-integrated', 'balance-not-verified'] };
 }
 
 async function operate({ directory, session, action, password, backup }) {
@@ -68,7 +68,7 @@ async function operate({ directory, session, action, password, backup }) {
       root = HDNodeWallet.createRandom();
       encrypted = await encryptAccountBackup(root.mnemonic.phrase, password, session.ownerId);
     } else {
-      encrypted = action === 'restore' ? backup : await readBackup(join(slot, backupFile));
+      encrypted = ['restore', 'verify-backup'].includes(action) ? backup : await readBackup(join(slot, backupFile));
       root = HDNodeWallet.fromPhrase(await decryptAccountBackup(encrypted, password, session.ownerId));
     }
     live(session);
@@ -93,7 +93,7 @@ async function operate({ directory, session, action, password, backup }) {
     completed = true;
     return { ...readiness('locked', wallet),
       recovery: action === 'create' ? 'backup-created' : action === 'restore' ? 'restored' : 'backup-verified',
-      ...(action === 'backup' ? { encryptedBackup: encrypted } : {}) };
+      ...(['create', 'backup'].includes(action) ? { encryptedBackup: encrypted } : {}) };
   } finally {
     try { if (engineStarted) await stopRailgunEngine(); }
     finally {

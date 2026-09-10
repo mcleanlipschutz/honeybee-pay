@@ -148,6 +148,7 @@ vite.config.ts.timestamp-*
 keystore.json
 root.keystore.json
 account.backup.json
+honeybee-testnet-recovery.json
 keystores/
 
 # Local Honeybee proof artifacts and runtime state

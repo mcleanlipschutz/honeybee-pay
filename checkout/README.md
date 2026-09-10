@@ -6,13 +6,23 @@ financial-flow prize through an actual wallet/payment integration. Eligibility
 is not established until a working live flow is demonstrated.
 
 The [product direction](../PRODUCT_DIRECTION.md) keeps wallet creation inside
-Honeybee and defines the planned verified-profile and private merchant checkout
-flow. Email login is not KYC, and this checkout's public wallet is not itself a
-privacy mechanism. The local [account-wallet service](../privacy/SEGMENT-1K.md)
-now implements authenticated ownership and encrypted recovery. Connecting that
-boundary to browser onboarding and validating live login remain outstanding.
+Honeybee and defines the planned private merchant checkout flow. KYC is deferred
+until testing is complete and the remaining time before submission is reviewed;
+it may wait until after the contest. Email login is not KYC.
+
+The [local wallet flow](../privacy/SEGMENT-1L.md) now connects this browser UI to
+authenticated private-wallet creation, encrypted-backup download, saved-file
+verification and restoration. The local test runtime handles wallet keys and
+recovery passwords. Live Privy login and browser validation remain outstanding.
 
 ## Run
+
+For the complete local wallet setup, follow [Segment 1L](../privacy/SEGMENT-1L.md):
+build this checkout, configure the public App ID and verification key in
+`privacy/.env.local`, then run `npm run wallet:web` from `privacy/`. Its loopback
+server supplies the public App ID to the browser and serves the account API.
+
+For a frontend preview or the existing public checkout:
 
 ```sh
 cd checkout
@@ -59,13 +69,15 @@ The token is pinned to Circle's published Ethereum Sepolia USDC address:
 
 Privy controls the public buyer wallet; `../privacy` retains the independently
 tested RAILGUN wallets, private-transfer adapter and synchronization code. Their
-spending keys and encrypted backups are separate. No RAILGUN secrets are exposed
-to this frontend or placed behind an unauthenticated server endpoint.
+spending keys and encrypted backups are separate. The local setup sends the
+user-entered recovery password to its authenticated loopback runtime and receives
+an encrypted backup. The runtime retains decrypted keys only while its worker
+runs; raw wallet seeds and database keys are not returned to the browser.
 
 This checkout currently performs a **public** ERC-20 transfer. It does not shield,
 submit a RAILGUN private payment, or claim that Privy policies protect RAILGUN
 spending keys. Integrating shielding and private checkout requires a reviewed
-transaction bridge plus ownership/authentication and recovery design.
+transaction bridge and a completed live onboarding/recovery validation.
 
 The approval checks are application controls, not an independently enforced
 onchain firewall or a Privy policy. The five-minute approval expires before wallet
@@ -76,12 +88,12 @@ remain required before production use.
 
 ## Validation and remaining setup
 
-- `npm test`: 4 tests passed, covering exact amount encoding, changed approval
-  fields, expiry, sender changes, invalid inputs, and matching receipt events.
+- `npm test`: 7 tests passed, covering payment controls plus remote-destination
+  rejection, stale account responses, and no automatic retry of wallet writes.
 - `npm run build`: passed. Privy produces a large wallet-modal chunk; optimization
   remains before production deployment.
-- Browser verification could not finish: the environment's usage limit blocked
-  the browser download. No browser or mobile pass is claimed.
+- Browser and mobile interaction testing remains outstanding. No browser pass is
+  claimed by the client/API integration tests.
 - Live Privy authentication, account creation and a funded test transfer have not
   been exercised: a real public App ID and test funds are still required.
 - The initial audit found 27 findings (25 moderate, 2 high). Axios was updated

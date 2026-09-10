@@ -2,9 +2,10 @@
 Honeybee Pay is an ETHGlobal hackathon project that aims to simplify crypto payments with AI, protect transaction details using zero-knowledge proofs, and block payments that don’t match the user’s approved rules.
 
 The [product direction](PRODUCT_DIRECTION.md) is an app or website where users
-create their profile and wallet, complete identity verification, and pay merchants
-from a shielded balance. Identity verification and private checkout are target
-features; the current public test checkout does not implement them.
+create their profile and wallet and pay merchants from a shielded balance. KYC
+is deferred until after testing and a review of the time before submission; it
+may wait until after the contest. See the [first-test checklist](TEST_CHECKLIST.md).
+The current checkout still uses public test transfers.
 
 ## The problem
 
@@ -24,8 +25,10 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 The local [account-wallet service](privacy/SEGMENT-1K.md) now binds private
 wallets to verified login tokens, creates separate buyer/merchant roots, and
-supports encrypted recovery under the same account. It has not been connected
-to browser onboarding, a live identity-verification provider or private checkout.
+supports encrypted recovery under the same account. [Segment 1L](privacy/SEGMENT-1L.md)
+connects browser setup and recovery to a protected local API. Automated client/API
+checks use real SDK wallets and local token fixtures. Live Privy and browser
+validation remain outstanding; KYC is deferred and private checkout is unbuilt.
 
 A customer-facing [Privy checkout](checkout/README.md) is now implemented with
 email login, an embedded buyer wallet, reviewed Sepolia USDC transfers and

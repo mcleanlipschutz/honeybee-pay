@@ -5,6 +5,12 @@ target design; the implementation status below distinguishes what exists today.
 
 ## Product decision
 
+**Current scope, September 10:** KYC is deferred until testing is complete. After
+testing, review the time remaining before the hackathon submission; KYC may wait
+until after the contest. The controlled Sepolia demo requires authentication and
+wallet/payment checks, but does not require KYC or collect identity documents.
+Email authentication must never be presented as verified legal identity.
+
 Users create their Honeybee profile and wallet inside the app or website. The
 primary onboarding path remains in-app wallet creation. The intended experience
 is cash-like checkout: add funds, scan a merchant QR code or open an invoice,
@@ -17,9 +23,9 @@ verify legal identity. Creating a new public wallet does not itself hide payment
 ## Target buyer and merchant experience
 
 1. Create a profile. Create or restore that user's embedded wallet inside Honeybee.
-2. Complete provider-hosted identity verification for the intended verified-account
-   product. Clearly show pending, verified, failed, or expired status. Never infer
-   verification from email login or a frontend flag.
+2. Continue to wallet setup for the testnet demo. Provider-hosted identity
+   verification is deferred under the scope decision above. If added later, show
+   provider-confirmed states and never infer verification from email login.
 3. Set up recovery for the user's private wallet and add funds. Distinguish funds
    available for private spending from public funds or pending shielding.
 4. Open a merchant invoice or QR code. Review merchant, token, amount, total fees
@@ -78,10 +84,9 @@ wallets before adding a live private-payment button:
   Privy recovery. Verify restoration preserves the wallet identity and that another
   account cannot unlock or use it. The current Node/LevelDOWN engine is not a
   browser wallet integration.
-- Model account, verification and wallet readiness separately. Configure a real
-  verification provider before collecting identity information. Validate signed
-  provider events, account binding, replay handling and status freshness on the
-  server; a preview must never claim that KYC succeeded.
+- Keep account, verification and wallet readiness separate. Show KYC as deferred
+  and unverified; exclude it from the controlled testnet readiness requirements.
+  Revisit provider integration only after testing and the remaining-time review.
 - Follow with test-only shielding, spendable-balance checks, invoice-bound private
   payment, duplicate-submission protection and merchant receipt verification.
   A submitted transaction hash or public ERC-20 log alone cannot establish a
@@ -101,9 +106,12 @@ public test checkout labeled public until that private flow is implemented.
 - Implemented locally in [Segment 1K](privacy/SEGMENT-1K.md): access-token
   verification, independently generated account wallets, account-bound encrypted
   recovery and truthful readiness states. This is a trusted local-process API;
-  live Privy validation and browser integration remain outstanding.
+  live Privy validation remains outstanding.
+- Implemented in [Segment 1L](privacy/SEGMENT-1L.md): browser setup and recovery
+  connected to a protected local API. Its trusted runtime handles decrypted keys;
+  it is not a production browser self-custody implementation. KYC is deferred.
 - Unfinished: live Privy validation, production user/account service, KYC,
-  browser private-wallet ownership and recovery, in-app shielding, private
+  live browser recovery validation, in-app shielding, private
   checkout, merchant reconciliation, and independent payment-policy enforcement.
 
 This decision records the product scope. It adds no identity collection, live

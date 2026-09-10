@@ -12,6 +12,7 @@
     "wallet:storage:smoke": "node src/wallet-storage-smoke.mjs",
     "deployment:preflight": "node src/deployment-preflight.mjs",
     "wallet": "node src/test-wallet-cli.mjs",
+    "wallet:web": "node --env-file=.env.local src/account-server-cli.mjs",
     "wallet:sync": "node src/test-sync-cli.mjs"
   },
   "engines": {

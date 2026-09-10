@@ -1,21 +1,24 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { PrivyProvider, usePrivy, useWallets, useSendTransaction } from '@privy-io/react-auth';
 import { createPublicClient, http, erc20Abi, formatUnits } from 'viem';
 import { sepolia } from 'viem/chains';
 import { CHAIN_ID, USDC, approvePayment, buildTransfer, verifyReceipt } from './payment.mjs';
+import { PrivateWalletPanel } from './PrivateWalletPanel.jsx';
+import { isLocalDemo } from './account-client.mjs';
 import './style.css';
 
 const rpc = createPublicClient({ chain: sepolia, transport: http('https://ethereum-sepolia-rpc.publicnode.com', { timeout: 15000, retryCount: 2 }) });
 const short = address => address ? `${address.slice(0, 6)}…${address.slice(-4)}` : 'Not connected';
-function ConnectedCheckout() {
-  const { ready, authenticated, login, logout } = usePrivy();
+function ConnectedCheckout({ runtime }) {
+  const { ready, authenticated, login, logout, user, getAccessToken } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
   const { sendTransaction } = useSendTransaction();
   const wallet = wallets.find(w => w.walletClientType === 'privy');
-  return <Checkout connection={{ ready: ready && walletsReady, authenticated, wallet, login, logout, sendTransaction }} />;
+  return <Checkout key={authenticated && user?.id || 'signed-out'} runtime={runtime} connection={{ ready: ready && walletsReady, authenticated, userId: user?.id, getAccessToken, wallet, login, logout, sendTransaction }} />;
 }
-function Checkout({ connection }) {
+function Checkout({ connection, runtime }) {
+  const [view, setView] = useState('wallet');
   const [recipient, setRecipient] = useState(import.meta.env.VITE_MERCHANT_ADDRESS || '');
   const [amount, setAmount] = useState('1.00');
   const [approval, setApproval] = useState(null);
@@ -27,6 +30,7 @@ function Checkout({ connection }) {
   const [details, setDetails] = useState(false);
   const inFlight = useRef(false);
   const current = useRef(connection); current.current = connection;
+  useEffect(() => () => { current.current = null; }, []);
   const wallet = connection?.wallet;
   const active = connection?.ready && connection?.authenticated && wallet;
   const review = event => {
@@ -89,9 +93,10 @@ function Checkout({ connection }) {
   };
   return <div className="shell">
     <header><a className="brand" href="/" aria-label="Honeybee Pay home"><span className="mark">h.</span>honeybee<span className="brand-light">pay</span></a><span className="network"><i/>Sepolia testnet</span></header>
+    <nav className="view-switch" aria-label="Honeybee sections"><button aria-pressed={view === 'wallet'} disabled={busy || !!hash} onClick={() => setView('wallet')}>Wallet setup</button><button aria-pressed={view === 'checkout'} onClick={() => setView('checkout')}>Public test checkout</button></nav>
     <main>
       <section className="intro"><span className="eyebrow">A LITTLE SIMPLER. A LITTLE SAFER.</span><h1>Good payments.<br/><span>Your rules.</span></h1><p>A checkout that keeps you in control.<br/>Choose the merchant. Review the amount.<br/>Approve exactly what you mean to pay.</p><div className="intro-note"><span className="circle">✓</span><span>Built for everyday payments.<small>Testing with USDC on Sepolia.</small></span></div><div className="honey-art" aria-hidden="true"><div className="hex one"/><div className="hex two"/><div className="hex three"/><span>MAKE IT<br/>HONEYBEE.</span></div></section>
-      <section className="checkout" aria-labelledby="checkout-heading"><div className="card-top"><span className="eyebrow">HONEYBEE CHECKOUT</span><span className="pill">Test payment</span></div><h2 id="checkout-heading">{receipt ? 'Payment received.' : approval ? 'Everything look right?' : 'Let’s make a payment.'}</h2><p className="subtext">{receipt ? 'The approved USDC transfer was verified on Sepolia.' : 'A public test-USDC transfer. No real money.'}</p>
+      {view === 'wallet' ? <PrivateWalletPanel key={connection?.userId || 'preview'} connection={connection} runtime={runtime}/> : <section className="checkout" aria-labelledby="checkout-heading"><div className="card-top"><span className="eyebrow">HONEYBEE CHECKOUT</span><span className="pill">Test payment</span></div><h2 id="checkout-heading">{receipt ? 'Payment received.' : approval ? 'Everything look right?' : 'Let’s make a payment.'}</h2><p className="subtext">{receipt ? 'The approved USDC transfer was verified on Sepolia.' : 'A public test-USDC transfer. No real money.'}</p>
         <ol className="steps" aria-label="Checkout steps">{['Connect','Review','Pay'].map((step,index)=><li key={step} className={(index === 0 && !active || index === 1 && active && !approval || index === 2 && approval) ? 'selected' : ''}><span>{index + 1}</span>{step}</li>)}</ol>
         {!connection && <div className="notice"><strong>Checkout preview</strong><p>Wallet sign-in will be available once this app is connected to Privy.</p></div>}
         <div className="wallet-row"><div><span className="label">BUYER WALLET</span><strong>{active ? short(wallet.address) : 'Sign in with email'}</strong></div><button className="secondary" disabled={!connection || !connection.ready || busy || !!hash} onClick={() => { setApproval(null); setBlocked(false); active ? connection.logout() : connection.login(); }}>{active ? 'Disconnect' : connection?.authenticated ? 'Creating wallet…' : 'Connect wallet'}</button></div>
@@ -103,11 +108,24 @@ function Checkout({ connection }) {
         </div>}
         {message && <p className="status" role="status">{message}</p>}
         <div className="card-bottom"><span>Powered by Privy</span><span>Reviewed by you.</span></div>
-      </section>
+      </section>}
     </main>
-    <section className="architecture"><div><span className="eyebrow">ONE PRODUCT. TWO WALLET LAYERS.</span><h3>Easy to enter. Built toward privacy.</h3></div><p>Privy powers this checkout’s sign-in and public wallet. RAILGUN powers our separate, tested privacy engine. Private checkout is not connected yet.</p><button className="text-button" aria-expanded={details} onClick={()=>setDetails(!details)}>How it works {details ? '−' : '+'}</button>{details && <div className="explanation"><p><strong>Today:</strong> this checkout sends public Sepolia USDC through Privy. Buyer approval checks run in the application; they are not independent onchain enforcement.</p><p><strong>Privacy integration:</strong> RAILGUN uses separate spending keys. Privy login does not create or recover those keys, and this checkout never asks for a RAILGUN seed or backup password.</p></div>}</section>
+    <section className="architecture"><div><span className="eyebrow">ONE PRODUCT. TWO WALLET LAYERS.</span><h3>Easy to enter. Built toward privacy.</h3></div><p>Create your account and recoverable wallet inside Honeybee. Private wallet setup runs on the local test machine; the payment checkout currently sends public test transfers.</p><button className="text-button" aria-expanded={details} onClick={()=>setDetails(!details)}>How it works {details ? '−' : '+'}</button>{details && <div className="explanation"><p><strong>Today:</strong> this checkout sends public Sepolia USDC through Privy. Buyer approval checks run in the application; they are not independent onchain enforcement.</p><p><strong>Privacy integration:</strong> Your private wallet has separate keys and an encrypted backup. The local demo runtime handles those keys when you enter your recovery password. Privy sign-in alone cannot restore the private wallet.</p></div>}</section>
     <footer><span>honeybee pay</span><span>Made for people. Tested with care.</span><span>ETHOnline 2026</span></footer>
   </div>;
 }
-const appId = import.meta.env.VITE_PRIVY_APP_ID;
-createRoot(document.getElementById('root')).render(appId ? <PrivyProvider appId={appId} clientId={import.meta.env.VITE_PRIVY_CLIENT_ID || undefined} config={{ loginMethods: ['email'], defaultChain: sepolia, supportedChains: [sepolia], embeddedWallets: { ethereum: { createOnLogin: 'all-users' } }, appearance: { theme: 'light', accentColor: '#d4a321' } }}><ConnectedCheckout/></PrivyProvider> : <Checkout/>);
+async function bootstrap() {
+  let runtime;
+  if (isLocalDemo(window.location.origin)) {
+    try {
+      const response = await fetch('/api/runtime', { credentials: 'omit', cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(3000) });
+      if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
+        const config = await response.json();
+        if (config.mode === 'local-testnet' && config.apiVersion === 1 && config.chainId === 11155111 && typeof config.appId === 'string') runtime = config;
+      }
+    } catch { /* Static preview and public checkout remain available. */ }
+  }
+  const appId = runtime?.appId || import.meta.env.VITE_PRIVY_APP_ID;
+  createRoot(document.getElementById('root')).render(appId ? <PrivyProvider appId={appId} clientId={import.meta.env.VITE_PRIVY_CLIENT_ID || undefined} config={{ loginMethods: ['email'], defaultChain: sepolia, supportedChains: [sepolia], embeddedWallets: { ethereum: { createOnLogin: 'all-users' } }, appearance: { theme: 'light', accentColor: '#d4a321' } }}><ConnectedCheckout runtime={runtime}/></PrivyProvider> : <Checkout/>);
+}
+void bootstrap();

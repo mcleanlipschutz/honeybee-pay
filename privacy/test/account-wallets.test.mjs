@@ -47,8 +47,10 @@ test('independent account wallets recover in new processes and reject cross-acco
   const unlocked = await restarted.execute({ action: 'unlock', accessToken: buyerToken, password: buyerPassword });
   assert.deepEqual(unlocked.privateWallet, buyer.privateWallet);
   for (const result of [buyer, merchant, saved, recovered, unlocked]) {
-    assert.equal(result.identityVerification.status, 'not-configured');
+    assert.equal(result.identityVerification.status, 'deferred-for-testnet');
     assert.equal(result.identityVerification.verified, false);
+    assert.equal(result.identityVerification.requiredForTestnet, false);
+    assert.equal(result.blockers.includes('identity-verification-not-configured'), false);
     assert.equal(result.paymentReady, false);
     assert.equal(result.networkLoaded, false);
     for (const secret of [buyerPassword, merchantPassword, buyerToken, merchantToken]) assert.equal(JSON.stringify(result).includes(secret), false);

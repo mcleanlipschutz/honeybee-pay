@@ -1,5 +1,8 @@
 # Segment 1K: account-bound private wallets and recovery
 
+Historical segment record. [Segment 1L](SEGMENT-1L.md) subsequently adds the
+local browser API and marks KYC deferred for the controlled testnet demo.
+
 ## Implemented boundary
 
 `createAccountWalletService` is a local Node service API for authenticated wallet

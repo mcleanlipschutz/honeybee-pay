@@ -38,11 +38,12 @@ export async function createAccountWalletService({ directory, appId, verificatio
     try {
       if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error();
       const { action, password, backup } = request;
-      const allowed = ['action', 'accessToken', ...(action === 'status' ? [] : ['password']), ...(action === 'restore' ? ['backup'] : [])];
+      const importsBackup = ['restore', 'verify-backup'].includes(action);
+      const allowed = ['action', 'accessToken', ...(action === 'status' ? [] : ['password']), ...(importsBackup ? ['backup'] : [])];
       if (Object.keys(request).some(key => !allowed.includes(key))
-          || !['status', 'create', 'unlock', 'backup', 'restore'].includes(action)) throw new Error();
+          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup'].includes(action)) throw new Error();
       if (action !== 'status') checkRecoveryPassword(password);
-      if (action === 'restore' && (typeof backup !== 'string' || Buffer.byteLength(backup) > accountBackupLimit)) throw new Error();
+      if (importsBackup && (typeof backup !== 'string' || Buffer.byteLength(backup) > accountBackupLimit)) throw new Error();
       return await runWorker({ directory, session, action, password, backup });
     } catch { throw new Error('Account wallet operation failed'); }
   } });
