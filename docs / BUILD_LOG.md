@@ -1,6 +1,6 @@
 # BUILD LOG
 
-Current checkpoint: **September 10, 2026, through Segment 1V**. See the
+Current checkpoint: **September 10, 2026, through Segment 1W**. See the
 [project status](../README.md#current-status) and
 [remaining test checklist](../TEST_CHECKLIST.md). Entries below are chronological:
 each records what was true at that milestone. Later entries supersede earlier
@@ -583,3 +583,35 @@ runtime deployment or merge was performed.
 
 AI assistance: Codex consolidated the existing implementation and validation
 records at McLean's request.
+
+## September 10, 2026 - Segment 1W: request-specific private-funds check
+
+Resumed the interrupted payment-check scaffold after Segment 1V. Connected
+validated imported merchant requests to authenticated account wallet scans and
+added the local **Check private funds** interface. The result reports spendable
+test-USDC coverage, exact shortfall and expiry. It does not include fees, reserve
+funds, authorize payment, generate a proof or submit a transaction.
+
+The API rejects injected wallet selectors, balances and endpoints. The client
+captures the existing wallet and request before asynchronous token lookup and
+matches returned identity, full terms, scan timestamp and integer balance
+arithmetic. Expired/incomplete results and account changes fail. Request
+replacement or clearing discards the UI result and aborts its browser request.
+Results remain in memory and do not affect history, receipts or usage counts.
+
+Validation: **27 focused tests passed** and the checkout client/Worker build
+passed. Seven new payment-check tests cover amount coverage, one-unit shortfall,
+expiry/session limits, immutable terms, incomplete/stale scans and response
+tampering. Existing account, request and local HTTP regressions passed. Real SDK
+workers reject unauthorized checks and controlled wrong-chain preflight while
+preserving recovery. Successful balance checks use controlled scan responses;
+actual browser interactions and live funded-account checks remain pending.
+
+No dependencies changed; existing build warnings and dependency findings remain.
+No fresh audit, full-repository test run, private payment, main-branch merge or
+hosted deployment is claimed. KYC stays deferred. Next: actual local wallet and
+history recovery, live sync/deposit validation, followed by private settlement
+and encrypted receipts. See privacy/SEGMENT-1W.md and its validation report.
+
+AI assistance: Codex completed, tested and documented this segment at McLean's
+direction.

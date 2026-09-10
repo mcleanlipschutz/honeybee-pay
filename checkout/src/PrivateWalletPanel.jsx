@@ -79,6 +79,12 @@ export function PrivateWalletPanel({ connection, runtime }) {
     } finally { inFlight.current = false; if (alive.current) setBusy(false); }
   };
   useEffect(() => { if (client) void perform('status'); }, [client]);
+  const checkPayment = async (request, password, wallet, signal) => {
+    if (!client || inFlight.current) throw new Error('Wait for the current wallet check to finish.');
+    inFlight.current = true; setBusy(true);
+    try { return await client.checkPayment(request, password, wallet, signal); }
+    finally { inFlight.current = false; if (alive.current) setBusy(false); }
+  };
   const submit = async event => {
     event.preventDefault();
     if (inFlight.current) return;
@@ -200,7 +206,9 @@ export function PrivateWalletPanel({ connection, runtime }) {
           <p>Approval and deposit submission are not enabled in this build. Wallet confirmation and live deposit verification come next.</p>
         </> : <p>Choose “Review test deposit” again to check fresh terms.</p>}
       </div>}
-      {runtime?.privateRequestsEnabled && <PrivatePaymentRequests key={accountId} created={result?.paymentRequest} history={result?.requestHistory} encryptedHistory={result?.encryptedRequestHistory} onCloseHistory={() => setResult(previous => previous ? { ...previous, requestHistory: null, paymentRequest: null, encryptedRequestHistory: null } : previous)} isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
+      {runtime?.privateRequestsEnabled && <PrivatePaymentRequests key={accountId} created={result?.paymentRequest} history={result?.requestHistory} encryptedHistory={result?.encryptedRequestHistory}
+        wallet={result?.privateWallet} checkPayment={runtime?.privatePaymentCheckEnabled ? checkPayment : null} busy={busy}
+        onCloseHistory={() => setResult(previous => previous ? { ...previous, requestHistory: null, paymentRequest: null, encryptedRequestHistory: null } : previous)} isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
       {download && <div className="notice protected"><strong>Your encrypted recovery copy is ready.</strong><p>Save it somewhere you can access if this device is lost. Then use “Verify saved backup” to check your saved file.</p><button className="secondary" onClick={saveBackup} disabled={busy}>Download encrypted backup</button></div>}
     </>}
     {message && <p className="status" role="status">{message}</p>}

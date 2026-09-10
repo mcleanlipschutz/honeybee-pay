@@ -360,3 +360,15 @@ runs only inside the recovered account’s isolated worker.
 downloads, sign-out during restore and cross-computer recovery remain unverified.
 The hosted site and private-signing gate are unchanged. See
 [Segment 1V](../privacy/SEGMENT-1V.md).
+
+## Check private funds for an imported request (Segment 1W)
+
+In the trusted local runtime with synchronization configured, open the buyer's
+private wallet and import a merchant request. **Check private funds** uses the
+recovery password to scan the authenticated account's spendable test USDC and
+show exact coverage or shortfall for that request. Results expire within the
+scan/request/session window; fees remain unchecked and payment is not authorized.
+Changing or clearing the request discards its check. The hosted mobile site
+remains unchanged. 27 focused tests and the checkout build passed; actual browser
+and live funded-account validation remain pending. See
+[Segment 1W](../privacy/SEGMENT-1W.md).

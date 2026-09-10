@@ -3,12 +3,13 @@
 Updated September 10, 2026. Checked items are implemented/validated as stated;
 they do not imply a live payment has settled.
 
-## Current checkpoint: Segment 1V
+## Current checkpoint: Segment 1W
 
 The public mobile payment milestone is verified. Private wallet setup/recovery,
 deposit preparation, merchant request files, encrypted request history and
-separate history backup/restore are implemented with the validation limits below.
-The latest recorded Segment 1V run passed 33 focused tests and the checkout build;
+separate history backup/restore and request-specific private-funds checks are
+implemented with the validation limits below.
+The latest recorded Segment 1W run passed 27 focused tests and the checkout build;
 it was not a full-repository test run or live private-payment test.
 
 The next gate is actual local browser sign-in and wallet-then-history recovery,
@@ -24,7 +25,7 @@ delivery is still unbuilt. Encrypted receipts for settled private payments remai
 a required part of the full test.
 
 See the [project status](README.md#current-status) and
-[latest validation report](privacy/reports/segment-1v-validation.json).
+[latest validation report](privacy/reports/segment-1w-validation.json).
 
 ## Scope decision
 
@@ -94,6 +95,10 @@ release.
 - [ ] Verify history reopening and clearing in the actual browser on the trusted computer.
 - [x] Add and test encrypted history export/restore with recovered SDK wallets; preserve newer local requests, skip duplicates and reject conflicting records (Segment 1V).
 - [ ] Download both backup files in the actual browser and verify wallet → history recovery on the trusted computer.
+- [x] Connect imported merchant requests to authenticated private balance scans; validate exact terms, wallet identity, shortfalls and expiry (Segment 1W; controlled success fixtures and real-worker rejection tests).
+- [x] Add local “Check private funds” UI with password clearing, request/account replacement cancellation and explicit unchecked-fee/no-authorization wording; checkout build passed.
+- [ ] Verify the funds-check UI in the actual browser, including request replacement, expiry, navigation and account changes.
+- [ ] Check a real funded buyer wallet against a merchant request; neither a passing fixture nor sufficient principal establishes payment readiness.
 - [ ] Follow-up delivery option: open the invoice from a link or QR code and review its exact terms; use the implemented file import for the first test.
 - [ ] Generate, submit and settle a real test private transfer.
 - [ ] Verify receipt of the matching payment from the merchant's wallet state.

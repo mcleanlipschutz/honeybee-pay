@@ -10,6 +10,7 @@ import { accountSyncConfig, scanAccountWallet, accountSyncToken } from '../src/a
 import { createAccountWalletService } from '../src/account-wallets.mjs';
 import { createAccountAuthenticator } from '../src/account-auth.mjs';
 import { accountFixture } from './account-fixture.mjs';
+import { createAccountInvoice } from '../src/account-invoice.mjs';
 
 const chain = { type: 0, id: 11155111 }, wallet = { id: 'only-this-account' };
 const prepared = { rpcURL: 'http://127.0.0.1:9999', deployment: { status: 'reviewed-deployment-and-circuit-matched' } };
@@ -101,6 +102,17 @@ test('real account workers reject unauthorized sync before network access and pr
     await assert.rejects(service.execute({ action: 'shield-preflight', accessToken: token, reviewId: '0x' + 'aa'.repeat(32), ...extra }));
   }
   assert.equal(calls, 2, 'unknown, cross-account or injected preflight requests never reach the network');
+  const paymentRequest = createAccountInvoice({ wallet: { id: 'test-merchant', railgunAddress: created.privateWallet.privateAddress },
+    amount: '1', lifetimeSeconds: 3600, checkSession() {} }).paymentRequest;
+  const payment = { action: 'payment-check', accessToken: token, password, paymentRequest };
+  for (const extra of [{ accessToken: 'forged' }, { accessToken: other }, { password: 'wrong-password-has-sixteen-characters' },
+    { walletId: 'another-account' }, { balanceUnits: '9000000' }, { rpcURL: 'https://other.test' },
+    { paymentRequest: { ...paymentRequest, amountUnits: '2000000' } }, { action: 'payment-submit' }]) {
+    await assert.rejects(service.execute({ ...payment, ...extra }));
+  }
+  assert.equal(calls, 2, 'unauthorized payment checks must not reach the RPC');
+  await assert.rejects(service.execute(payment));
+  assert.equal(calls, 3, 'valid payment check stops at wrong-chain preflight without signing');
   const owner = (await (await createAccountAuthenticator(auth))(token)).ownerId;
   assert.equal(await readFile(join(directory, owner, 'account.backup.json'), 'utf8'), created.encryptedBackup);
   const checked = await service.execute({ action: 'unlock', accessToken: token, password });

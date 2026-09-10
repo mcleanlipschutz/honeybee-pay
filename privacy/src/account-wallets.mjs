@@ -5,7 +5,8 @@ import { createAccountAuthenticator } from './account-auth.mjs';
 import { checkRecoveryPassword, accountBackupLimit } from './account-backup.mjs';
 import { accountSyncConfig } from './account-sync.mjs';
 import { validateHistoryBackup } from '../../shared/request-history-backup.mjs';
-import { invoiceInput } from './account-invoice.mjs';
+import { invoiceInput, invoiceValidation } from './account-invoice.mjs';
+import { validatePrivateRequest } from '../../shared/private-request.mjs';
 import { shieldInput } from './account-shield.mjs';
 import { createShieldReviewCache } from './shield-review-cache.mjs';
 
@@ -19,7 +20,7 @@ function runWorker(message) {
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'], execArgv: [],
     });
     let result;
-    const timer = setTimeout(() => child.kill('SIGKILL'), ['sync', 'shield-review', 'shield-preflight'].includes(message.action) ? 120000 : 30000);
+    const timer = setTimeout(() => child.kill('SIGKILL'), ['sync', 'shield-review', 'shield-preflight', 'payment-check'].includes(message.action) ? 120000 : 30000);
     child.once('error', () => { clearTimeout(timer); reject(new Error('Account wallet operation failed')); });
     child.on('message', value => { result = value; });
     child.once('exit', code => {
@@ -44,16 +45,17 @@ export async function createAccountWalletService({ directory, appId, verificatio
     const session = await authenticate(request?.accessToken);
     try {
       if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error();
-      const { action, password, backup, amount, publicAddress, reviewId, lifetimeSeconds, historyBackup } = request;
-      const usesNetwork = ['sync', 'shield-review', 'shield-preflight'].includes(action);
+      const { action, password, backup, amount, publicAddress, reviewId, lifetimeSeconds, historyBackup, paymentRequest } = request;
+      const usesNetwork = ['sync', 'shield-review', 'shield-preflight', 'payment-check'].includes(action);
       const needsPassword = !['status', 'shield-preflight'].includes(action);
       const importsBackup = ['restore', 'verify-backup'].includes(action);
-      const allowed = ['action', 'accessToken', ...(needsPassword ? ['password'] : []), ...(importsBackup ? ['backup'] : []), ...(action === 'shield-review' ? ['amount', 'publicAddress'] : []), ...(action === 'shield-preflight' ? ['reviewId'] : []), ...(action === 'invoice-create' ? ['amount', 'lifetimeSeconds'] : []), ...(action === 'invoice-history-restore' ? ['historyBackup'] : [])];
+      const allowed = ['action', 'accessToken', ...(needsPassword ? ['password'] : []), ...(importsBackup ? ['backup'] : []), ...(action === 'shield-review' ? ['amount', 'publicAddress'] : []), ...(action === 'shield-preflight' ? ['reviewId'] : []), ...(action === 'invoice-create' ? ['amount', 'lifetimeSeconds'] : []), ...(action === 'invoice-history-restore' ? ['historyBackup'] : []), ...(action === 'payment-check' ? ['paymentRequest'] : [])];
       if (Object.keys(request).some(key => !allowed.includes(key))
-          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync', 'shield-review', 'shield-preflight', 'invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore'].includes(action)) throw new Error();
+          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync', 'shield-review', 'shield-preflight', 'invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore', 'payment-check'].includes(action)) throw new Error();
       if (usesNetwork && !synchronization) throw new Error();
       if (action === 'shield-review') shieldInput(amount, publicAddress);
       if (action === 'invoice-create') invoiceInput(amount, lifetimeSeconds);
+      const checkedRequest = action === 'payment-check' ? validatePrivateRequest(paymentRequest, invoiceValidation()) : null;
       const normalizedHistory = action === 'invoice-history-restore' ? validateHistoryBackup(historyBackup) : null;
       if (needsPassword) checkRecoveryPassword(password);
       if (importsBackup && (typeof backup !== 'string' || Buffer.byteLength(backup) > accountBackupLimit)) throw new Error();
@@ -63,6 +65,7 @@ export async function createAccountWalletService({ directory, appId, verificatio
       const result = await runWorker({ directory, session, action, password, backup,
         ...(action === 'shield-review' ? { amount, publicAddress } : {}),
         ...(action === 'invoice-create' ? { amount, lifetimeSeconds } : {}),
+        ...(action === 'payment-check' ? { paymentRequest: checkedRequest } : {}),
         ...(action === 'invoice-history-restore' ? { historyBackup: normalizedHistory } : {}),
         ...(usesNetwork ? { syncConfig: synchronization } : {}) });
       if (action === 'shield-review') shieldReviews.put(session, result.shieldReview);

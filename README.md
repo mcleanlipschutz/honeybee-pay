@@ -23,7 +23,7 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
-Updated September 10, 2026, through **Segment 1V** on
+Updated September 10, 2026, through **Segment 1W** on
 `codex/privacy-segment-1a`. The development work remains in
 [draft PR #1](https://github.com/mcleanlipschutz/honeybee-pay/pull/1).
 
@@ -44,16 +44,19 @@ published to the hosted demo.
 | Private deposit preparation | Account history/balance integration, deposit review, fee simulation, bounded gas quotes, submission controller, attempt journal and canonical deposit verifier. | Controlled tests passed. Live account sync, funding and spendability remain unverified. Controller is not connected to the UI; signing stays disabled. [1P](privacy/SEGMENT-1P.md), [1Q](privacy/SEGMENT-1Q.md), [1R](privacy/SEGMENT-1R.md), [1S](privacy/SEGMENT-1S.md). |
 | Merchant payment requests | Account-derived private recipient, exact amount/network/expiry, request download/import and immutable buyer review. | SDK/API and request validation checks passed. Requests are unsigned and do not authenticate a merchant or authorize payment. [1T](privacy/SEGMENT-1T.md). |
 | Encrypted request history and backups | Saved requests, history reopening, separate encrypted history export and merge-only restore. | Restores preserve newer records, skip duplicates and reject conflicts. Actual browser downloads/recovery remain pending. Request history is not a payment receipt or settlement ledger. [1U](privacy/SEGMENT-1U.md), [1V](privacy/SEGMENT-1V.md). |
+| Buyer private-funds check | Imported request connected to an authenticated account scan; exact balance/shortfall and an expiring result in local checkout. | Controlled scans and client validation passed; actual workers reject unauthorized requests and wrong-chain preflight. Live funded checks and browser interactions remain pending. Fees are unchecked and payment is not authorized. [1W](privacy/SEGMENT-1W.md). |
 
 ### Latest validation
 
-Segment 1V recorded **33 focused tests passed** and a successful checkout
-client/Worker build. Tests include real SDK wallet recovery followed by encrypted
-history restore, account isolation, tamper rejection and interrupted-write
-handling. See the [validation report](privacy/reports/segment-1v-validation.json)
-and [reproduction command](privacy/SEGMENT-1V.md#validation).
+Segment 1W recorded **27 focused tests passed** and a successful checkout
+client/Worker build. Tests cover exact request/wallet binding, balance shortfalls,
+expiry, incomplete scans, account changes and unauthorized worker requests,
+alongside actual SDK/API wallet recovery regressions. Successful balance-check
+responses use controlled scan fixtures. See the
+[validation report](privacy/reports/segment-1w-validation.json) and
+[reproduction command](privacy/SEGMENT-1W.md#validation).
 
-This is the recorded Segment 1V run, not a cumulative test total or a fresh
+This is the recorded Segment 1W run, not a cumulative test total or a fresh
 full-repository run. Actual browser, cross-computer and Windows/power-loss checks
 remain pending. Existing build warnings and dependency findings still need
 review; no fresh dependency audit is claimed.

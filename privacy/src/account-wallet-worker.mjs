@@ -13,6 +13,7 @@ import { prepareAccountSync, scanAccountWallet, accountSyncDeadline, accountSync
 import { prepareShieldReview } from './account-shield.mjs';
 import { createRequestHistoryStore } from './request-history.mjs';
 import { createAccountInvoice } from './account-invoice.mjs';
+import { checkAccountPayment } from './account-payment-check.mjs';
 import { preflightShield } from './shield-preflight.mjs';
 
 const backupFile = 'account.backup.json';
@@ -49,7 +50,7 @@ function readiness(walletStatus, wallet) {
     paymentReady: false, blockers: [...(walletStatus === 'not-created' ? ['private-wallet-not-created'] : []), 'private-payment-not-integrated', 'balance-not-verified'] };
 }
 
-async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, review, lifetimeSeconds, historyBackup }) {
+async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, review, lifetimeSeconds, historyBackup, paymentRequest }) {
   live(session);
   if (action === 'shield-preflight') {
     // This branch never opens a wallet directory or receives a recovery password.
@@ -68,7 +69,8 @@ async function operate({ directory, session, action, password, backup, syncConfi
   await mkdir(lock, { mode: 0o700 });
   let engineStarted = false, createdSlot = false, completed = false;
   const signal = AbortSignal.timeout(accountSyncDeadline);
-  const usesNetwork = ['sync', 'shield-review'].includes(action);
+  const usesNetwork = ['sync', 'shield-review', 'payment-check'].includes(action);
+  const scansWallet = ['sync', 'payment-check'].includes(action);
   const checkSession = () => { live(session); if (usesNetwork) signal.throwIfAborted(); };
   try {
     live(session);
@@ -109,6 +111,8 @@ async function operate({ directory, session, action, password, backup, syncConfi
       : await loadWalletByID(key, id, false);
     if (wallet.id !== id) throw new Error('Recovered wallet identity mismatch');
     const syncResult = action === 'sync' ? await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal }) : null;
+    const paymentResult = action === 'payment-check' ? await checkAccountPayment({ paymentRequest, sdk, wallet,
+      prepared, checkSession, signal, expiresAt: session.expiresAt }) : null;
     const shieldResult = action === 'shield-review' ? await prepareShieldReview({ wallet, amount, publicAddress,
       prepared, checkSession, expiresAt: session.expiresAt }) : null;
     const invoiceResult = action === 'invoice-create' ? createAccountInvoice({ wallet, amount, lifetimeSeconds, checkSession }) : null;
@@ -120,17 +124,17 @@ async function operate({ directory, session, action, password, backup, syncConfi
       else if (action === 'invoice-history-restore') historyBackupResult = await store.restoreBackup(historyBackup);
       else requestHistory = action === 'invoice-create' ? await store.append(invoiceResult.paymentRequest) : await store.read();
     }
-    if (action === 'sync') await sdk.unloadProvider(accountSyncNetwork);
+    if (scansWallet) await sdk.unloadProvider(accountSyncNetwork);
     await stopRailgunEngine(); engineStarted = false;
     checkSession();
     completed = true;
-    return { ...readiness('locked', wallet), ...syncResult, ...shieldResult, ...invoiceResult,
+    return { ...readiness('locked', wallet), ...syncResult, ...shieldResult, ...invoiceResult, ...paymentResult,
       ...(requestHistory ? { requestHistory } : {}), ...historyBackupResult,
       recovery: action === 'create' ? 'backup-created' : action === 'restore' ? 'restored' : 'backup-verified',
       ...(['create', 'backup'].includes(action) ? { encryptedBackup: encrypted } : {}) };
   } finally {
     try {
-      if (engineStarted && action === 'sync') { try { await sdk.unloadProvider(accountSyncNetwork); } catch { /* May not have loaded. */ } }
+      if (engineStarted && scansWallet) { try { await sdk.unloadProvider(accountSyncNetwork); } catch { /* May not have loaded. */ } }
       if (engineStarted) await stopRailgunEngine();
     }
     finally {

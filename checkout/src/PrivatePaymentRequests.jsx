@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits } from 'viem';
 import { createPaymentRequestReader, paymentRequestFile } from './private-request.mjs';
 import { validateHistoryBackup } from '../../shared/request-history-backup.mjs';
+import { PrivatePaymentCheck } from './PrivatePaymentCheck.jsx';
 
 function RequestDetails({ request, now }) {
   return <dl className="request-details">
@@ -15,7 +16,7 @@ function RequestDetails({ request, now }) {
 
 // Parent mounts one instance per signed-in account. Decrypted requests remain
 // in page memory; merchant history is encrypted by the local account worker.
-export function PrivatePaymentRequests({ created, history, encryptedHistory, onCloseHistory, isCurrent }) {
+export function PrivatePaymentRequests({ created, history, encryptedHistory, onCloseHistory, isCurrent, wallet, checkPayment, busy }) {
   const [imported, setImported] = useState(null), [message, setMessage] = useState('');
   const [selectedId, setSelectedId] = useState(null), [visible, setVisible] = useState(10);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
@@ -106,6 +107,8 @@ export function PrivatePaymentRequests({ created, history, encryptedHistory, onC
       <RequestDetails request={imported} now={now}/>
       <p>{now < imported.expiresAt ? 'Confirm the reference and terms with the merchant through a channel you trust. A request file does not verify their identity.' : 'Ask the merchant for a new request before proceeding.'}</p>
       <p>Opening this file does not authorize a payment. This is a request, not a receipt.</p>
+      {checkPayment && wallet?.id && <PrivatePaymentCheck key={`${imported.digest}:${wallet.id}:${wallet.privateAddress}`}
+        request={imported} wallet={wallet} checkPayment={checkPayment} disabled={busy} isCurrent={isCurrent}/>}
       <button type="button" className="secondary" onClick={() => { operation.current++; reader.clear(); setImported(null); setMessage(''); }}>Clear request</button>
     </div>}
     {message && <p role="status" className="status">{message}</p>}
