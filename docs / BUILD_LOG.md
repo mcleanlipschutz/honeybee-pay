@@ -250,3 +250,15 @@ AI assistance: Codex implemented and tested this segment at McLean's direction. 
 - No wallet networks loaded, funds moved, transactions broadcast, merge or deployment performed.
 
 AI assistance: Codex implemented and verified this segment at McLean's direction. Automated local wallet integration passes; live browser onboarding and private settlement remain to be tested.
+
+## September 10, 2026 - Segment 1M: phone access
+
+- Configured the public Privy development App ID and validated the supplied P-256 public verification key. Local runtime configuration and checkout serving passed. Email enabled in the user's dashboard screenshot; live sign-in remains untested.
+- Added hosted onboarding with email sign-in, embedded public-wallet address, copy action and sign-out. The wallet/payment form appears first on phones, with larger inputs and touch targets.
+- Preserved local-only private-wallet creation, encrypted backup and restoration; the hosted UI explicitly identifies these remaining limitations. No remote account API, recovery passwords or private storage is deployed.
+- Kept the existing public Sepolia test checkout. No funds moved or transactions broadcast by this work. KYC remains deferred.
+- Seven checkout tests and the production build passed. Native phone interaction and live Privy login are still awaiting the user's test.
+- Production dependency audit completed: 25 unresolved findings (24 moderate, 1 high). The high ws advisory concerns Node WebSocket processing; this deployment serves static browser assets. No clean-audit claim and no dependency changes.
+- Registered an owner-private Sites deployment for mobile access; deployment completion is recorded by the hosting status, not by this source entry. The deployment source is a snapshot of checkout only. GitHub PR remains draft and unmerged.
+
+AI assistance: Codex implemented phone access at McLean's request. Public wallet onboarding is prepared for a live test; private settlement and remote private-wallet recovery remain unfinished.

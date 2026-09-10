@@ -1,0 +1,27 @@
+{
+  "segment": "1M",
+  "date": "2026-09-10",
+  "checkoutTests": {
+    "passed": 7,
+    "failed": 0
+  },
+  "build": "passed",
+  "livePrivyLoginTested": false,
+  "browserInteractionTested": false,
+  "mobileInteractionTested": false,
+  "localPublicKeyValidation": "P-256 valid",
+  "localRuntimeConfiguration": "passed",
+  "emailEnabled": "user dashboard screenshot",
+  "hostingScope": "owner-private static checkout",
+  "privateAccountApiHosted": false,
+  "privatePaymentEnabled": false,
+  "kyc": "deferred",
+  "fundsMoved": false,
+  "dependenciesChanged": false,
+  "productionAudit": {
+    "moderate": 24,
+    "high": 1,
+    "critical": 0,
+    "resolved": false
+  }
+}

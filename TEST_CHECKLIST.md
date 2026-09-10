@@ -19,7 +19,10 @@ release.
 - [x] Local authenticated API and client integration tested against the real wallet SDK.
 - [x] Cross-account access, forged tokens, backup tampering and overwrite protection tested.
 - [x] KYC separated from authentication and removed from testnet readiness blockers.
-- [ ] Configure the real Privy App ID and its public verification key.
+- [x] Configure the real Privy App ID and its public verification key; local startup passed.
+- [x] Email enabled in Privy (confirmed from the user’s dashboard screenshot).
+- [x] Mobile hosted-wallet view implemented; private recovery remains local.
+- [ ] Verify live mobile email login and the same embedded wallet after sign-out/sign-in.
 - [ ] Allow the exact local demo origin in Privy and enable email/embedded wallets.
 - [ ] Test actual sign-in, sign-out and independently controlled buyer/merchant accounts.
 - [ ] Complete desktop/mobile browser checks, including password clearing and account changes.
@@ -59,7 +62,7 @@ release.
 ## Deferred work
 
 KYC integration, real-money release, broader merchant operations, production
-key custody/recovery, remote hosting and any unbuilt sponsor features are outside
+key custody/recovery, remote hosting of the private-wallet service and any unbuilt sponsor features are outside
 this first controlled test. Sponsor eligibility must match demonstrated features.
 
 The local demo runtime handles decrypted wallet keys and recovery passwords.

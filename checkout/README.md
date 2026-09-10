@@ -95,7 +95,7 @@ remain required before production use.
 - Browser and mobile interaction testing remains outstanding. No browser pass is
   claimed by the client/API integration tests.
 - Live Privy authentication, account creation and a funded test transfer have not
-  been exercised: a real public App ID and test funds are still required.
+  been exercised: the supplied public App ID and key are configured, while live testing and test funds are still required.
 - The initial audit found 27 findings (25 moderate, 2 high). Axios was updated
   through a scoped override to 1.18.0. The remaining ws 8.x update and final audit
   were blocked by the environment usage limit. Remaining findings are unresolved;
@@ -107,3 +107,27 @@ remain required before production use.
 - [Privy transaction hook](https://docs.privy.io/wallets/using-wallets/ethereum/send-a-transaction)
 - [Circle USDC addresses](https://developers.circle.com/stablecoins/usdc-contract-addresses)
 - [ETHOnline sponsor requirements](https://ethglobal.com/events/ethonline2026/prizes)
+
+## Mobile test access (Segment 1M)
+
+The hosted checkout uses the public development App ID in `.env.production`.
+Its initial wallet page supports email login, the automatically created Privy
+Ethereum wallet, copying its public address, and sign-out. On narrow screens the
+active form appears first. Existing reviewed public Sepolia payments remain in
+the Public test checkout tab. No browser or live-login pass is claimed yet.
+
+The hosted page does not expose the loopback account API. Private RAILGUN wallet
+creation, backup and restoration still require the local runtime on a computer.
+No private wallet keys, recovery files or backend configuration are deployed.
+KYC remains deferred. Hosting the app does not enable private settlement.
+
+The Sites deployment uses a dedicated source snapshot of this `checkout/`
+directory, with its own Git root, so the unrelated contract/privacy sources and
+runtime storage are not sent to the hosting source repository. The snapshot must
+match the tracked checkout source; make future changes here and refresh that
+snapshot before publishing. Reuse `.openai/hosting.json` for this Site.
+
+The latest production dependency audit reports 25 unresolved findings (24 moderate,
+1 high). The high finding is `ws` memory exhaustion in the Node WebSocket package;
+this deployment serves browser assets without a Node WebSocket server. These
+findings still need review before a broader release. Versions were not changed.
