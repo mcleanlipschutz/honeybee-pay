@@ -6,9 +6,10 @@ import { loadProvider, unloadProvider, stopRailgunEngine, refreshBalances,
 import { readWorkspaceRoot, startWorkspaceEngine, loadWorkspaceWallets, testNetworkName } from './test-workspace.mjs';
 import { readSecret } from './secret-input.mjs';
 import { createScanTracker } from './sync-state.mjs';
-import { syncProviderConfig } from './sync-config.mjs';
+import { syncProviderConfig, syncTimeoutMilliseconds } from './sync-config.mjs';
 import { installRpcTransport, connectionErrorCode } from './rpc-transport.mjs';
 import { installTxidTransport } from './txid-transport.mjs';
+import { installPOITransport } from './poi-transport.mjs';
 import { makeReadOnlyRpc, testNetwork } from './network-preflight.mjs';
 import { inspectDeployment } from './deployment-check.mjs';
 import { createPinnedArtifactStore } from './artifact-store.mjs';
@@ -47,19 +48,21 @@ async function finish(status, code) {
 }
 try {
   if (process.argv.length !== 3 || !process.env.HONEYBEE_RPC_URL) throw new Error();
+  const timeout = syncTimeoutMilliseconds(process.env.HONEYBEE_SYNC_TIMEOUT_SECONDS);
   const rpcURL = process.env.HONEYBEE_RPC_URL;
   const rpc = makeReadOnlyRpc(rpcURL);
   installRpcTransport(rpcURL);
   installTxidTransport();
   const poiURL = process.env.HONEYBEE_POI_URL || 'https://ppoi.fdi.network';
   if (new URL(poiURL).protocol !== 'https:') throw new Error();
+  installPOITransport(poiURL);
   const root = await readWorkspaceRoot(resolve(process.argv[2]), await readSecret());
   directory = resolve(process.argv[2]);
   const pending = join(directory, `sync-status.${process.pid}.tmp`);
   await writeFile(pending, JSON.stringify({ status: 'sync-running', synchronized: false, paymentReady: false,
     startedAt: new Date().toISOString() }) + '\n', { flag: 'wx', mode: 0o600 });
   await rename(pending, join(directory, 'sync-status.json'));
-  timer = setTimeout(() => void finish('sync-timeout', 1), 90000);
+  timer = setTimeout(() => void finish('sync-timeout', 1), timeout);
   process.once('SIGINT', () => void finish('sync-interrupted', 1));
   process.once('SIGTERM', () => void finish('sync-interrupted', 1));
   stage = 'deployment-verification';

@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createScanTracker } from '../src/sync-state.mjs';
-import { syncProviderConfig } from '../src/sync-config.mjs';
+import { syncProviderConfig, syncTimeoutMilliseconds } from '../src/sync-config.mjs';
+test('sync timeout is bounded and rejects malformed input', () => {
+  assert.equal(syncTimeoutMilliseconds(), 90000);
+  assert.equal(syncTimeoutMilliseconds('300'), 300000);
+  for (const value of ['0', '601', '-1', '1.5', '', 'Infinity', '300seconds']) assert.throws(() => syncTimeoutMilliseconds(value));
+});
 import { createFallbackProviderFromJsonConfig } from '@railgun-community/shared-models';
 test('sync configuration is accepted by the installed SDK and rejects insecure remote RPCs', async () => {
   const provider = createFallbackProviderFromJsonConfig(syncProviderConfig('https://example.com'));

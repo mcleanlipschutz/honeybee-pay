@@ -31,13 +31,15 @@ from one password-encrypted backup. The synchronization command verifies the
 deployment first and requires both history scans to complete. SDK provider
 loading now succeeds through the runtime's proxy-aware transport. The live UTXO
 scan completed. TXID history downloads now work, but full scan validation awaits
-approval for the SDK's external POI requests; synchronization has not passed.
+separate RPC approval from automatic review. POI requests are approved, and their
+transport is fixed; synchronization has not passed.
 
 This is a cryptographic development test, not a settled payment. Synchronization,
 test-token funding and merchant receipts remain unfinished. The buyer approval checks are not yet
 an independently enforced onchain firewall.
 
-See [Segment 1I](privacy/SEGMENT-1I.md) for TXID history retrieval and its remaining validation,
+See [Segment 1J](privacy/SEGMENT-1J.md) for POI transport and the current validation blocker,
+[Segment 1I](privacy/SEGMENT-1I.md) for TXID history retrieval,
 [Segment 1H](privacy/SEGMENT-1H.md) for the RPC connection fix,
 [Segment 1G](privacy/SEGMENT-1G.md) for workspace and synchronization commands,
 [Segment 1F](privacy/SEGMENT-1F.md) for storage and deployment checks,

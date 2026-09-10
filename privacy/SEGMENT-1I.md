@@ -39,3 +39,6 @@ that payload and destination. No further sync was attempted after rejection.
 User approval for SDK POI requests to `https://ppoi.fdi.network` is required to
 complete this validation with disposable, unfunded demo wallets. The isolated
 history download does not perform wallet POI validation.
+
+Update: POI requests were subsequently approved. See [Segment 1J](SEGMENT-1J.md)
+for the approved attempt and the separate RPC approval requirement.
