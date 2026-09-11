@@ -388,3 +388,13 @@ establish a spendable balance or a merchant payment. New browsers normally have
 no attempts because the signing controller remains disconnected. Actual browser
 and live deposit tests are still pending. See [Segment 1X](../privacy/SEGMENT-1X.md)
 for the 24-test validation record and the next trusted-computer gate.
+
+## Dependency security update (Segment 1Y)
+
+All ws 8 consumers are now pinned to 8.21.3 while the separate ws 7 API stays
+unchanged. Privy, viem and the existing Axios pin are preserved. Fresh production
+audit: 23 moderate findings, zero high/critical (previously 25 total, one high).
+uuid and URI-decoding findings remain in transitive wallet connectors and need
+further compatibility/reachability review. All 38 checkout tests and the
+client/Worker build passed. No browser or live wallet test was run, and the
+hosted site was not updated. See [Segment 1Y](../privacy/SEGMENT-1Y.md).

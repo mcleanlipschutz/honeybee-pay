@@ -23,7 +23,7 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
-Updated September 10, 2026, through **Segment 1X** on
+Updated September 11, 2026, through **Segment 1Y** on
 `codex/privacy-segment-1a`. The development work remains in
 [draft PR #1](https://github.com/mcleanlipschutz/honeybee-pay/pull/1).
 
@@ -46,21 +46,23 @@ published to the hosted demo.
 | Encrypted request history and backups | Saved requests, history reopening, separate encrypted history export and merge-only restore. | Restores preserve newer records, skip duplicates and reject conflicts. Actual browser downloads/recovery remain pending. Request history is not a payment receipt or settlement ledger. [1U](privacy/SEGMENT-1U.md), [1V](privacy/SEGMENT-1V.md). |
 | Buyer private-funds check | Imported request connected to an authenticated account scan; exact balance/shortfall and an expiring result in local checkout. | Controlled scans and client validation passed; actual workers reject unauthorized requests and wrong-chain preflight. Live funded checks and browser interactions remain pending. Fees are unchecked and payment is not authorized. [1W](privacy/SEGMENT-1W.md). |
 | Deposit activity and recovery | Local account-scoped attempt list and read-only reconciliation, including missing-hash recovery for a recorded attempt. | Controlled provider/storage tests passed. Status reads never submit a transaction. Actual browser and live deposit checks remain pending. [1X](privacy/SEGMENT-1X.md). |
+| Dependency security update | Same-major networking/parser pins; wallet and prover SDK versions preserved. | Fresh production audits: no high/critical findings; 5 low private-runtime and 23 moderate checkout findings remain. Offline wallet/proof compatibility passed. [1Y](privacy/SEGMENT-1Y.md). |
 
 ### Latest validation
 
-Segment 1X recorded **24 focused tests passed** and a successful checkout
-client/Worker build. Tests cover account-scoped activity, exact transaction
-reconciliation, missing/late results, read-only RPC use, guarded journal writes
-and existing signing-controller/receipt regressions. Provider, storage and wallet
-responses in this run are controlled fixtures. See the
-[validation report](privacy/reports/segment-1x-validation.json) and
-[reproduction command](privacy/SEGMENT-1X.md#validation).
+Segment 1Y recorded **127 private-runtime tests and 38 checkout tests passed**,
+plus a successful client/Worker build and fresh offline SDK wallet/recovery and
+proof/tamper-rejection checks. The two JavaScript suites use controlled network
+responses and disposable wallets; the proof uses synthetic inputs. See the
+[validation report](privacy/reports/segment-1y-validation.json) and
+[reproduction commands](privacy/SEGMENT-1Y.md#validation).
 
-This is the recorded Segment 1X run, not a cumulative test total or a fresh
-full-repository run. Actual browser, cross-computer and Windows/power-loss checks
-remain pending. Existing build warnings and dependency findings still need
-review; no fresh dependency audit is claimed.
+Fresh production-dependency audits improved from 28 to 5 private-runtime
+findings and from 25 to 23 checkout findings, with no high or critical findings
+remaining. This is not a complete security approval: elliptic, uuid and URI
+decoding findings, existing peer mismatches and build warnings remain documented.
+Actual browser, live funded-account, cross-computer and Windows/power-loss checks
+remain pending. No new Solidity/full-repository test run is claimed.
 
 Keep **both** the wallet recovery file and separate encrypted request-history
 backup. Sign in to the same account, recover the wallet first, then restore its

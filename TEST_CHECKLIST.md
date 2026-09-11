@@ -1,16 +1,19 @@
 # Honeybee Pay: first end-to-end test
 
-Updated September 10, 2026. Checked items are implemented/validated as stated;
+Updated September 11, 2026. Checked items are implemented/validated as stated;
 they do not imply a live payment has settled.
 
-## Current checkpoint: Segment 1X
+## Current checkpoint: Segment 1Y
 
 The public mobile payment milestone is verified. Private wallet setup/recovery,
 deposit preparation, merchant request files, encrypted request history and
 separate history backup/restore, request-specific private-funds checks and local
 deposit activity/reconciliation are implemented with the validation limits below.
-The latest recorded Segment 1X run passed 24 focused tests and the checkout build;
-it was not a full-repository test run or live private-payment test.
+The latest Segment 1Y security update passed both JavaScript suites (127 private,
+38 checkout), the checkout build and offline SDK wallet/proof checks. Fresh
+production audits have zero high/critical findings; 5 low private-runtime and
+23 moderate checkout findings remain. This is not a live private-payment test
+or a complete security approval.
 
 The next gate is actual local browser sign-in and wallet-then-history recovery,
 followed by live account synchronization and deposit validation. Private signing
@@ -25,7 +28,7 @@ delivery is still unbuilt. Encrypted receipts for settled private payments remai
 a required part of the full test.
 
 See the [project status](README.md#current-status) and
-[latest validation report](privacy/reports/segment-1x-validation.json).
+[latest validation report](privacy/reports/segment-1y-validation.json).
 
 ## Scope decision
 
@@ -115,6 +118,7 @@ release.
 - [ ] Run the complete login → wallet → shield → invoice → private payment → receipt flow.
 - [ ] Run the protected/unprotected attack comparison as separately labeled test paths.
 - [ ] Check logs and saved evidence for exposed keys, passwords or personal information.
+- [x] Apply compatible dependency pins and rerun production audits, both JavaScript suites and offline wallet/proof checks (Segment 1Y).
 - [ ] Review the known dependency findings and resolve blockers for the test environment.
 - [ ] Record reproducible test results, transaction evidence and the demo video.
 - [ ] Recheck submission requirements and the official deadline.

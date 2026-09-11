@@ -648,3 +648,31 @@ merchant receipts remain outstanding. See privacy/SEGMENT-1X.md and its report.
 
 AI assistance: Codex implemented, tested and documented this segment at McLean's
 direction.
+
+## September 11, 2026 - Segment 1Y: bounded dependency security update
+
+Pinned private-runtime Axios 1.18.0, dset 3.1.4, js-yaml 4.3.2 and bn.js 4.12.5,
+plus ws 8.21.3 in both components. Version-scoped overrides preserve the separate
+major-version APIs. Existing RAILGUN/Privy/viem/prover pins and vendored crypto
+source remain unchanged. No forced SDK downgrade or signing integration.
+
+Fresh production audits: private runtime 28 -> 5 affected-package entries
+(5 low); checkout 25 -> 23 (23 moderate). Both now have zero high/critical
+findings. Remaining elliptic and wallet-connector findings are documented, not
+accepted as safe. Historical segment audit counts above remain historical.
+
+Validation: 127 private-runtime tests and 38 checkout tests passed, as did the
+client/Worker build and fresh offline SDK wallet/recovery and synthetic-proof
+checks. Invalid proof inputs were rejected. Four dependency tests passed again
+after adding implicit-key pollution cases. Lockfile install dry-runs passed;
+clean-install, browser and live/funded checks are not claimed. Existing GraphQL
+Mesh peer mismatches and build warnings remain. See privacy/SEGMENT-1Y.md and
+privacy/reports/segment-1y-validation.json for reproduction and residual risks.
+
+No transaction signing/broadcast, private settlement, main merge or hosted
+deployment. The next trusted-computer gates remain local browser recovery and
+live/forked Sepolia deposit validation. KYC remains deferred and the commercial
+fee idea remains tabled.
+
+AI assistance: Codex reviewed, updated, tested and documented this segment at
+McLean's direction.

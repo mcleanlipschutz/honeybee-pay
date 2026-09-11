@@ -1,5 +1,9 @@
 # Honeybee Pay dependency fix — review package
 
+Historical review below. For the September 11 security update and fresh audit
+counts, see [Segment 1Y](privacy/SEGMENT-1Y.md). The original packaging fork and
+its unchanged cryptographic source remain in use.
+
 Prepared September 9, 2026. This is a proposed update to Segment 1C; it has not been uploaded to GitHub or merged.
 
 ## What changed
