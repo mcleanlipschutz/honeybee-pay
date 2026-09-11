@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.mjs",
+    "demo:rules": "node src/attack-demo.mjs",
     "preflight": "node src/preflight.mjs",
     "engine:smoke": "node src/engine-smoke.mjs",
     "artifacts:prepare": "node src/prepare-proof-artifacts.mjs",

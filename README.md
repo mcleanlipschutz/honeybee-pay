@@ -11,19 +11,19 @@ The current checkout still uses public test transfers.
 
 Crypto is often treated as a trading asset, while everyday payments remain a limited use case in the United States. Paying with crypto can be confusing for ordinary users, and transactions on public blockchains can expose payment amounts and wallet activity. Scams and unauthorized transactions create additional risks, including when AI tools are used to deceive users or manipulate payment instructions. Honeybee Pay aims to address these barriers by making payments easier, protecting transaction privacy, and enforcing the user’s approved payment terms.
 
-## Planned attack-comparison demo
+## Attack-comparison demo
 
-- The buyer approves three separate transactions of 1 test USDC to send to the merchant wallet.
+- The completed offline demonstration uses one fixed test invoice and three separately labeled cases.
 
-- Transaction 1 succeeds normally. Transaction 2 is redirected to the attacker's wallet in an intentionally unprotected demo. Transaction 3 encounters the same redirection attempt, which is rejected because the recipient differs from the buyer's approval.
+- Case 1 prepares the approved request using SDK doubles. Case 2 accepts a changed recipient in an intentionally unprotected fixture. Case 3 applies the actual approval adapter and rejects the same change before proof preparation. None of these cases sends a transaction.
 
 - The planned AI-assisted explanation tells the buyer that the recipient changed and the transaction was blocked; this explanation is not the authorization control.
  
-- This comparison remains to be run. It will demonstrate payment-rule behavior separately from the complete private-payment test. The existing approval checks are application controls, not an independently enforced onchain firewall.
+- The offline comparison now runs with `npm run demo:rules` in `privacy/`: approved preparation, an unprotected recipient-change fixture, and rejection by the real approval adapter using SDK doubles. It moves no tokens and is separate from the complete private-payment test. The approval checks are application controls, not an independently enforced onchain firewall.
 
 ## Current status
 
-Updated September 11, 2026, through **Segment 1Y** on
+Updated September 11, 2026, through **Segment 1Z** on
 `codex/privacy-segment-1a`. The development work remains in
 [draft PR #1](https://github.com/mcleanlipschutz/honeybee-pay/pull/1).
 
@@ -50,12 +50,17 @@ published to the hosted demo.
 
 ### Latest validation
 
-Segment 1Y recorded **127 private-runtime tests and 38 checkout tests passed**,
-plus a successful client/Worker build and fresh offline SDK wallet/recovery and
-proof/tamper-rejection checks. The two JavaScript suites use controlled network
-responses and disposable wallets; the proof uses synthetic inputs. See the
-[validation report](privacy/reports/segment-1y-validation.json) and
-[reproduction commands](privacy/SEGMENT-1Y.md#validation).
+Segment 1Z recorded **132 private-runtime tests and 38 checkout tests passed**,
+plus 23 focused checks after refining response-size limits and a successful
+offline three-case approval comparison. The JavaScript suites use controlled
+network responses and disposable wallets. See the
+[validation report](privacy/reports/segment-1z-validation.json) and
+[reproduction commands](privacy/SEGMENT-1Z.md#validation).
+
+The successful client/Worker build and real offline wallet/recovery and synthetic
+proof checks remain recorded in Segment 1Y. They were not rerun in 1Z. New RPC,
+history and POI response readers count decoded streaming bytes, cancel oversized
+replies and retain bounded buffers. No frontend or cryptographic source changed.
 
 Fresh production-dependency audits improved from 28 to 5 private-runtime
 findings and from 25 to 23 checkout findings, with no high or critical findings
@@ -84,5 +89,9 @@ release and production hosting of the private-wallet runtime are outside this
 controlled testnet milestone.
 
 The [test checklist](TEST_CHECKLIST.md) tracks the individual gates. The
+[demo and computer runbook](DEMO_RUNBOOK.md), [submission draft](SUBMISSION.md),
+[Check-in 2 draft](CHECK_IN_2.md) and [security review](SECURITY_REVIEW.md)
+prepare the next session. The exact deadline and live-judging time still need
+confirmation in the organizer dashboard. The
 [build log](docs%20/%20BUILD_LOG.md) preserves the implementation history,
 including dependency work, transport fixes and the latest status checkpoint.

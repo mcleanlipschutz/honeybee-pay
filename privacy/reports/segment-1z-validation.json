@@ -1,0 +1,99 @@
+{
+  "segment": "1Z",
+  "date": "2026-09-11",
+  "status": "unblocked-offline-review-and-preparation-completed",
+  "tests": {
+    "privacySuitePassed": 132,
+    "checkoutSuitePassed": 38,
+    "focusedTransportRerunPassed": 23,
+    "failures": 0,
+    "usesControlledNetworkResponses": true,
+    "frontendBuildRerun": false,
+    "soliditySuiteRun": false
+  },
+  "responseLimits": {
+    "rpcAndHistoryDecodedBytes": 8388608,
+    "poiDecodedBytes": 1048576,
+    "countStreamedBytes": true,
+    "retainedBufferBounded": true,
+    "oversizeAndAbortCancelReader": true,
+    "actualAxiosAdapterVerified": true
+  },
+  "ruleComparison": {
+    "actualPromptInjectionExecuted": false,
+    "applicationRuleVerified": true,
+    "cases": [
+      {
+        "case": "normal-approved-request",
+        "outcome": "prepared-for-approved-recipient",
+        "sdkDoubleCalls": 2
+      },
+      {
+        "case": "recipient-change-without-approval-check",
+        "outcome": "unprotected-baseline-accepts-attacker-recipient",
+        "sdkDoubleCalls": 0
+      },
+      {
+        "case": "same-recipient-change-with-approval-check",
+        "outcome": "blocked-before-proof-or-population",
+        "sdkDoubleCalls": 0
+      }
+    ],
+    "cryptographicProofGenerated": false,
+    "independentlyEnforcedOnchainFirewall": false,
+    "privatePaymentSettled": false,
+    "scenario": "offline-payment-rule-comparison",
+    "tokensMoved": false,
+    "transactionsSignedOrBroadcast": 0,
+    "version": 1
+  },
+  "scopedEvidenceReview": {
+    "jsonReportsReviewed": 22,
+    "sensitiveValueFieldsFound": 0,
+    "fullGitHistorySecretScan": false,
+    "thirdPartyLogsCertified": false
+  },
+  "dependencyReview": {
+    "versionsAndLockfilesChanged": false,
+    "newAuditPerformed": false,
+    "lastAudit": "segment-1y-validation.json",
+    "lastPrivateAffectedPackages": {
+      "low": 5,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "lastCheckoutAffectedPackages": {
+      "low": 0,
+      "moderate": 23,
+      "high": 0,
+      "critical": 0
+    },
+    "nodeSDKImportLoadedRiskModules": [],
+    "moduleCacheCheckScope": "Node wallet SDK import only; not all future paths",
+    "uriDecoderUpgradeBlockedBy": "CommonJS-to-ESM and plus-to-space behavior changes require connector/adapter validation",
+    "residualRiskReviewComplete": false
+  },
+  "preparedDocuments": [
+    "CHECK_IN_2.md",
+    "SUBMISSION.md",
+    "DEMO_RUNBOOK.md",
+    "SECURITY_REVIEW.md"
+  ],
+  "officialPrizeRequirementsReviewed": true,
+  "officialDeadlineVerified": false,
+  "judgingAvailabilityAssumed": false,
+  "actualBrowserInteractionsVerified": false,
+  "windowsInstallVerified": false,
+  "liveRpcOrFundedDepositVerified": false,
+  "privateSigningGate": "closed",
+  "signingControllerConnectedToUi": false,
+  "privateSettlementIntegrated": false,
+  "encryptedPrivateReceiptsImplemented": false,
+  "transactionsSignedOrBroadcast": 0,
+  "completedPrivatePayments": 0,
+  "hostedDeploymentChanged": false,
+  "formSubmitted": false,
+  "commercialFeeIdea": "tabled",
+  "kyc": "deferred"
+}

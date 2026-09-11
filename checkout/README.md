@@ -1,5 +1,10 @@
 # Honeybee Pay checkout — Privy integration
 
+Current checkpoint (September 11): a public mobile payment is verified; the
+private runtime remains local and signing is disabled. All 38 checkout tests
+passed in Segment 1Z. See the root README for current status; earlier segment
+notes below preserve their original validation limits.
+
 This React application adds Privy email login, an embedded Ethereum buyer wallet,
 reviewed Sepolia USDC transfers and receipt verification. It targets Privy's
 financial-flow prize through an actual wallet/payment integration. Eligibility
@@ -86,7 +91,7 @@ Receipt state is in memory: retain the explorer link before refreshing or closin
 the page. Durable invoices, server-side idempotency and merchant reconciliation
 remain required before production use.
 
-## Validation and remaining setup
+## Initial integration validation and setup (historical)
 
 - `npm test`: 7 tests passed, covering payment controls plus remote-destination
   rejection, stale account responses, and no automatic retry of wallet writes.
@@ -127,7 +132,7 @@ runtime storage are not sent to the hosting source repository. The snapshot must
 match the tracked checkout source; make future changes here and refresh that
 snapshot before publishing. Reuse `.openai/hosting.json` for this Site.
 
-The latest production dependency audit reports 25 unresolved findings (24 moderate,
+The Segment 1M deployment's production dependency audit reported 25 findings (24 moderate,
 1 high). The high finding is `ws` memory exhaustion in the Node WebSocket package;
 this deployment serves browser assets without a Node WebSocket server. These
 findings still need review before a broader release. Versions were not changed.

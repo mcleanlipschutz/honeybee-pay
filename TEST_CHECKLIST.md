@@ -3,17 +3,18 @@
 Updated September 11, 2026. Checked items are implemented/validated as stated;
 they do not imply a live payment has settled.
 
-## Current checkpoint: Segment 1Y
+## Current checkpoint: Segment 1Z
 
 The public mobile payment milestone is verified. Private wallet setup/recovery,
 deposit preparation, merchant request files, encrypted request history and
 separate history backup/restore, request-specific private-funds checks and local
 deposit activity/reconciliation are implemented with the validation limits below.
-The latest Segment 1Y security update passed both JavaScript suites (127 private,
-38 checkout), the checkout build and offline SDK wallet/proof checks. Fresh
-production audits have zero high/critical findings; 5 low private-runtime and
-23 moderate checkout findings remain. This is not a live private-payment test
-or a complete security approval.
+Segment 1Z passed both JavaScript suites (132 private, 38 checkout), a 23-test
+focused transport rerun and the offline approval comparison. It adds bounded
+remote-response readers, residual-risk notes and submission/demo materials.
+Segment 1Y's build, wallet/proof checks and audit evidence remain recorded:
+5 low private-runtime and 23 moderate checkout findings, zero high/critical.
+This is not a live private-payment test or a complete security approval.
 
 The next gate is actual local browser sign-in and wallet-then-history recovery,
 followed by live account synchronization and deposit validation. Private signing
@@ -28,7 +29,7 @@ delivery is still unbuilt. Encrypted receipts for settled private payments remai
 a required part of the full test.
 
 See the [project status](README.md#current-status) and
-[latest validation report](privacy/reports/segment-1y-validation.json).
+[latest validation report](privacy/reports/segment-1z-validation.json).
 
 ## Scope decision
 
@@ -111,20 +112,30 @@ release.
 - [ ] Reconcile the invoice once and give both parties a receipt.
 - [ ] Handle pending transactions, errors and interrupted sessions without automatic resending.
 - [ ] Reject altered recipient/amount and repeated authorization.
-- [ ] State precisely which checks are application controls and which are independently enforced.
+- [x] State precisely which checks are application controls and which are independently enforced (SECURITY_REVIEW.md and SUBMISSION.md).
 
 ## Final test and evidence
 
 - [ ] Run the complete login → wallet → shield → invoice → private payment → receipt flow.
-- [ ] Run the protected/unprotected attack comparison as separately labeled test paths.
-- [ ] Check logs and saved evidence for exposed keys, passwords or personal information.
+- [x] Run the protected/unprotected comparison as an explicitly offline three-case demonstration using SDK doubles; no token movement (Segment 1Z).
+- [ ] Demonstrate the agreed final payment/attack comparison with the completed private flow; do not substitute offline fixture results for settlement.
+- [x] Review first-party logging, tracked environment names and 22 JSON reports for sensitive-value fields (scoped Segment 1Z review).
+- [ ] Check final live logs, screenshots and recordings for exposed keys, passwords or personal information.
 - [x] Apply compatible dependency pins and rerun production audits, both JavaScript suites and offline wallet/proof checks (Segment 1Y).
 - [ ] Review the known dependency findings and resolve blockers for the test environment.
+- [x] Document remaining dependency call paths and compatibility blockers; add tested size limits to active RPC/history/POI readers (Segment 1Z).
+- [x] Prepare submission description, architecture explanation, AI attribution, demo script, runbook and copy-ready Check-in 2.
+- [x] Recheck sponsor requirements; identify Privy financial flow and conditional additional targets without claiming unbuilt integrations.
 - [ ] Record reproducible test results, transaction evidence and the demo video.
 - [ ] Recheck submission requirements and the official deadline.
 - [ ] Review remaining time; decide whether KYC stays postponed until after the contest.
 
 ## Deferred work
+
+See [DEMO_RUNBOOK.md](DEMO_RUNBOOK.md) for phone tasks and ordered computer
+checks. [Segment 1Z](privacy/SEGMENT-1Z.md#what-remains-and-why) distinguishes
+user checks from remaining private-settlement engineering. The official schedule
+could not be verified through the public event page; check the dashboard.
 
 KYC integration, real-money release, broader merchant operations, production
 key custody/recovery, remote hosting of the private-wallet service and any unbuilt sponsor features are outside

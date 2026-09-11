@@ -40,7 +40,7 @@ test('concurrent read-only RPC responses retain their own request IDs', async t 
   t.mock.method(globalThis, 'fetch', async (_url, options) => {
     const request = JSON.parse(options.body);
     return new Promise(resolve => pending.set(request.id,
-      () => resolve({ ok: true, json: async () => ({ jsonrpc: '2.0', id: request.id, result: request.method }) })));
+      () => resolve(Response.json({ jsonrpc: '2.0', id: request.id, result: request.method }))));
   });
   const rpc = makeReadOnlyRpc('http://127.0.0.1:8545');
   const first = rpc('eth_chainId', []);

@@ -676,3 +676,39 @@ fee idea remains tabled.
 
 AI assistance: Codex reviewed, updated, tested and documented this segment at
 McLean's direction.
+
+## September 11, 2026 - Segment 1Z: offline security and submission preparation
+
+Completed the unblocked dependency/call-path review and added streaming byte
+limits to direct RPC, ethers, TXID GraphQL and POI transports. Decoded RPC/history
+responses are capped at 8 MiB and POI at 1 MiB. Oversize/aborted bodies are
+cancelled; a single growing buffer bounds retention across tiny chunks. The
+actual Axios POI adapter remains endpoint scoped. Dependency pins are unchanged.
+
+Added a reproducible three-case offline rule demo. The real approval adapter
+accepts matching terms and rejects recipient substitution before SDK-double
+calls; a separately labeled unprotected fixture accepts the substitution. The
+comparison performs no cryptographic proof, signing, token transfer or attack
+against an external system. It is not a settled private-payment demonstration.
+
+Validation: 132 privacy tests and 38 checkout tests passed; 23 transport/runtime
+checks passed again after the bounded-buffer refinement. An outdated JSON-only
+fetch test double was replaced with a real Response. Reviewed first-party log
+sites, tracked configuration names and 22 JSON evidence reports for sensitive
+value fields. No such fields found in those reports; no complete secret scan
+or security certification is implied.
+
+Prepared CHECK_IN_2.md, SUBMISSION.md, DEMO_RUNBOOK.md and SECURITY_REVIEW.md.
+Reviewed current sponsor requirements: Privy financial flow fits the working
+public payment; other targets need their specific functional integrations.
+The exact deadline and judging schedule remain unverified because the public
+overview/schedule could not be read. McLean can confirm them in the dashboard.
+
+Private settlement and encrypted receipts remain further engineering after the
+trusted-computer wallet/deposit gates. No gate was bypassed and no private signing,
+main merge or hosted deployment occurred. The hosted implementation is still
+through Segment 1O. KYC and commercial fees stay deferred. See Segment 1Z and
+its validation report for the completed work and remaining dependencies.
+
+AI assistance: Codex implemented, tested, reviewed and drafted the materials at
+McLean's direction. No check-in, submission or judging commitment was sent.

@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import { FetchRequest } from 'ethers';
 import { makeReadOnlyRpc } from './network-preflight.mjs';
+import { readResponseBytes } from './response-limit.mjs';
 
 const require = createRequire(import.meta.url);
 
@@ -22,7 +23,7 @@ export function createFetchTransport(fetchImpl = globalThis.fetch) {
         method: request.method, headers: request.headers, body: request.body ?? undefined,
         signal: controller.signal, redirect: 'error',
       });
-      const body = new Uint8Array(await response.arrayBuffer());
+      const body = await readResponseBytes(response, { signal: controller.signal });
       const headers = Object.fromEntries(response.headers);
       // Fetch has already decoded compressed responses.
       delete headers['content-encoding'];

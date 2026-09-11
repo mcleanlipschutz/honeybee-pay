@@ -1,4 +1,5 @@
 import { NETWORK_CONFIG } from '@railgun-community/shared-models';
+import { readResponseJSON } from './response-limit.mjs';
 
 // Read-only checks. A configuration entry is not proof of a usable deployment.
 export function testNetwork(name) {
@@ -39,15 +40,17 @@ export function makeReadOnlyRpc(url) {
     const requestID = ++id;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
+        const signal = AbortSignal.timeout(10000);
         const response = await fetch(url, { method: 'POST', redirect: 'error',
-          headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(10000),
+          headers: { 'content-type': 'application/json' }, signal,
           body: JSON.stringify({ jsonrpc: '2.0', id: requestID, method, params }) });
         if (!response.ok) {
+          void response.body?.cancel().catch(() => {});
           const error = new Error();
           error.retryable = [429, 502, 503, 504].includes(response.status);
           throw error;
         }
-        const body = await response.json();
+        const body = await readResponseJSON(response, { signal });
         if (body.error || body.id !== requestID || body.jsonrpc !== '2.0') throw new Error();
         return body.result;
       } catch (cause) {

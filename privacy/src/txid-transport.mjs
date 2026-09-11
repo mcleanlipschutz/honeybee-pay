@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
+import { readResponseBytes } from './response-limit.mjs';
 const require = createRequire(import.meta.url);
 export const txidEndpoint = 'https://rail-squid.squids.live/squid-railgun-eth-sepolia-v2/graphql';
 
@@ -21,7 +22,7 @@ export function createHistoryFetch(previous, fetchImpl = globalThis.fetch) {
       const response = await fetchImpl(url, { ...init, method, headers, body,
         signal: controller.signal, redirect: 'error' });
       // Consume under the same deadline; preserve GraphQL errors for the SDK.
-      const bytes = await response.arrayBuffer();
+      const bytes = await readResponseBytes(response, { signal: controller.signal });
       const decodedHeaders = new Headers(response.headers);
       decodedHeaders.delete('content-encoding'); decodedHeaders.delete('content-length');
       return new Response(bytes, { status: response.status, statusText: response.statusText, headers: decodedHeaders });

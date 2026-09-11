@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+import { readResponseBytes, poiResponseLimit } from './response-limit.mjs';
 const require = createRequire(import.meta.url);
 
 export function installPOITransport(poiURL) {
@@ -11,6 +12,17 @@ export function installPOITransport(poiURL) {
       config.adapter = 'fetch';
       config.timeout = Math.min(config.timeout || 15000, 15000);
       config.fetchOptions = { ...config.fetchOptions, redirect: 'error' };
+      // Supply Axios' supported fetch environment hook so parsing is bounded
+      // even when the server omits Content-Length or sends compressed content.
+      config.env = { ...config.env, fetch: async (request, init) => {
+        const signal = init?.signal ?? request?.signal;
+        const response = await globalThis.fetch(request, init);
+        const bytes = await readResponseBytes(response, { maximumBytes: poiResponseLimit, signal });
+        const headers = new Headers(response.headers);
+        headers.delete('content-encoding'); headers.delete('content-length');
+        return new Response([204, 205, 304].includes(response.status) ? null : bytes,
+          { status: response.status, statusText: response.statusText, headers });
+      } };
     }
     return config;
   });
