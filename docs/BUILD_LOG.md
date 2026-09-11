@@ -1,6 +1,6 @@
 # BUILD LOG
 
-Current checkpoint: **September 10, 2026, through Segment 1X**. See the
+Current checkpoint: **September 11, 2026, through Segment 1Z and Windows path repair**. See the
 [project status](../README.md#current-status) and
 [remaining test checklist](../TEST_CHECKLIST.md). Entries below are chronological:
 each records what was true at that milestone. Later entries supersede earlier
@@ -712,3 +712,15 @@ its validation report for the completed work and remaining dependencies.
 
 AI assistance: Codex implemented, tested, reviewed and drafted the materials at
 McLean's direction. No check-in, submission or judging commitment was sent.
+
+## September 11, 2026 - Windows checkout path repair
+
+McLean's first Windows clone downloaded the repository successfully but could
+not check out `docs / BUILD_LOG.md`: the directory name ended in a space.
+Renamed the log to `docs/BUILD_LOG.md`, preserving all existing entries, and
+removed the leading space from the filename. Moved the other document in the
+same invalid directory to `docs/PAYMENT_RULES.md` without content changes and
+updated the README link. No application code changed.
+Reviewed tracked paths for Windows-invalid characters, trailing dots/spaces and
+reserved device names. Actual Windows checkout confirmation remains with McLean.
+The failed local clone can be preserved while a fresh clone verifies the repair.

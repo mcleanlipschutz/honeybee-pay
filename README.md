@@ -93,5 +93,5 @@ The [test checklist](TEST_CHECKLIST.md) tracks the individual gates. The
 [Check-in 2 draft](CHECK_IN_2.md) and [security review](SECURITY_REVIEW.md)
 prepare the next session. The exact deadline and live-judging time still need
 confirmation in the organizer dashboard. The
-[build log](docs%20/%20BUILD_LOG.md) preserves the implementation history,
+[build log](docs/BUILD_LOG.md) preserves the implementation history,
 including dependency work, transport fixes and the latest status checkpoint.
