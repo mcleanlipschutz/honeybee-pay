@@ -724,3 +724,32 @@ updated the README link. No application code changed.
 Reviewed tracked paths for Windows-invalid characters, trailing dots/spaces and
 reserved device names. Actual Windows checkout confirmation remains with McLean.
 The failed local clone can be preserved while a fresh clone verifies the repair.
+
+## Windows private-test repair after the first desktop run
+
+McLean confirmed clone 7e22070, checkout install, 38/38 checkout tests and both
+client/server build stages on Windows (Node 24.21.0, npm 11.19.0,
+Git 2.55.0.windows.5). The production checkout audit matched the recorded 23
+moderate findings. Private packages installed with 5 low findings and the
+existing GraphQL Mesh peer-version warnings. The first private run passed
+111/132 tests, with 21 failures; that result was not treated as readiness.
+
+Reproduced the history-store failure on Linux by directing test temporary
+files through a path alias. The account/history fixtures now pass realpath-
+resolved temporary directories to the unchanged strict storage checks. This
+matches the local CLI's existing canonical-path setup. POSIX permission tests
+are explicitly skipped on Windows; hard-link/file-shape checks still run.
+The separate dangling-symlink test skips only if Windows denies fixture
+creation. These skips do not establish equivalent Windows ACL protection.
+
+The review-cache fixture now shares one clock between the review and cache,
+preserving the production five-minute lifetime limit. Account preflight now
+checks the RPC chain before opening the artifact cache; full deployment and
+verification-key checks still follow and repeat the chain check. A fresh clone
+can therefore reject a wrong-chain provider without predownloaded proof files.
+
+Validation: all 134 private tests passed (zero skips/failures) in a fresh Linux
+source copy with no artifact cache and an aliased temporary directory. Installed
+dependencies were reused unchanged. git diff --check and the modified runtime's
+syntax check passed. Native Windows retesting is still required. No signing,
+deployment, wallet credentials, fee settings or dependency versions changed.

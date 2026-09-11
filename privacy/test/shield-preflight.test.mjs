@@ -19,7 +19,7 @@ const stateABI = new Interface(['function paused() view returns (bool)', 'functi
 const digest = (value, field) => { const body = { ...value }; delete body[field]; return { ...body, [field]: keccak256(toUtf8Bytes(JSON.stringify(body))) }; };
 const hex = value => '0x' + BigInt(value).toString(16);
 function fixture(change = {}) {
-  const now = Date.now();
+  const now = change.now ?? Date.now();
   // Synthetic unsigned note for preflight control tests; no proof or funds.
   const request = { preimage: { npk: '0x' + '11'.repeat(32), token: { tokenType: 0, tokenAddress: accountSyncToken, tokenSubID: 0 }, value: 1_000_000n },
     ciphertext: { encryptedBundle: Array(3).fill('0x' + '22'.repeat(32)), shieldKey: '0x' + '33'.repeat(32) } };
@@ -131,7 +131,7 @@ test('review cache binds owners, rejects expired/replaced requests and never acc
   let now = Date.now();
   const a = { ownerId: 'a'.repeat(64), expiresAt: now + 3600000 }, b = { ...a, ownerId: 'b'.repeat(64) };
   const cache = createShieldReviewCache({ now: () => now, maximum: 1 });
-  const { review } = fixture();
+  const { review } = fixture({ now });
   cache.put(a, review);
   await assert.rejects(cache.use(b, review.reviewId, () => assert.fail('No other owner access')));
   assert.throws(() => cache.put(b, review), /Invalid stored/);

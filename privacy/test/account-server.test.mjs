@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, realpath, mkdir, writeFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -12,7 +12,7 @@ import { historyRestoreBodyLimit, historyBackupFormat } from '../../shared/reque
 import { createAccountWalletClient } from '../../checkout/src/account-client.mjs';
 
 async function setup(t, fixture, existingDirectory) {
-  const root = await mkdtemp(join(tmpdir(), 'honeybee-http-'));
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'honeybee-http-')));
   const directory = existingDirectory ?? join(root, 'accounts'), distDirectory = join(root, 'dist');
   if (!existingDirectory) await mkdir(directory, { mode: 0o700 });
   await mkdir(distDirectory);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, readdir, readFile, stat, cp, chmod, symlink } from 'node:fs/promises';
+import { mkdtemp, realpath, rm, readdir, readFile, stat, cp, chmod, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -9,8 +9,8 @@ import { createAccountAuthenticator } from '../src/account-auth.mjs';
 import { accountFixture } from './account-fixture.mjs';
 
 test('independent account wallets recover in new processes and reject cross-account access and overwrite', { timeout: 90000 }, async t => {
-  const directory = await mkdtemp(join(tmpdir(), 'honeybee-accounts-'));
-  const recoveryDirectory = await mkdtemp(join(tmpdir(), 'honeybee-recovery-'));
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'honeybee-accounts-')));
+  const recoveryDirectory = await realpath(await mkdtemp(join(tmpdir(), 'honeybee-recovery-')));
   t.after(() => Promise.all([directory, recoveryDirectory].map(path => rm(path, { recursive: true, force: true }))));
   const fixture = await accountFixture();
   const buyerToken = await fixture.token(), merchantToken = await fixture.token('merchant');
@@ -65,9 +65,10 @@ test('independent account wallets recover in new processes and reject cross-acco
   if (process.platform !== 'win32') assert.equal((await stat(backupPath)).mode & 0o777, 0o600);
 });
 
-test('account storage rejects unsafe directories and symlinked backup files', { timeout: 30000 }, async t => {
-  if (process.platform === 'win32') return;
-  const directory = await mkdtemp(join(tmpdir(), 'honeybee-account-path-'));
+test('account storage rejects unsafe directories and symlinked backup files', {
+  timeout: 30000, skip: process.platform === 'win32' ? 'POSIX permission and symlink fixture; Windows ACL validation remains separate' : false,
+}, async t => {
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'honeybee-account-path-')));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const fixture = await accountFixture(), accessToken = await fixture.token();
   await assert.rejects(createAccountWalletService({ directory: 'relative', ...fixture }));

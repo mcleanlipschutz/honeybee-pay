@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { mkdtemp, chmod, rm, readFile, writeFile, readdir } from 'node:fs/promises';
+import { mkdtemp, realpath, chmod, rm, readFile, writeFile, readdir } from 'node:fs/promises';
 import { readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -18,7 +18,7 @@ const recipient = RailgunEngine.encodeAddress({ masterPublicKey: 123n, viewingPu
 const invoice = (options = {}) => createAccountInvoice({ wallet: { id: 'fixture', railgunAddress: recipient },
   amount: '1', lifetimeSeconds: 900, now: clock, checkSession() {}, ...options }).paymentRequest;
 async function fixture(t, account = {}) {
-  const directory = await mkdtemp(join(tmpdir(), 'honeybee-history-backup-'));
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'honeybee-history-backup-')));
   await chmod(directory, 0o700); t.after(() => rm(directory, { recursive: true, force: true }));
   const { directory: ignored, ...keys } = account;
   const context = { privateKey: '0x' + randomBytes(32).toString('hex'), ownerId: randomBytes(32).toString('hex'),

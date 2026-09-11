@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, realpath, rm, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createServer } from 'node:http';
@@ -66,7 +66,7 @@ test('sync endpoint configuration cannot come from a request or select non-HTTP 
   assert.equal(accountSyncConfig({ rpcURL: 'https://rpc.example' }).poiURL, 'https://ppoi.fdi.network');
 });
 test('real account workers reject unauthorized sync before network access and preserve recovery on preflight failure', { timeout: 45000 }, async t => {
-  const directory = await mkdtemp(join(tmpdir(), 'honeybee-account-sync-'));
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'honeybee-account-sync-')));
   t.after(() => rm(directory, { recursive: true, force: true }));
   let calls = 0;
   const rpc = createServer((req, res) => {

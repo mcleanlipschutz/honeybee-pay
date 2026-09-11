@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { mkdtemp, readFile, writeFile, stat, readdir, rm, chmod, symlink, link, mkdir } from 'node:fs/promises';
+import { mkdtemp, realpath, readFile, writeFile, stat, readdir, rm, chmod, symlink, link, mkdir } from 'node:fs/promises';
 import { readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -18,7 +18,7 @@ const otherRecipient = RailgunEngine.encodeAddress({ masterPublicKey: 456n, view
 const invoice = (options = {}) => createAccountInvoice({ wallet: { id: 'test-wallet-id', railgunAddress: recipient },
   amount: '1', lifetimeSeconds: 900, now: initialTime, checkSession() {}, ...options }).paymentRequest;
 async function fixture(t) {
-  const directory = await mkdtemp(join(tmpdir(), 'honeybee-history-'));
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'honeybee-history-')));
   await chmod(directory, 0o700);
   t.after(() => rm(directory, { recursive: true, force: true }));
   const context = { directory, recipient, ownerId: randomBytes(32).toString('hex'),
@@ -33,7 +33,7 @@ test('history survives reopening, encrypts private terms, preserves duplicate re
   await store.append(first);
   const saved = await readFile(filename, 'utf8'), envelope = JSON.parse(saved);
   for (const secret of [first.recipient, first.id, 'amountUnits', context.ownerId, context.privateKey.slice(2)]) assert.equal(saved.includes(secret), false);
-  assert.equal((await stat(filename)).mode & 0o777, 0o600);
+  if (process.platform !== 'win32') assert.equal((await stat(filename)).mode & 0o777, 0o600);
   assert.equal((await createRequestHistoryStore(context).read()).requests[0].digest, first.digest);
   assert.equal((await store.append(first)).requests.length, 1);
   assert.equal(await readFile(filename, 'utf8'), saved);
@@ -67,13 +67,26 @@ test('malformed, tampered and oversized history fail closed instead of resetting
   await writeFile(filename, saved); assert.equal((await store.read()).requests.length, 1);
 });
 
-test('unsafe files and directories, hard links and dangling symlinks are refused', async t => {
+test('history refuses hard links and directories in place of files', async t => {
+  const { context, filename, store } = await fixture(t); await store.append(invoice());
+  const other = join(context.directory, 'other'); await link(filename, other); await assert.rejects(store.read()); await rm(other);
+  await rm(filename); await mkdir(filename); await assert.rejects(store.read()); await rm(filename, { recursive: true });
+});
+
+test('history refuses public POSIX file and directory permissions', { skip: process.platform === 'win32' ? 'Windows uses ACLs, not POSIX mode bits' : false }, async t => {
   const { context, filename, store } = await fixture(t); await store.append(invoice());
   await chmod(filename, 0o644); await assert.rejects(store.read()); await assert.rejects(store.append(invoice())); await chmod(filename, 0o600);
-  const other = join(context.directory, 'other'); await link(filename, other); await assert.rejects(store.read()); await rm(other);
-  await rm(filename); await symlink(join(context.directory, 'missing'), filename); await assert.rejects(store.read()); await assert.rejects(store.append(invoice()));
-  await rm(filename); await mkdir(filename); await assert.rejects(store.read()); await rm(filename, { recursive: true });
   await chmod(context.directory, 0o755); await assert.rejects(store.append(invoice())); await chmod(context.directory, 0o700);
+});
+
+test('history refuses dangling symlinks without replacing them', async t => {
+  const { context, filename, store } = await fixture(t);
+  try { await symlink(join(context.directory, 'missing'), filename); }
+  catch (error) {
+    if (process.platform === 'win32' && error.code === 'EPERM') return t.skip('Creating symlinks requires Windows permission; protection remains enabled');
+    throw error;
+  }
+  await assert.rejects(store.read()); await assert.rejects(store.append(invoice()));
 });
 
 test('interrupted pre-rename writes preserve old history and clean temporary files', async t => {

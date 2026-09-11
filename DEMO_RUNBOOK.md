@@ -41,6 +41,19 @@ unprotected real payment or run an attack against any external system.
 
 ## Open the reviewed code on Windows
 
+Windows checkpoint: McLean installed Node 24.21.0, npm 11.19.0 and Git
+2.55.0.windows.5. The corrected repository cloned successfully; checkout's
+38 tests and both build stages passed. Production audits showed 23 moderate
+checkout findings and the private install showed 5 low findings. The first
+private run passed 111/132 tests; the follow-up below awaits a Windows rerun.
+
+If already in the clean Windows checkout, retrieve the test repairs with
+`git pull --ff-only`, then run `npm.cmd test` from `privacy/`. Dependencies
+did not change, so reinstalling packages is unnecessary. The suite now has
+134 tests; Windows reports explicit skips for POSIX-only checks, and may skip
+the symlink-creation fixture if Windows denies that operation. Require zero
+failures and review skipped coverage separately. Do not remove runtime guards.
+
 Use an existing clean checkout of `codex/privacy-segment-1a`, or clone it into a
 new directory. Preserve any work already on your computer.
 

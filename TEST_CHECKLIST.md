@@ -5,6 +5,15 @@ they do not imply a live payment has settled.
 
 ## Current checkpoint: Segment 1Z
 
+Windows follow-up: checkout installed, all 38 checkout tests passed, and both
+client/server builds completed on McLean's computer. The production checkout
+audit matched 23 moderate findings. Private packages installed with 5 low
+findings; the initial private suite passed 111/132 tests. Test-fixture path and
+clock repairs plus an earlier wrong-chain rejection now pass 134/134 tests in
+a fresh Linux checkout with an aliased temporary directory and no artifact
+cache. A Windows rerun and the actual browser/recovery checks remain pending.
+Explicit Windows skips do not validate POSIX permissions or Windows ACLs.
+
 The public mobile payment milestone is verified. Private wallet setup/recovery,
 deposit preparation, merchant request files, encrypted request history and
 separate history backup/restore, request-specific private-funds checks and local
