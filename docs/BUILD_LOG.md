@@ -778,3 +778,26 @@ cancellations or skips in 63.8 seconds. The three large scenarios completed in
 with their phase timings visible. git diff --check passed. No runtime source,
 dependency version or lockfile changed. The rest of the already-verified suite
 was not rerun for this test-only change. Native Windows retesting remains next.
+
+## Windows focused wallet integration checkpoint passed
+
+McLean supplied the completed `npm.cmd run test:wallets` output from Windows at
+90e68be: 10 tests, 9 passed, 0 failed, 0 cancelled and 1 expected POSIX-only
+permission/symlink fixture skip. The three previously cancelled scenarios now
+completed: local HTTP wallet creation/recovery/request history in 86,621.3039 ms,
+account sync and preflight/recovery checks in 42,441.9072 ms, and independent
+account wallets with fresh-process recovery in 43,010.7616 ms. Phase diagnostics
+reached each scenario's final recovery or authorization checks.
+
+The runner reported a total duration of 2,231,135.988 ms. This is recorded as
+supplied; the cause of the difference from individual test durations was not
+established. The result is a focused Windows rerun, not a new 134-test full-suite
+pass. Earlier passing Windows checks remain recorded in the preceding entries.
+The POSIX-only skip does not validate Windows ACL protection.
+
+Next is the actual loopback browser workflow: public Privy configuration,
+sign-in, account wallet creation and encrypted backup/recovery, followed by
+merchant request/history checks. Live sync/deposit review and full private
+settlement still require their separate gates. This checkpoint changes only
+documentation; no runtime source, dependencies, signing gate or deployment
+changed. No tests were repeated for this documentation update.

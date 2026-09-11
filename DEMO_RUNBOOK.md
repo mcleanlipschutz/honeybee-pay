@@ -48,7 +48,14 @@ checkout findings and the private install showed 5 low findings. After the path
 and fixture fixes, Windows reported 128 passed, 3 skipped and 3 cancelled by
 test timeouts. An isolated account-sync rerun also reached its 45-second limit.
 
-If already in the clean Windows checkout, retrieve the test repairs with
+At 90e68be, McLean completed `npm.cmd run test:wallets` on Windows: 9 passed,
+0 failed, 0 cancelled and 1 expected POSIX-only skip. The HTTP wallet/recovery/
+history scenario completed in 86.6 seconds, sync in 42.4 seconds and independent
+wallet recovery in 43.0 seconds. This completes the previously cancelled
+automated scenarios; actual local browser sign-in and recovery checks are next.
+No reinstall or repeat of this successful focused run is needed to continue.
+
+For a Windows checkout that has not yet completed this checkpoint, retrieve the repairs with
 `git pull --ff-only`, then run `npm.cmd run test:wallets` from `privacy/` to
 retest only the three affected files sequentially. This focused suite has 10
 tests; Windows explicitly skips one POSIX-only test. The overall Windows
@@ -79,9 +86,9 @@ npm.cmd run demo:rules
 npm.cmd run engine:smoke
 ```
 
-The reference environment is Node 24.19.0/npm 11.9.0 on Linux. Windows installation
-and native database lock/reopen tests passed; complete account scenarios still
-require validation after the timeout adjustments. If installation or a test
+The reference environment is Node 24.19.0/npm 11.9.0 on Linux. Windows installation,
+native database lock/reopen tests and the focused account scenarios passed.
+Actual browser checks and Windows ACL validation remain separate. If installation or a test
 fails, retain its redacted error and stop there; do not force dependency upgrades.
 
 For an offline proof check, first ensure pinned artifacts are present. If needed,
