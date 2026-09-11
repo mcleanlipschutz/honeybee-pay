@@ -27,12 +27,18 @@ function client(server, accessToken) {
     fetchImpl: (url, options) => fetch(url, { ...options, headers: { ...options.headers, Origin: server.origin } }) });
 }
 
-test('browser client and local API create, export, verify and restore actual account wallets', { timeout: 120000 }, async t => {
+// This full HTTP scenario performs dozens of separate wallet operations.
+// Only the overall Windows test budget changes; runtime request limits do not.
+test('browser client and local API create, export, verify and restore actual account wallets', { timeout: process.platform === 'win32' ? 480000 : 120000 }, async t => {
+  const started = performance.now();
+  const checkpoint = stage => t.diagnostic('HTTP fixture: ' + stage + ' at ' + Math.round(performance.now() - started) + ' ms');
+  checkpoint('starting');
   const fixture = await accountFixture(), server = await setup(t, fixture);
   const buyer = client(server, await fixture.token()), merchant = client(server, await fixture.token('merchant'));
   const password = randomBytes(24).toString('hex');
   const initial = await buyer.execute('status');
   assert.equal(initial.privateWallet.status, 'not-created');
+  checkpoint('empty wallet status checked');
   const created = await buyer.execute('create', { password });
   assert.equal(typeof created.encryptedBackup, 'string');
   assert.equal(created.encryptedBackup.includes(password), false);
@@ -46,12 +52,14 @@ test('browser client and local API create, export, verify and restore actual acc
   const merchantPassword = randomBytes(24).toString('hex');
   const other = await merchant.execute('create', { password: merchantPassword });
   assert.notEqual(other.privateWallet.privateAddress, created.privateWallet.privateAddress);
+  checkpoint('separate buyer and merchant wallets created');
   await assert.rejects(buyer.execute('verify-backup', { password, backup: other.encryptedBackup }));
   await assert.rejects(buyer.execute('create', { password }));
   const secondServer = await setup(t, fixture);
   const recovered = await client(secondServer, await fixture.token('buyer', { sid: 'new-session' })).execute('restore', { password, backup: created.encryptedBackup });
   assert.deepEqual(recovered.privateWallet, created.privateWallet);
   assert.equal(recovered.recovery, 'restored');
+  checkpoint('wallet backup recovered');
   // Actual SDK recovery through HTTP and browser validation, with no RPC configured.
   const fields = { password, amount: '1.00', lifetimeSeconds: 3600 };
   const invoice = await buyer.execute('invoice-create', fields);
@@ -63,6 +71,7 @@ test('browser client and local API create, export, verify and restore actual acc
   const restartedServer = await setup(t, fixture, server.directory);
   const reopened = await client(restartedServer, await fixture.token('buyer', { sid: 'new-session' })).execute('invoice-history', { password });
   assert.deepEqual(reopened.requestHistory, invoice.requestHistory);
+  checkpoint('merchant request persisted and reopened');
   await assert.rejects(buyer.execute('invoice-history', { password: randomBytes(24).toString('hex') }));
   await assert.rejects(buyer.execute('invoice-history', { password, ownerId: 'merchant' }));
   assert.equal((await buyer.execute('status')).requestHistory, undefined);
@@ -81,6 +90,7 @@ test('browser client and local API create, export, verify and restore actual acc
   assert.equal(restoredHistory.historyRestoration.total, 2);
   assert.equal(restoredHistory.requestHistory.requests.some(item => item.id === restarted.paymentRequest.id), true);
   assert.equal((await destination.execute('invoice-history-restore', restoreFields)).historyRestoration.added, 0);
+  checkpoint('history backup restored without duplication');
   assert.deepEqual((await destination.execute('invoice-history', { password })).requestHistory, restoredHistory.requestHistory);
   await assert.rejects(merchant.execute('invoice-history-restore', { ...restoreFields, password: merchantPassword }));
   await assert.rejects(buyer.execute('invoice-history-export', { password: randomBytes(24).toString('hex') }));
@@ -91,6 +101,7 @@ test('browser client and local API create, export, verify and restore actual acc
     await assert.rejects(buyer.execute('invoice-create', { ...fields, [selector]: 'injected' }));
   }
   await assert.rejects(client(server, 'forged').execute('invoice-create', fields));
+  checkpoint('final backup and authorization checks completed');
 });
 
 test('local HTTP boundary rejects other origins, forged tokens, selectors and secret-file paths', { timeout: 15000 }, async t => {

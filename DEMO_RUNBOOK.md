@@ -44,15 +44,23 @@ unprotected real payment or run an attack against any external system.
 Windows checkpoint: McLean installed Node 24.21.0, npm 11.19.0 and Git
 2.55.0.windows.5. The corrected repository cloned successfully; checkout's
 38 tests and both build stages passed. Production audits showed 23 moderate
-checkout findings and the private install showed 5 low findings. The first
-private run passed 111/132 tests; the follow-up below awaits a Windows rerun.
+checkout findings and the private install showed 5 low findings. After the path
+and fixture fixes, Windows reported 128 passed, 3 skipped and 3 cancelled by
+test timeouts. An isolated account-sync rerun also reached its 45-second limit.
 
 If already in the clean Windows checkout, retrieve the test repairs with
-`git pull --ff-only`, then run `npm.cmd test` from `privacy/`. Dependencies
-did not change, so reinstalling packages is unnecessary. The suite now has
-134 tests; Windows reports explicit skips for POSIX-only checks, and may skip
-the symlink-creation fixture if Windows denies that operation. Require zero
-failures and review skipped coverage separately. Do not remove runtime guards.
+`git pull --ff-only`, then run `npm.cmd run test:wallets` from `privacy/` to
+retest only the three affected files sequentially. This focused suite has 10
+tests; Windows explicitly skips one POSIX-only test. The overall Windows
+budgets are 3 minutes for account sync, 6 for account recovery and 8 for the
+full HTTP scenario. Each existing application operation retains its original
+deadline. Test diagnostics print fixed stage labels and elapsed milliseconds;
+they contain no passwords, wallet material or tokens. Require zero failures
+and cancellations. The larger budget is not evidence of a passing test.
+
+Dependencies did not change, so reinstalling packages is unnecessary. The full
+suite still has 134 tests. Review Windows skips separately; they do not establish
+POSIX permission checks or Windows ACL protection. Do not remove runtime guards.
 
 Use an existing clean checkout of `codex/privacy-segment-1a`, or clone it into a
 new directory. Preserve any work already on your computer.
@@ -61,18 +69,19 @@ new directory. Preserve any work already on your computer.
 git clone --branch codex/privacy-segment-1a https://github.com/mcleanlipschutz/honeybee-pay.git honeybee-pay-review
 cd honeybee-pay-review
 cd checkout
-npm ci --ignore-scripts
-npm test
-npm run build
+npm.cmd ci --ignore-scripts
+npm.cmd test
+npm.cmd run build
 cd ../privacy
-npm ci --ignore-scripts
-npm test
-npm run demo:rules
-npm run engine:smoke
+npm.cmd ci --ignore-scripts
+npm.cmd test
+npm.cmd run demo:rules
+npm.cmd run engine:smoke
 ```
 
-The recorded environment is Node 24.19.0/npm 11.9.0 on Linux. Windows installation
-and native database bindings still need verification. If installation or a test
+The reference environment is Node 24.19.0/npm 11.9.0 on Linux. Windows installation
+and native database lock/reopen tests passed; complete account scenarios still
+require validation after the timeout adjustments. If installation or a test
 fails, retain its redacted error and stop there; do not force dependency upgrades.
 
 For an offline proof check, first ensure pinned artifacts are present. If needed,

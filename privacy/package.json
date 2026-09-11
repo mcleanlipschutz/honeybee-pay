@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.mjs",
+    "test:wallets": "node --test --test-concurrency=1 test/account-sync.test.mjs test/account-wallets.test.mjs test/account-server.test.mjs",
     "demo:rules": "node src/attack-demo.mjs",
     "preflight": "node src/preflight.mjs",
     "engine:smoke": "node src/engine-smoke.mjs",

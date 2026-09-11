@@ -753,3 +753,28 @@ source copy with no artifact cache and an aliased temporary directory. Installed
 dependencies were reused unchanged. git diff --check and the modified runtime's
 syntax check passed. Native Windows retesting is still required. No signing,
 deployment, wallet credentials, fee settings or dependency versions changed.
+
+## Windows integration-test timing follow-up
+
+At 50c51f1, McLean's Windows suite reported 128 passed, 3 platform-specific
+skips and 3 cancellations at the overall integration-test limits (45, 90 and
+120 seconds). The isolated account-sync file still cancelled at 45 seconds;
+parallel suite contention alone therefore did not explain completion limits.
+These cancellations were not recorded as passing tests.
+
+Added `npm run test:wallets` to run only the three affected files sequentially.
+The Windows-only total test limits are now 180 seconds for account sync,
+360 seconds for account recovery and 480 seconds for the larger HTTP scenario.
+Each scenario performs many independent SDK worker starts and password KDF
+operations. All assertions, application worker/request/RPC deadlines, session
+expiry, KDF settings and private signing gates remain unchanged. Finite larger
+test budgets are a diagnostic step, not proof that Windows integration works.
+Fixed-label stage diagnostics report only monotonic elapsed milliseconds and
+identify the last completed phase without printing credentials or wallet data.
+
+Validation: the focused Linux run passed all 10 tests with no failures,
+cancellations or skips in 63.8 seconds. The three large scenarios completed in
+29.8 seconds (HTTP), 12.2 seconds (sync) and 14.7 seconds (account recovery),
+with their phase timings visible. git diff --check passed. No runtime source,
+dependency version or lockfile changed. The rest of the already-verified suite
+was not rerun for this test-only change. Native Windows retesting remains next.

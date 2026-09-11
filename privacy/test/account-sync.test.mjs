@@ -65,7 +65,12 @@ test('sync endpoint configuration cannot come from a request or select non-HTTP 
   }
   assert.equal(accountSyncConfig({ rpcURL: 'https://rpc.example' }).poiURL, 'https://ppoi.fdi.network');
 });
-test('real account workers reject unauthorized sync before network access and preserve recovery on preflight failure', { timeout: 45000 }, async t => {
+// Many isolated SDK processes and password checks share this test's total
+// budget. Application worker, RPC and session deadlines remain unchanged.
+test('real account workers reject unauthorized sync before network access and preserve recovery on preflight failure', { timeout: process.platform === 'win32' ? 180000 : 45000 }, async t => {
+  const started = performance.now();
+  const checkpoint = stage => t.diagnostic('sync fixture: ' + stage + ' at ' + Math.round(performance.now() - started) + ' ms');
+  checkpoint('starting');
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'honeybee-account-sync-')));
   t.after(() => rm(directory, { recursive: true, force: true }));
   let calls = 0;
@@ -79,11 +84,13 @@ test('real account workers reject unauthorized sync before network access and pr
   const password = randomBytes(24).toString('hex');
   const service = await createAccountWalletService({ directory, ...auth, syncConfig: { rpcURL: `http://127.0.0.1:${rpc.address().port}` } });
   const created = await service.execute({ action: 'create', accessToken: token, password });
+  checkpoint('wallet created');
   await assert.rejects(service.execute({ action: 'sync', accessToken: 'forged', password }));
   await assert.rejects(service.execute({ action: 'sync', accessToken: other, password }));
   await assert.rejects(service.execute({ action: 'sync', accessToken: token, password: 'wrong-password-has-sixteen-characters' }));
   await assert.rejects(service.execute({ action: 'sync', accessToken: token, password, rpcURL: 'https://other.test' }));
   assert.equal(calls, 0);
+  checkpoint('unauthorized sync rejected');
   // Wrong-chain RPC is local and deterministic. No external network or payment.
   await assert.rejects(service.execute({ action: 'sync', accessToken: token, password }));
   assert.equal(calls, 1);
@@ -98,6 +105,7 @@ test('real account workers reject unauthorized sync before network access and pr
   assert.equal(calls, 1, 'unauthorized or altered deposit requests must not reach the RPC');
   await assert.rejects(service.execute(review));
   assert.equal(calls, 2, 'valid review fails at the wrong-chain preflight without sending any transaction');
+  checkpoint('sync and deposit review rejected wrong chain');
   for (const extra of [{}, { accessToken: other }, { transaction: {} }, { password }, { review: {} }, { rpcURL: 'https://other.test' }]) {
     await assert.rejects(service.execute({ action: 'shield-preflight', accessToken: token, reviewId: '0x' + 'aa'.repeat(32), ...extra }));
   }
@@ -113,9 +121,11 @@ test('real account workers reject unauthorized sync before network access and pr
   assert.equal(calls, 2, 'unauthorized payment checks must not reach the RPC');
   await assert.rejects(service.execute(payment));
   assert.equal(calls, 3, 'valid payment check stops at wrong-chain preflight without signing');
+  checkpoint('payment checks completed');
   const owner = (await (await createAccountAuthenticator(auth))(token)).ownerId;
   assert.equal(await readFile(join(directory, owner, 'account.backup.json'), 'utf8'), created.encryptedBackup);
   const checked = await service.execute({ action: 'unlock', accessToken: token, password });
   assert.deepEqual(checked.privateWallet, created.privateWallet);
   assert.equal(checked.spendableBalanceVerified, false); assert.equal(checked.paymentReady, false);
+  checkpoint('recovery preserved and wallet unlocked');
 });

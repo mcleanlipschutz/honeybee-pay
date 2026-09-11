@@ -8,7 +8,12 @@ import { createAccountWalletService } from '../src/account-wallets.mjs';
 import { createAccountAuthenticator } from '../src/account-auth.mjs';
 import { accountFixture } from './account-fixture.mjs';
 
-test('independent account wallets recover in new processes and reject cross-account access and overwrite', { timeout: 90000 }, async t => {
+// The total includes many fresh SDK processes. Individual application worker
+// deadlines and password KDF settings are intentionally unchanged.
+test('independent account wallets recover in new processes and reject cross-account access and overwrite', { timeout: process.platform === 'win32' ? 360000 : 90000 }, async t => {
+  const started = performance.now();
+  const checkpoint = stage => t.diagnostic('wallet fixture: ' + stage + ' at ' + Math.round(performance.now() - started) + ' ms');
+  checkpoint('starting');
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'honeybee-accounts-')));
   const recoveryDirectory = await realpath(await mkdtemp(join(tmpdir(), 'honeybee-recovery-')));
   t.after(() => Promise.all([directory, recoveryDirectory].map(path => rm(path, { recursive: true, force: true }))));
@@ -20,6 +25,7 @@ test('independent account wallets recover in new processes and reject cross-acco
   assert.deepEqual(await readdir(directory), []);
   const empty = await service.execute({ action: 'status', accessToken: buyerToken });
   assert.equal(empty.privateWallet.status, 'not-created');
+  checkpoint('empty wallet status checked');
   const attempts = await Promise.allSettled([0, 1].map(() => service.execute({ action: 'create', accessToken: buyerToken, password: buyerPassword })));
   assert.equal(attempts.filter(r => r.status === 'fulfilled').length, 1);
   assert.equal(attempts.filter(r => r.status === 'rejected').length, 1);
@@ -27,6 +33,7 @@ test('independent account wallets recover in new processes and reject cross-acco
   const merchant = await service.execute({ action: 'create', accessToken: merchantToken, password: merchantPassword });
   assert.notEqual(buyer.privateWallet.id, merchant.privateWallet.id);
   assert.notEqual(buyer.privateWallet.privateAddress, merchant.privateWallet.privateAddress);
+  checkpoint('separate buyer and merchant wallets created');
   const saved = await service.execute({ action: 'backup', accessToken: buyerToken, password: buyerPassword });
   const backup = saved.encryptedBackup;
   await assert.rejects(service.execute({ action: 'unlock', accessToken: merchantToken, password: buyerPassword }));
@@ -36,6 +43,7 @@ test('independent account wallets recover in new processes and reject cross-acco
   await assert.rejects(service.execute({ action: 'restore', accessToken: buyerToken, password: buyerPassword, backup }));
   const again = await service.execute({ action: 'backup', accessToken: buyerToken, password: buyerPassword });
   assert.equal(again.encryptedBackup, backup);
+  checkpoint('backup and overwrite protections checked');
   // New service and child process, with a new login session, restores the same
   // account. A different authenticated account with the correct password fails.
   const recoveredService = await createAccountWalletService({ directory: recoveryDirectory, ...fixture });
@@ -46,6 +54,7 @@ test('independent account wallets recover in new processes and reject cross-acco
   const restarted = await createAccountWalletService({ directory: recoveryDirectory, ...fixture });
   const unlocked = await restarted.execute({ action: 'unlock', accessToken: buyerToken, password: buyerPassword });
   assert.deepEqual(unlocked.privateWallet, buyer.privateWallet);
+  checkpoint('fresh-process recovery and unlock completed');
   for (const result of [buyer, merchant, saved, recovered, unlocked]) {
     assert.equal(result.identityVerification.status, 'deferred-for-testnet');
     assert.equal(result.identityVerification.verified, false);
@@ -63,6 +72,7 @@ test('independent account wallets recover in new processes and reject cross-acco
   const backupPath = join(directory, buyerId, 'account.backup.json');
   assert.equal(await readFile(backupPath, 'utf8'), backup);
   if (process.platform !== 'win32') assert.equal((await stat(backupPath)).mode & 0o777, 0o600);
+  checkpoint('cross-account backup binding checked');
 });
 
 test('account storage rejects unsafe directories and symlinked backup files', {

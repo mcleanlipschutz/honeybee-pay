@@ -11,7 +11,13 @@ audit matched 23 moderate findings. Private packages installed with 5 low
 findings; the initial private suite passed 111/132 tests. Test-fixture path and
 clock repairs plus an earlier wrong-chain rejection now pass 134/134 tests in
 a fresh Linux checkout with an aliased temporary directory and no artifact
-cache. A Windows rerun and the actual browser/recovery checks remain pending.
+cache. Windows subsequently reported 128 passed, 3 skipped and 3 cancelled by
+overall test deadlines; isolated account sync also timed out at 45 seconds.
+The affected multi-operation tests now have finite Windows-specific total
+budgets and timing diagnostics, plus a sequential `npm.cmd run test:wallets`
+command. Native Windows completion and actual browser/recovery checks remain
+pending. Larger test budgets do not change individual runtime deadlines or
+establish a passing result.
 Explicit Windows skips do not validate POSIX permissions or Windows ACLs.
 
 The public mobile payment milestone is verified. Private wallet setup/recovery,
