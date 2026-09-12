@@ -1,0 +1,55 @@
+{
+  "checkedAt": "2026-09-10T02:37:08.640904+00:00",
+  "segment": "1L",
+  "scope": "Browser wallet setup connected to a trusted local testnet runtime",
+  "kyc": {
+    "status": "deferred-for-testnet",
+    "verified": false,
+    "requiredForTestnet": false,
+    "reviewAfter": "Testing is complete, followed by remaining hackathon timeline review",
+    "mayWaitUntilAfterContest": true,
+    "identityDocumentsCollected": false
+  },
+  "tests": {
+    "privacy": {
+      "passed": 69,
+      "failed": 0
+    },
+    "checkout": {
+      "passed": 7,
+      "failed": 0
+    },
+    "productionBuild": "passed",
+    "browserInteractionTested": false,
+    "livePrivyLoginTested": false
+  },
+  "integration": {
+    "realRailgunSdk": true,
+    "locallySignedTokenFixtures": true,
+    "createAndEncryptedBackup": true,
+    "savedFileVerification": true,
+    "freshRuntimeRecoverySameWallet": true,
+    "crossAccountRecoveryRejected": true,
+    "forgedTokensRejected": true,
+    "hostAndOriginChecksPassed": true,
+    "requestLimitsPassed": true,
+    "staticSecretPathsRejected": true,
+    "staleAccountClientResponsesRejected": true,
+    "remoteClientDestinationsRejected": true,
+    "automaticWriteRetry": false
+  },
+  "limitations": [
+    "The local host handles recovery passwords and decrypted wallet keys",
+    "Real Privy App ID, public verification key and allowed origin still need configuration",
+    "Browser and mobile interaction validation remain outstanding",
+    "Loopback API cannot be used remotely from another device",
+    "Account synchronization, shielding, private merchant settlement and independent policy enforcement are not integrated",
+    "Prior dependency findings remain unresolved; no fresh audit was needed or run"
+  ],
+  "dependenciesChanged": false,
+  "walletNetworkLoaded": false,
+  "paymentReady": false,
+  "fundsMoved": false,
+  "broadcast": false,
+  "deployed": false
+}

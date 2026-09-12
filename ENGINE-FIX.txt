@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> honeybee-private-transfer-review@0.3.1 engine:smoke
+> node src/engine-smoke.mjs
+
+{"status":"offline-engine-wallet-check-passed","walletsCreated":2,"encryptedWalletReloaded":true,"wrongKeyRejected":true,"funded":false,"proofGenerated":false,"paymentReady":false}

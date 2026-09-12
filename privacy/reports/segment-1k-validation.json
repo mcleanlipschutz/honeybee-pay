@@ -1,0 +1,69 @@
+{
+  "checkedAt": "2026-09-10T02:12:49.611218+00:00",
+  "segment": "1K",
+  "scope": "Local authenticated account-wallet ownership and recovery API",
+  "tests": {
+    "command": "npm test",
+    "passed": 66,
+    "failed": 0,
+    "newFocusedTests": 6
+  },
+  "authentication": {
+    "library": "jose",
+    "version": "6.2.12",
+    "algorithm": "ES256",
+    "trustSource": "Configured app verification key",
+    "fixtureIssuer": "Disposable local signing key; no live Privy login",
+    "signatureAndClaimRejectionsPassed": true
+  },
+  "walletChecks": {
+    "sdk": "RAILGUN",
+    "independentBuyerAndMerchantRoots": true,
+    "freshProcessRecoveryPreservesIdentity": true,
+    "crossAccountBackupRejectedWithCorrectPassword": true,
+    "copiedAccountFilesRejected": true,
+    "overwriteRejected": true,
+    "concurrentCreationSingleSuccess": true,
+    "unsafeStorageRejected": true
+  },
+  "backupChecks": {
+    "cipher": "AES-256-GCM",
+    "kdf": "scrypt N=131072 r=8 p=1",
+    "accountBoundAssociatedData": true,
+    "wrongPasswordRejected": true,
+    "tamperingRejected": true,
+    "unboundedKdfRejected": true
+  },
+  "identityVerification": {
+    "status": "not-configured",
+    "verified": false,
+    "identityDocumentsCollected": false
+  },
+  "limitations": [
+    "Trusted local process sees decrypted keys; no privacy-from-host or browser self-custody claim",
+    "Live Privy login, key rotation operations and online revocation unverified",
+    "Browser integration, KYC provider, shielding and private payments unimplemented",
+    "Crash recovery and distributed rate limiting unimplemented",
+    "Existing dependency findings unresolved"
+  ],
+  "dependencies": {
+    "added": {
+      "jose": "6.2.12"
+    },
+    "otherLockedVersionsChanged": false,
+    "audit": {
+      "info": 0,
+      "low": 4,
+      "moderate": 14,
+      "high": 10,
+      "critical": 0,
+      "total": 28
+    },
+    "joseFindingReported": false
+  },
+  "walletNetworkLoaded": false,
+  "paymentReady": false,
+  "fundsMoved": false,
+  "broadcast": false,
+  "deployed": false
+}

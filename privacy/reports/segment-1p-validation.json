@@ -1,0 +1,22 @@
+{
+  "segment": "1P",
+  "privacyFocusedTests": {
+    "passed": 9,
+    "failed": 0
+  },
+  "checkoutClientTests": {
+    "passed": 4,
+    "failed": 0
+  },
+  "checkoutBuild": "passed",
+  "localBuiltPage": 200,
+  "localRuntimeSyncEnabled": true,
+  "successfulScanEvidence": "controlled SDK fixture",
+  "realWalletFailureAndRecovery": "passed with local wrong-chain RPC",
+  "liveAccountSync": false,
+  "shielding": false,
+  "privatePaymentSettlement": false,
+  "transactionsBroadcast": 0,
+  "privateRuntimePublished": false,
+  "dependencyChanges": false
+}

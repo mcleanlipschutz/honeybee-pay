@@ -1,0 +1,27 @@
+[
+  {
+    "path": "",
+    "before": "0.2.0",
+    "after": "0.3.0"
+  },
+  {
+    "path": "node_modules/functional-red-black-tree",
+    "before": null,
+    "after": "1.0.1"
+  },
+  {
+    "path": "node_modules/ltgt",
+    "before": null,
+    "after": "2.2.1"
+  },
+  {
+    "path": "node_modules/memdown",
+    "before": null,
+    "after": "6.1.1"
+  },
+  {
+    "path": "node_modules/request/node_modules/form-data",
+    "before": "2.3.3",
+    "after": "2.5.6"
+  }
+]

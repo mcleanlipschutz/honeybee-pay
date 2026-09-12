@@ -1,0 +1,193 @@
+# Honeybee Pay demo and trusted-computer handoff
+
+Prepared September 11, 2026. The public checkout works; private signing remains
+disabled. These steps do not enable it. Use test assets and separately controlled
+buyer and merchant accounts.
+
+## Things McLean can do on the phone
+
+1. Paste CHECK_IN_2.md into the check-in form, review it and submit it yourself.
+2. Confirm the official deadline/timezone, live-judging time, and video length in
+   the organizer dashboard. The public event schedule could not be verified.
+3. Confirm the public Receipts tab and download a receipt for each account.
+   Check the shared counter after sign-out/reload. Record what actually happens;
+   no new payment is needed merely to inspect existing evidence.
+4. Rehearse the explanation below and choose the prize targets from SUBMISSION.md.
+5. Keep both encrypted backup types accessible privately. Do not send wallet
+   passwords or recovery files to judges or include them in recordings.
+
+## Suggested three-minute presentation
+
+This is a suggested running time, not a verified organizer video limit.
+
+| Time | Show | Explain |
+| --- | --- | --- |
+| 0:00–0:25 | Honeybee checkout | Everyday stablecoin payments should be easy to use and hard to redirect after approval. |
+| 0:25–1:05 | Email login, public transfer review, recorded Sepolia receipt | Privy removes manual wallet setup. This demonstrated transaction is public, not private. |
+| 1:05–1:40 | `npm run demo:rules` output | An approved proposal passes. An unprotected baseline accepts a changed recipient. Honeybee's adapter blocks that change. This is an offline simulation with SDK doubles. |
+| 1:40–2:15 | Local wallet/backup UI if personally verified; recorded proof evidence | Private wallets, recovery and synthetic-note proof checks are implemented. Show the real test report, not a fabricated paid invoice. |
+| 2:15–3:00 | Current status and next steps | Full private settlement, encrypted payment receipts and live recovery validation remain. Explain the local runtime and application-control limitations. |
+
+Possible opening: “I'm building Honeybee Pay to make stablecoin payments simpler
+for everyday users and merchants. My investigation work made me interested in
+preventing payment redirection while improving transaction privacy.”
+
+Possible close: “The public payment flow is working, and I've tested the private
+wallet and proving components. My next milestone is one complete private merchant
+payment with recovery and matching receipts.”
+
+Do not claim real customer adoption from the test counter. Do not film an
+unprotected real payment or run an attack against any external system.
+
+## Open the reviewed code on Windows
+
+Windows checkpoint: McLean installed Node 24.21.0, npm 11.19.0 and Git
+2.55.0.windows.5. The corrected repository cloned successfully; checkout's
+38 tests and both build stages passed. Production audits showed 23 moderate
+checkout findings and the private install showed 5 low findings. After the path
+and fixture fixes, Windows reported 128 passed, 3 skipped and 3 cancelled by
+test timeouts. An isolated account-sync rerun also reached its 45-second limit.
+
+At 90e68be, McLean completed `npm.cmd run test:wallets` on Windows: 9 passed,
+0 failed, 0 cancelled and 1 expected POSIX-only skip. The HTTP wallet/recovery/
+history scenario completed in 86.6 seconds, sync in 42.4 seconds and independent
+wallet recovery in 43.0 seconds. This completes the previously cancelled
+automated scenarios; actual local browser sign-in and recovery checks are next.
+No reinstall or repeat of this successful focused run is needed to continue.
+
+For a Windows checkout that has not yet completed this checkpoint, retrieve the repairs with
+`git pull --ff-only`, then run `npm.cmd run test:wallets` from `privacy/` to
+retest only the three affected files sequentially. This focused suite has 10
+tests; Windows explicitly skips one POSIX-only test. The overall Windows
+budgets are 3 minutes for account sync, 6 for account recovery and 8 for the
+full HTTP scenario. Each existing application operation retains its original
+deadline. Test diagnostics print fixed stage labels and elapsed milliseconds;
+they contain no passwords, wallet material or tokens. Require zero failures
+and cancellations. The larger budget is not evidence of a passing test.
+
+Dependencies did not change, so reinstalling packages is unnecessary. The full
+suite now has 140 tests. Review Windows skips separately; they do not establish
+POSIX permission checks or Windows ACL protection. Do not remove runtime guards.
+
+Use an existing clean checkout of `codex/privacy-segment-1a`, or clone it into a
+new directory. Preserve any work already on your computer.
+
+```powershell
+git clone --branch codex/privacy-segment-1a https://github.com/mcleanlipschutz/honeybee-pay.git honeybee-pay-review
+cd honeybee-pay-review
+cd checkout
+npm.cmd ci --ignore-scripts
+npm.cmd test
+npm.cmd run build
+cd ../privacy
+npm.cmd ci --ignore-scripts
+npm.cmd test
+npm.cmd run demo:rules
+npm.cmd run engine:smoke
+```
+
+The reference environment is Node 24.19.0/npm 11.9.0 on Linux. Windows installation,
+native database lock/reopen tests and the focused account scenarios passed.
+Actual browser checks and Windows ACL validation remain separate. If installation or a test
+fails, retain its redacted error and stop there; do not force dependency upgrades.
+
+For an offline proof check, first ensure pinned artifacts are present. If needed,
+`npm run artifacts:prepare` downloads and verifies the pinned public artifacts.
+Then run `npm run proof:smoke`. This generates a synthetic-input proof, not a
+payment. Expected tamper tests can print two `ERROR: 4` lines before success.
+
+## Local browser and recovery gate
+
+1. Preserve an existing `privacy/.env.local`. If absent, create it from
+   `.env.example`. Configure the public Privy App ID and public verification-key
+   file, plus the private account-directory path. No app secret or wallet password
+   belongs in these settings. Verify email and embedded Ethereum wallets in Privy.
+2. Allow the exact local origin, normally `http://127.0.0.1:4173`, in Privy.
+3. From `privacy/`, run `npm run wallet:web`. Paste the printed loopback URL
+   directly into that computer's address bar. Following a link from another
+   website can trigger `local-origin-required`; the server rejects cross-site
+   requests. A phone's 127.0.0.1 refers to the phone, not this computer.
+4. Sign in as buyer. Verify wallet creation/unlock, password clearing, encrypted
+   recovery-file download and saved-file verification. Sign out. Verify the
+   merchant account is separate and cannot open the buyer's backup.
+5. Create a merchant request, download it, reopen history, export its separate
+   encrypted history backup and import the request as buyer. Check expiry and
+   account changes. An unsigned request does not authenticate a business.
+6. Stop the runtime. Preserve the original account directory. Configure a new
+   private directory for the recovery rehearsal. Sign in to the same account,
+   recover the wallet first, then restore its history backup. Compare wallet and
+   request identities. Never delete the only original or backup copy.
+7. Under Wallet, expand Test deposit tools and reopen Deposit activity.
+   With signing disabled, an empty list is normal.
+   Test real saved attempts only when they exist; do not seed fake transactions.
+
+The local Wallet setup page now separates tasks into four views:
+
+| View | Actions |
+| --- | --- |
+| Wallet | Check my wallet, Sync private balance, Private wallet address; expandable Test deposit tools |
+| Pay a request | Open one merchant request and review its terms; check private funds after unlocking/checking the wallet |
+| Request payment | Create payment request or Open request history; a compact saved list opens one request's details |
+| Recovery | Prepare recovery download, Verify saved backup, Back up request history, Restore request history |
+
+The selected action opens one password form. Switching tasks clears the form
+and request details. Saved history is collapsed after creating/selecting a
+request. Expiry and payment-status labels remain visible; a request is never
+presented as a paid receipt. The signed-in email distinguishes local accounts.
+
+McLean confirmed browser creation and verification of both wallet backups,
+request download/import, buyer restore with the same address and merchant
+wallet/history recovery. Pinned artifacts prepared successfully. The live buyer
+sync returned a generic wallet-operation error and remains unresolved; do not
+record this as a zero balance or a successful scan.
+
+McLean subsequently confirmed the cleaner desktop layout, successful Check my
+wallet, and the deployment/circuit preflight on Windows at finalized Sepolia
+block `0xb25892`. This does not establish completion of the account history scan.
+
+For a failed Sync private balance, the local runtime now prints one fixed-label
+diagnostic in its PowerShell window, for example
+`[Private balance check] txid-history: TIMEOUT`. Labels identify the last step
+being attempted or awaited; no raw exception text, wallet data, password or URL
+is printed. The browser keeps its generic error. A failed scan never establishes
+a zero or spendable balance.
+
+To update this diagnostic on Windows, stop the server with Ctrl+C in its
+**existing PowerShell window**, then run `git pull --ff-only` and
+`npm.cmd run wallet:web` from `privacy/`. Keeping that window preserves any
+session-only recovery-directory setting. Refresh the browser, use Wallet →
+Sync private balance, and report only the `[Private balance check]` line if it
+fails. Do not recreate wallets or delete storage to troubleshoot a scan.
+
+McLean's Windows diagnostic returned `poi-service: ECONNRESET`: the public POI
+availability connection reset after the deployment checks. The availability
+read now retries that specific connection error once, after 250 ms, within the
+same 15-second deadline. Other errors and invalid replies do not trigger retries.
+
+To isolate this connection without opening a wallet, stop the local server in
+its existing PowerShell window, update with `git pull --ff-only`, and run
+`npm.cmd run poi:preflight` from `privacy/`. It uses the configured POI URL from
+`.env.local` (or the existing default), sends only the public Sepolia validated
+TXID availability query, and prints a fixed-field JSON result. It requires no
+sign-in or recovery password and does not open account storage. Report its JSON
+result; `poi-service-ready` confirms this prerequisite only. Restart with
+`npm.cmd run wallet:web` in the same window when ready for another account scan.
+
+## Live test gates requiring further integration
+
+| Gate | Required evidence | Stop condition |
+| --- | --- | --- |
+| Account sync | Correct Sepolia deployment and completed account-specific history scans | Incomplete, stale, wrong-chain or oversized responses |
+| Deposit review and fees | Exact token/amount, allowance, recoverable note and successful simulation | Missing or changed terms, fees or simulation results |
+| Signing integration | Review completed with the actual browser wallet and durable journal | Current closed gate; do not remove it simply to make a button work |
+| Small explicitly approved deposit | Matching canonical transaction/event, spendable private balance, recovery | Unknown outcome, mismatch, reorg or unavailable spendability |
+| Private merchant payment | Reviewed broadcaster/fee path, request-bound proof, actual submission and merchant wallet evidence | Proof preparation or a public Shield event alone |
+| Private receipts | Reconcile each request once using both authorized wallet views, persist encrypted records | Missing invoice binding, ambiguous history or duplicate assignment |
+
+These last stages are unfinished engineering plus live verification. They are
+not all user clicks waiting behind a switch. Once the first live gates pass,
+continue that implementation before attempting the final payment test.
+
+For each gate record date, code commit, expected result, actual result and only
+the minimum public transaction reference or redacted screenshot. No seeds,
+passwords, bearer tokens, RPC credentials or decrypted backups in the evidence.
