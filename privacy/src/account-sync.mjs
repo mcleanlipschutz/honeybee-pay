@@ -10,7 +10,7 @@ import { artifactDirectory, artifactManifest, artifactPrefix } from './proof-art
 import { installRpcTransport } from './rpc-transport.mjs';
 import { installTxidTransport } from './txid-transport.mjs';
 import { installPOITransport } from './poi-transport.mjs';
-import { readResponseJSON, poiResponseLimit } from './response-limit.mjs';
+import { checkPOIService } from './poi-preflight.mjs';
 
 export const accountSyncNetwork = 'Ethereum_Sepolia';
 export const accountSyncToken = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
@@ -48,13 +48,7 @@ export async function prepareAccountSync(config, checkSession, { blockTag = 'fin
   const deployment = await inspectDeployment(accountSyncNetwork, rpc, pins, JSON.parse(key), { blockTag });
   checkSession();
   onStage('poi-service');
-  const poiSignal = AbortSignal.timeout(15000);
-  const response = await fetch(poiURL, { method: 'POST', redirect: 'error', signal: poiSignal,
-    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1,
-      method: 'ppoi_validated_txid', params: { chainType: '0', chainID: '11155111', txidVersion: 'V2_PoseidonMerkle' } }) });
-  const poi = await readResponseJSON(response, { maximumBytes: poiResponseLimit, signal: poiSignal });
-  if (!response.ok || poi.error || poi.id !== 1 || !Number.isSafeInteger(poi.result?.validatedTxidIndex)
-      || poi.result.validatedTxidIndex < 0 || !/^[0-9a-fA-F]{64}$/.test(poi.result.validatedTxidMerkleroot)) throw new Error('POI service unavailable');
+  await checkPOIService(poiURL, checkSession);
   checkSession();
   return { artifacts, deployment, rpcURL, poiURL };
 }

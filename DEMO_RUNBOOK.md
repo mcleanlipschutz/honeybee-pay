@@ -66,7 +66,7 @@ they contain no passwords, wallet material or tokens. Require zero failures
 and cancellations. The larger budget is not evidence of a passing test.
 
 Dependencies did not change, so reinstalling packages is unnecessary. The full
-suite now has 135 tests. Review Windows skips separately; they do not establish
+suite now has 140 tests. Review Windows skips separately; they do not establish
 POSIX permission checks or Windows ACL protection. Do not remove runtime guards.
 
 Use an existing clean checkout of `codex/privacy-segment-1a`, or clone it into a
@@ -158,6 +158,20 @@ To update this diagnostic on Windows, stop the server with Ctrl+C in its
 session-only recovery-directory setting. Refresh the browser, use Wallet →
 Sync private balance, and report only the `[Private balance check]` line if it
 fails. Do not recreate wallets or delete storage to troubleshoot a scan.
+
+McLean's Windows diagnostic returned `poi-service: ECONNRESET`: the public POI
+availability connection reset after the deployment checks. The availability
+read now retries that specific connection error once, after 250 ms, within the
+same 15-second deadline. Other errors and invalid replies do not trigger retries.
+
+To isolate this connection without opening a wallet, stop the local server in
+its existing PowerShell window, update with `git pull --ff-only`, and run
+`npm.cmd run poi:preflight` from `privacy/`. It uses the configured POI URL from
+`.env.local` (or the existing default), sends only the public Sepolia validated
+TXID availability query, and prints a fixed-field JSON result. It requires no
+sign-in or recovery password and does not open account storage. Report its JSON
+result; `poi-service-ready` confirms this prerequisite only. Restart with
+`npm.cmd run wallet:web` in the same window when ready for another account scan.
 
 ## Live test gates requiring further integration
 

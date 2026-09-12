@@ -889,3 +889,43 @@ The Windows runbook preserves the existing PowerShell session when restarting,
 so its recovery-directory setting is retained. Users should report only the
 fixed-label failure line, without deleting or recreating wallet storage. Phone
 layout review and private payment integration remain pending.
+
+## September 12, 2026 - Windows POI reset and bounded availability retry
+
+McLean supplied the Windows diagnostic `poi-service: ECONNRESET`. The sync
+reached the public POI availability query after wallet recovery and deployment
+checks, then the connection reset. This identifies the failing prerequisite;
+it does not identify which remote host or network intermediary reset the
+connection. An independent public query from Codex returned HTTP 200 with a
+valid response, so a general service outage was not established.
+
+Extracted the existing public Sepolia validated-TXID availability query into
+`checkPOIService`. It retries ECONNRESET once after 250 ms, using the same
+endpoint, request body and original 15-second abort signal for both attempts.
+It rechecks account/session validity before requests, after replies and before
+retrying. Other errors, HTTP failures, invalid JSON/fields, oversized bodies and
+cancellation fail closed. The existing 1 MiB decoded-response limit, HTTPS,
+redirect rejection, circuit checks and overall sync/worker deadlines remain.
+This is only an availability read; no wallet query or payment is retried.
+
+Added `npm.cmd run poi:preflight` for Windows. It loads the existing local POI
+configuration and runs the same public query without signing in, asking for a
+password, reading account storage or loading a wallet. Output is a fixed-field
+JSON result with `paymentReady: false`; failure output contains only the existing
+sanitized stage/reason labels. It performs no transactions and does not establish
+successful history synchronization or private-payment readiness.
+
+Validation: all 15 focused account-sync, POI-preflight, POI-transport and response
+limit tests passed. These include actual isolated account workers, one-reset
+recovery, persistent resets capped at two attempts, no retry of invalid/oversized
+or HTTP-error responses, session expiry, abort during retry/body reads, and CLI
+error redaction. After preserving TimeoutError across an interrupted retry delay,
+all five POI-preflight tests passed again. The actual new CLI returned
+`poi-service-ready` from Codex's environment. Syntax and diff whitespace checks
+passed. No dependencies changed and no frontend rebuild is required.
+
+The runbook asks McLean to preserve the existing PowerShell session, stop the
+server, pull this update and run the isolated connection check. Windows retest,
+the later history/shutdown failures observed separately on disposable wallets,
+and successful account synchronization remain pending. No main merge, hosted
+deployment or signing-gate change occurred.

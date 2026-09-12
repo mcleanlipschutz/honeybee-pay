@@ -40,7 +40,12 @@ The next gate is live account synchronization and deposit validation. McLean's
 balance scan returned a generic wallet-operation error; no balance was verified.
 McLean subsequently passed Check my wallet and the deployment/circuit preflight
 on Windows at finalized Sepolia block 0xb25892. Public POI prerequisites passed
-separately from Codex's environment; the Windows sync failure remains unresolved.
+separately from Codex's environment. McLean's Windows diagnostic then identified
+`poi-service: ECONNRESET`; the POI availability connection reset. That public
+read now retries a reset once within its existing 15-second deadline, and
+`npm.cmd run poi:preflight` checks the connection without opening wallet storage.
+The isolated connection check passed from Codex's environment; Windows retesting
+and successful account synchronization remain pending.
 The local server now reports a sanitized fixed-label sync stage and reason in
 PowerShell; HTTP errors remain generic. Private signing
 remains disabled, the submission controller is not connected to the UI, and no
