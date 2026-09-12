@@ -38,8 +38,11 @@ This is not a live private-payment test or a complete security approval.
 
 The next gate is live account synchronization and deposit validation. McLean's
 balance scan returned a generic wallet-operation error; no balance was verified.
-Public deployment/circuit and POI prerequisites passed separately from Codex's
-environment; the Windows failure remains unresolved. Private signing
+McLean subsequently passed Check my wallet and the deployment/circuit preflight
+on Windows at finalized Sepolia block 0xb25892. Public POI prerequisites passed
+separately from Codex's environment; the Windows sync failure remains unresolved.
+The local server now reports a sanitized fixed-label sync stage and reason in
+PowerShell; HTTP errors remain generic. Private signing
 remains disabled, the submission controller is not connected to the UI, and no
 complete private merchant payment has settled. The hosted mobile site remains
 on the public checkout/receipt/counter implementation through Segment 1O.
@@ -78,7 +81,8 @@ release.
 - [ ] Complete desktop/mobile browser checks, including password clearing and account changes.
 - [x] Save buyer/merchant backups through the browser and verify recovery in a separate storage folder after restart (user-reported; buyer address matched).
 - [x] Separate wallet, buyer request, merchant request and recovery tasks in the local UI; show one selected request detail.
-- [ ] Confirm the reorganized layout on McLean's Windows browser and at phone width.
+- [x] Confirm the reorganized layout on McLean's Windows browser (user-reported).
+- [ ] Confirm the reorganized layout at phone width.
 
 ## Public payment and receipt milestone
 

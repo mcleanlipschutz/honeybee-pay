@@ -66,7 +66,7 @@ they contain no passwords, wallet material or tokens. Require zero failures
 and cancellations. The larger budget is not evidence of a passing test.
 
 Dependencies did not change, so reinstalling packages is unnecessary. The full
-suite still has 134 tests. Review Windows skips separately; they do not establish
+suite now has 135 tests. Review Windows skips separately; they do not establish
 POSIX permission checks or Windows ACL protection. Do not remove runtime guards.
 
 Use an existing clean checkout of `codex/privacy-segment-1a`, or clone it into a
@@ -140,6 +140,24 @@ request download/import, buyer restore with the same address and merchant
 wallet/history recovery. Pinned artifacts prepared successfully. The live buyer
 sync returned a generic wallet-operation error and remains unresolved; do not
 record this as a zero balance or a successful scan.
+
+McLean subsequently confirmed the cleaner desktop layout, successful Check my
+wallet, and the deployment/circuit preflight on Windows at finalized Sepolia
+block `0xb25892`. This does not establish completion of the account history scan.
+
+For a failed Sync private balance, the local runtime now prints one fixed-label
+diagnostic in its PowerShell window, for example
+`[Private balance check] txid-history: TIMEOUT`. Labels identify the last step
+being attempted or awaited; no raw exception text, wallet data, password or URL
+is printed. The browser keeps its generic error. A failed scan never establishes
+a zero or spendable balance.
+
+To update this diagnostic on Windows, stop the server with Ctrl+C in its
+**existing PowerShell window**, then run `git pull --ff-only` and
+`npm.cmd run wallet:web` from `privacy/`. Keeping that window preserves any
+session-only recovery-directory setting. Refresh the browser, use Wallet →
+Sync private balance, and report only the `[Private balance check]` line if it
+fails. Do not recreate wallets or delete storage to troubleshoot a scan.
 
 ## Live test gates requiring further integration
 

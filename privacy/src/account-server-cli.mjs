@@ -14,6 +14,7 @@ try {
     distDirectory: fileURLToPath(new URL('../../checkout/dist/client/', import.meta.url)),
     syncConfig: { rpcURL: process.env.HONEYBEE_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com',
       poiURL: process.env.HONEYBEE_POI_URL || 'https://ppoi.fdi.network' },
+    onSyncDiagnostic: ({ stage, reason }) => console.error(`[Private balance check] ${stage}: ${reason}`),
     port: Number(process.env.HONEYBEE_ACCOUNT_PORT || 4173) });
   console.log(`Honeybee local testnet demo: ${server.origin}`);
   console.log('KYC deferred. Local runtime handles test-wallet keys. Private payments are not enabled.');

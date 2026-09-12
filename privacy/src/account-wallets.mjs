@@ -9,9 +9,10 @@ import { invoiceInput, invoiceValidation } from './account-invoice.mjs';
 import { validatePrivateRequest } from '../../shared/private-request.mjs';
 import { shieldInput } from './account-shield.mjs';
 import { createShieldReviewCache } from './shield-review-cache.mjs';
+import { syncDiagnosticStages, syncFailureDiagnostic } from './sync-diagnostic.mjs';
 
 let activeWorkers = 0;
-function runWorker(message) {
+function runWorker(message, onSyncDiagnostic) {
   // Bound expensive KDF/SDK processes even before a network rate limiter exists.
   if (activeWorkers >= 2) return Promise.reject(new Error('Account wallet operation failed'));
   activeWorkers += 1;
@@ -19,21 +20,31 @@ function runWorker(message) {
     const child = fork(fileURLToPath(new URL('./account-wallet-worker.mjs', import.meta.url)), [], {
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'], execArgv: [],
     });
-    let result;
-    const timer = setTimeout(() => child.kill('SIGKILL'), ['sync', 'shield-review', 'shield-preflight', 'payment-check'].includes(message.action) ? 120000 : 30000);
+    let result, stage = 'worker-start', reason = 'CHECK_FAILED', timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, ['sync', 'shield-review', 'shield-preflight', 'payment-check'].includes(message.action) ? 120000 : 30000);
     child.once('error', () => { clearTimeout(timer); reject(new Error('Account wallet operation failed')); });
-    child.on('message', value => { result = value; });
+    child.on('message', value => {
+      if (message.action === 'sync' && syncDiagnosticStages.includes(value?.syncStage)) stage = value.syncStage;
+      else if (message.action === 'sync' && value?.ok === false) reason = syncFailureDiagnostic(stage, value.syncFailureReason).reason;
+      else result = value;
+    });
     child.once('exit', code => {
       clearTimeout(timer);
       if (code === 0 && result?.ok && Date.now() < message.session.expiresAt) resolveResult(result.value);
-      else reject(new Error('Account wallet operation failed'));
+      else {
+        if (message.action === 'sync' && typeof onSyncDiagnostic === 'function') {
+          try { onSyncDiagnostic(syncFailureDiagnostic(stage, timedOut ? 'TIMEOUT' : reason)); }
+          catch { /* Reporting must never change the rejected operation. */ }
+        }
+        reject(new Error('Account wallet operation failed'));
+      }
     });
     // Passwords/backup data are neither process arguments nor log output.
     child.send(message, error => { if (error) child.kill('SIGKILL'); });
   }).finally(() => { activeWorkers -= 1; });
 }
 
-export async function createAccountWalletService({ directory, appId, verificationKey, syncConfig }) {
+export async function createAccountWalletService({ directory, appId, verificationKey, syncConfig, onSyncDiagnostic }) {
   if (typeof directory !== 'string' || !isAbsolute(directory) || resolve(directory) !== directory) {
     throw new Error('Account storage path must be absolute and canonical');
   }
@@ -67,7 +78,7 @@ export async function createAccountWalletService({ directory, appId, verificatio
         ...(action === 'invoice-create' ? { amount, lifetimeSeconds } : {}),
         ...(action === 'payment-check' ? { paymentRequest: checkedRequest } : {}),
         ...(action === 'invoice-history-restore' ? { historyBackup: normalizedHistory } : {}),
-        ...(usesNetwork ? { syncConfig: synchronization } : {}) });
+        ...(usesNetwork ? { syncConfig: synchronization } : {}) }, onSyncDiagnostic);
       if (action === 'shield-review') shieldReviews.put(session, result.shieldReview);
       return result;
     } catch { throw new Error('Account wallet operation failed'); }

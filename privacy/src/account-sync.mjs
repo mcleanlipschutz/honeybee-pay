@@ -27,23 +27,27 @@ export function accountSyncConfig(config) {
 }
 
 // Trusted parent configuration only; endpoint selection is never accepted from HTTP.
-export async function prepareAccountSync(config, checkSession, { blockTag = 'finalized' } = {}) {
+export async function prepareAccountSync(config, checkSession, { blockTag = 'finalized', onStage = () => {} } = {}) {
   checkSession();
   const { rpcURL, poiURL } = accountSyncConfig(config);
   // Reject a wrong network even in a fresh checkout with no artifact cache.
   // Deployment inspection repeats this check before its pinned contract reads.
   const rpc = makeReadOnlyRpc(rpcURL);
+  onStage('rpc-connection');
   const chainID = await rpc('eth_chainId', []);
   checkSession();
   if (typeof chainID !== 'string' || !/^0x[0-9a-fA-F]{1,16}$/.test(chainID)
       || BigInt(chainID) !== BigInt(testNetwork(accountSyncNetwork).chain.id)) throw new Error('RPC chain does not match configuration');
   installRpcTransport(rpcURL); installTxidTransport(); installPOITransport(poiURL);
+  onStage('artifact-check');
   const artifacts = await createPinnedArtifactStore(fileURLToPath(artifactDirectory), artifactManifest);
   const key = await artifacts.get(artifactPrefix + 'vkey.json');
   if (!key) throw new Error('Pinned verification key unavailable');
   const pins = JSON.parse(await readFile(new URL('../config/sepolia-deployment.json', import.meta.url), 'utf8'));
+  onStage('deployment-check');
   const deployment = await inspectDeployment(accountSyncNetwork, rpc, pins, JSON.parse(key), { blockTag });
   checkSession();
+  onStage('poi-service');
   const poiSignal = AbortSignal.timeout(15000);
   const response = await fetch(poiURL, { method: 'POST', redirect: 'error', signal: poiSignal,
     headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1,
@@ -55,7 +59,7 @@ export async function prepareAccountSync(config, checkSession, { blockTag = 'fin
   return { artifacts, deployment, rpcURL, poiURL };
 }
 
-export async function scanAccountWallet({ sdk, wallet, prepared, checkSession, signal }) {
+export async function scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage = () => {} }) {
   const { chain } = testNetwork(accountSyncNetwork);
   const version = TXIDVersion.V2_PoseidonMerkle;
   const tracker = createScanTracker(chain);
@@ -69,16 +73,28 @@ export async function scanAccountWallet({ sdk, wallet, prepared, checkSession, s
   });
   try {
     check();
+    onStage('provider-loading');
     await sdk.loadProvider(syncProviderConfig(prepared.rpcURL), accountSyncNetwork, 15000);
     check();
     // Never load the old shared buyer/merchant demo wallet list.
+    onStage('history-scan');
     await sdk.refreshBalances(chain, [wallet.id]);
+    let waitingStage;
     while (!tracker.complete() || !walletScanned) {
+      const snapshot = tracker.snapshot();
+      const nextStage = snapshot.utxo === 'Incomplete' ? 'utxo-history'
+        : snapshot.txid === 'Incomplete' ? 'txid-history'
+        : snapshot.utxo !== 'Complete' ? 'utxo-history'
+        : snapshot.txid !== 'Complete' ? 'txid-history' : 'wallet-balance';
+      if (nextStage !== waitingStage) { waitingStage = nextStage; onStage(nextStage); }
       check();
-      if (Object.values(tracker.snapshot()).includes('Incomplete')) throw new Error('Incomplete wallet scan');
+      if (Object.values(tracker.snapshot()).includes('Incomplete')) {
+        throw new Error('Incomplete wallet scan');
+      }
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     check();
+    onStage('balance-read');
     const loaded = sdk.walletForID(wallet.id);
     if (loaded.id !== wallet.id) throw new Error('Wallet identity changed');
     // SDK onlySpendable=true filters out notes that are not eligible for spending.

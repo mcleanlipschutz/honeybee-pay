@@ -36,7 +36,9 @@ function fixture({ incomplete = false, otherWallet = false, units = 7000000n, on
 }
 const scan = (sdk, extra = {}) => scanAccountWallet({ sdk, wallet, prepared, checkSession: () => {}, signal: AbortSignal.timeout(1000), ...extra });
 test('account scan waits for both histories and its own balance update, returning only a locked-wallet snapshot', async () => {
-  const result = await scan(fixture());
+  const stages = [];
+  const result = await scan(fixture(), { onStage: stage => stages.push(stage) });
+  assert.deepEqual(stages, ['provider-loading', 'history-scan', 'balance-read']);
   assert.equal(result.synchronization.status, 'history-scans-complete');
   assert.deepEqual(result.synchronization.scans, { utxo: 'Complete', txid: 'Complete' });
   assert.equal(result.spendableBalance.amountUnits, '7000000');
@@ -48,9 +50,13 @@ test('account scan waits for both histories and its own balance update, returnin
 });
 test('incomplete histories, another wallet, expired sessions, cancellation and invalid balances fail closed', async () => {
   const incomplete = fixture({ incomplete: true });
-  await assert.rejects(scan(incomplete), /Incomplete/); assert.equal(incomplete.reads(), 0);
+  const stages = [];
+  await assert.rejects(scan(incomplete, { onStage: stage => stages.push(stage) }), /Incomplete/); assert.equal(incomplete.reads(), 0);
+  assert.deepEqual(stages, ['provider-loading', 'history-scan', 'txid-history']);
   const other = fixture({ otherWallet: true });
-  await assert.rejects(scan(other, { signal: AbortSignal.timeout(20) })); assert.equal(other.reads(), 0);
+  const waiting = [];
+  await assert.rejects(scan(other, { signal: AbortSignal.timeout(20), onStage: stage => waiting.push(stage) })); assert.equal(other.reads(), 0);
+  assert.deepEqual(waiting, ['provider-loading', 'history-scan', 'wallet-balance']);
   await assert.rejects(scan(fixture(), { checkSession: () => { throw Error('Expired'); } }), /Expired/);
   let current = true;
   await assert.rejects(scan(fixture({ onRead: () => { current = false; } }), { checkSession: () => { if (!current) throw Error('Expired'); } }), /Expired/);
@@ -82,18 +88,25 @@ test('real account workers reject unauthorized sync before network access and pr
   t.after(() => new Promise(resolve => rpc.close(resolve)));
   const auth = await accountFixture(), token = await auth.token(), other = await auth.token('merchant');
   const password = randomBytes(24).toString('hex');
-  const service = await createAccountWalletService({ directory, ...auth, syncConfig: { rpcURL: `http://127.0.0.1:${rpc.address().port}` } });
+  const diagnostics = [];
+  const service = await createAccountWalletService({ directory, ...auth, syncConfig: { rpcURL: `http://127.0.0.1:${rpc.address().port}` },
+    onSyncDiagnostic: diagnostic => { diagnostics.push(diagnostic); throw new Error('Reporter failure must stay internal'); } });
   const created = await service.execute({ action: 'create', accessToken: token, password });
   checkpoint('wallet created');
   await assert.rejects(service.execute({ action: 'sync', accessToken: 'forged', password }));
+  assert.deepEqual(diagnostics, [], 'rejected authentication cannot start worker diagnostics');
   await assert.rejects(service.execute({ action: 'sync', accessToken: other, password }));
   await assert.rejects(service.execute({ action: 'sync', accessToken: token, password: 'wrong-password-has-sixteen-characters' }));
   await assert.rejects(service.execute({ action: 'sync', accessToken: token, password, rpcURL: 'https://other.test' }));
+  await assert.rejects(service.execute({ action: 'sync', accessToken: token, password, onSyncDiagnostic: 'injected' }));
   assert.equal(calls, 0);
+  assert.deepEqual(diagnostics, [{ stage: 'wallet-storage', reason: 'SDK_ERROR' }, { stage: 'wallet-recovery', reason: 'SDK_ERROR' }]);
   checkpoint('unauthorized sync rejected');
   // Wrong-chain RPC is local and deterministic. No external network or payment.
-  await assert.rejects(service.execute({ action: 'sync', accessToken: token, password }));
+  await assert.rejects(service.execute({ action: 'sync', accessToken: token, password }), { message: 'Account wallet operation failed' });
   assert.equal(calls, 1);
+  assert.deepEqual(diagnostics.at(-1), { stage: 'rpc-connection', reason: 'SDK_ERROR' });
+  assert.equal(diagnostics.length, 3);
   const review = { action: 'shield-review', accessToken: token, password, amount: '1', publicAddress: '0x1111111111111111111111111111111111111111' };
   await assert.rejects(service.execute({ ...review, accessToken: 'forged' }));
   await assert.rejects(service.execute({ ...review, accessToken: other }));
@@ -127,5 +140,6 @@ test('real account workers reject unauthorized sync before network access and pr
   const checked = await service.execute({ action: 'unlock', accessToken: token, password });
   assert.deepEqual(checked.privateWallet, created.privateWallet);
   assert.equal(checked.spendableBalanceVerified, false); assert.equal(checked.paymentReady, false);
+  assert.equal(diagnostics.length, 3, 'other wallet actions do not emit sync diagnostics');
   checkpoint('recovery preserved and wallet unlocked');
 });

@@ -15,6 +15,8 @@ import { createRequestHistoryStore } from './request-history.mjs';
 import { createAccountInvoice } from './account-invoice.mjs';
 import { checkAccountPayment } from './account-payment-check.mjs';
 import { preflightShield } from './shield-preflight.mjs';
+import { connectionErrorCode } from './rpc-transport.mjs';
+import { syncFailureDiagnostic } from './sync-diagnostic.mjs';
 
 const backupFile = 'account.backup.json';
 function live(session) {
@@ -50,7 +52,7 @@ function readiness(walletStatus, wallet) {
     paymentReady: false, blockers: [...(walletStatus === 'not-created' ? ['private-wallet-not-created'] : []), 'private-payment-not-integrated', 'balance-not-verified'] };
 }
 
-async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, review, lifetimeSeconds, historyBackup, paymentRequest }) {
+async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, review, lifetimeSeconds, historyBackup, paymentRequest }, onStage = () => {}) {
   live(session);
   if (action === 'shield-preflight') {
     // This branch never opens a wallet directory or receives a recovery password.
@@ -62,6 +64,7 @@ async function operate({ directory, session, action, password, backup, syncConfi
     return { ...readiness('locked', { id: review.walletId, railgunAddress: review.privateAddress }), ...quote };
   }
   if (!isAbsolute(directory)) throw new Error();
+  onStage('wallet-storage');
   await privateDirectory(directory);
   const slot = join(directory, session.ownerId);
   const lock = join(directory, `${session.ownerId}.lock`);
@@ -84,6 +87,7 @@ async function operate({ directory, session, action, password, backup, syncConfi
     const initializing = action === 'create' || action === 'restore';
     if (initializing ? exists : !exists) throw new Error('Account wallet state does not allow this operation');
     let encrypted, root;
+    onStage('wallet-recovery');
     if (action === 'create') {
       root = HDNodeWallet.createRandom();
       encrypted = await encryptAccountBackup(root.mnemonic.phrase, password, session.ownerId);
@@ -96,8 +100,9 @@ async function operate({ directory, session, action, password, backup, syncConfi
       await mkdir(slot, { mode: 0o700 }); createdSlot = true;
       await writeBackup(join(slot, backupFile), encrypted);
     } else { await privateDirectory(join(slot, 'wallets')); }
-    const prepared = usesNetwork ? await prepareAccountSync(syncConfig, checkSession) : null;
+    const prepared = usesNetwork ? await prepareAccountSync(syncConfig, checkSession, { onStage }) : null;
     checkSession();
+    onStage('wallet-loading');
     const db = await createWalletDatabase(join(slot, 'wallets'));
     const unavailable = async () => { throw new Error('Account setup does not load proving artifacts'); };
     // Each process loads exactly one owner's engine, then exits. Sync is read-only.
@@ -110,7 +115,7 @@ async function operate({ directory, session, action, password, backup, syncConfi
     const wallet = initializing ? await createRailgunWallet(key, root.mnemonic.phrase, undefined, 0)
       : await loadWalletByID(key, id, false);
     if (wallet.id !== id) throw new Error('Recovered wallet identity mismatch');
-    const syncResult = action === 'sync' ? await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal }) : null;
+    const syncResult = action === 'sync' ? await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage }) : null;
     const paymentResult = action === 'payment-check' ? await checkAccountPayment({ paymentRequest, sdk, wallet,
       prepared, checkSession, signal, expiresAt: session.expiresAt }) : null;
     const shieldResult = action === 'shield-review' ? await prepareShieldReview({ wallet, amount, publicAddress,
@@ -124,6 +129,7 @@ async function operate({ directory, session, action, password, backup, syncConfi
       else if (action === 'invoice-history-restore') historyBackupResult = await store.restoreBackup(historyBackup);
       else requestHistory = action === 'invoice-create' ? await store.append(invoiceResult.paymentRequest) : await store.read();
     }
+    onStage('shutdown');
     if (scansWallet) await sdk.unloadProvider(accountSyncNetwork);
     await stopRailgunEngine(); engineStarted = false;
     checkSession();
@@ -148,7 +154,17 @@ async function operate({ directory, session, action, password, backup, syncConfi
 // This private IPC entry point accepts trusted parent messages, never HTTP.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href && process.send) {
   process.once('message', async message => {
-    try { process.send({ ok: true, value: await operate(message) }, () => process.exit(0)); }
-    catch { process.exit(1); }
+    const onStage = stage => {
+      if (message.action !== 'sync' || !process.connected) return;
+      try { process.send({ syncStage: syncFailureDiagnostic(stage).stage }, () => {}); }
+      catch { /* Diagnostics cannot change the wallet operation. */ }
+    };
+    try { process.send({ ok: true, value: await operate(message, onStage) }, () => process.exit(0)); }
+    catch (error) {
+      if (message.action === 'sync' && process.connected) {
+        const reason = error?.name === 'TimeoutError' ? 'TIMEOUT' : connectionErrorCode(error);
+        process.send({ ok: false, syncFailureReason: syncFailureDiagnostic(undefined, reason).reason }, () => process.exit(1));
+      } else process.exit(1);
+    }
   });
 }

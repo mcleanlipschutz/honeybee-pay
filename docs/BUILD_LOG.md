@@ -846,3 +846,46 @@ browser could not reach the loopback preview (ERR_BLOCKED_BY_CLIENT); desktop
 and phone visual review of the new layout remains with McLean. No real wallet,
 secret or transaction was used by the component checks. No main merge or hosted
 deployment occurred.
+
+## September 12, 2026 - Windows preflight and private-sync diagnostics
+
+McLean confirmed the reorganized desktop layout and reported Check my wallet:
+"Wallet and recovery password checked. The wallet is now locked again."
+The Windows deployment preflight then returned
+`reviewed-deployment-and-circuit-matched` on Ethereum_Sepolia (11155111), at
+finalized block `0xb25892`, hash
+`0x7301e0901a30a428bf24c4d3500e7aa09733671874d2699fa6c35c740d2ec2c8`.
+The reviewed proxy/implementation/relay runtime hashes, unpaused proxy, relay
+target and circuit 01x02 verification key matched. `paymentReady` remained false.
+This is Windows contract/circuit evidence, not a completed account scan.
+
+Added a trusted local-server diagnostic callback for failed sync workers. The
+worker sends only allowlisted stage and reason labels over its private IPC
+channel; the parent validates the labels again before the CLI prints one
+`[Private balance check]` line. Stages distinguish wallet recovery, public
+prerequisites, provider loading, history scans, waiting for this wallet's balance
+update, balance reading and shutdown. HTTP errors remain generic. Raw exception
+text, account identifiers, wallet addresses, balances, credentials and URLs are
+not diagnostic fields. Request-supplied diagnostic configuration is rejected.
+
+Validation: five focused sync/diagnostic tests passed, including real isolated
+SDK workers, rejected authentication, wrong passwords and wrong-chain rejection,
+unchanged generic errors, a throwing diagnostic reporter, and preserved recovery.
+Three HTTP origin/authentication/rate-limit/upload-boundary tests passed. After
+refining the pending-history and wallet-update labels, the three affected scan
+and diagnostic tests passed again. Modified runtime syntax and diff whitespace
+checks passed. No dependency or frontend changes require reinstalling/rebuilding.
+
+Two disposable, unfunded account scans against the configured public Sepolia
+services produced different failures: first `history-scan: TIMEOUT`, followed by
+a successful wallet recovery check; then `shutdown: CHECK_FAILED`, followed by
+a failed recovery check. The second worker exited without a success/failure
+payload; the cause is not established. Both temporary test directories were
+removed after their workers exited. Neither attempt is recorded as a successful
+account scan, and no transaction was sent. The Windows failure still needs its
+own diagnostic. No deadline, storage lock, validation or signing gate was relaxed.
+
+The Windows runbook preserves the existing PowerShell session when restarting,
+so its recovery-directory setting is retained. Users should report only the
+fixed-label failure line, without deleting or recreating wallet storage. Phone
+layout review and private payment integration remain pending.
