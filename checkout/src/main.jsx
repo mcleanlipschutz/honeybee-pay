@@ -19,7 +19,7 @@ function ConnectedCheckout({ runtime }) {
   const { wallets, ready: walletsReady } = useWallets();
   const { sendTransaction } = useSendTransaction();
   const wallet = wallets.find(w => w.walletClientType === 'privy');
-  return <Checkout key={authenticated && user?.id || 'signed-out'} runtime={runtime} connection={{ ready: ready && walletsReady, authenticated, userId: user?.id, getAccessToken, wallet, login, logout, sendTransaction }} />;
+  return <Checkout key={authenticated && user?.id || 'signed-out'} runtime={runtime} connection={{ ready: ready && walletsReady, authenticated, userId: user?.id, email: user?.email?.address, getAccessToken, wallet, login, logout, sendTransaction }} />;
 }
 function Checkout({ connection, runtime }) {
   const [view, setView] = useState('wallet');
@@ -107,12 +107,12 @@ function Checkout({ connection, runtime }) {
     const changed = { ...approval, recipient: approval.sender };
     try { buildTransfer(approval, changed, approval.sender); } catch { setBlocked(true); }
   };
-  return <div className="shell">
+  return <div className={`shell${localWalletSetup && view === 'wallet' ? ' local-wallet-shell' : ''}`}>
     <header><a className="brand" href="/" aria-label="Honeybee Pay home"><span className="mark">h.</span>honeybee<span className="brand-light">pay</span></a><span className="network"><i/>Sepolia testnet</span></header>
     {!localWalletSetup && <PaymentCount/>}
     <nav className="view-switch" aria-label="Honeybee sections"><button aria-pressed={view === 'wallet'} disabled={busy || (!!hash && !receipt)} onClick={() => setView('wallet')}>Wallet setup</button><button aria-pressed={view === 'checkout'} onClick={() => setView('checkout')}>Public test checkout</button><button aria-pressed={view === 'receipts'} disabled={busy || (!!hash && !receipt)} onClick={() => setView('receipts')}>Receipts</button></nav>
     <main>
-      <section className="intro"><span className="eyebrow">A LITTLE SIMPLER. A LITTLE SAFER.</span><h1>Good payments.<br/><span>Your rules.</span></h1><p>A checkout that keeps you in control.<br/>Choose the merchant. Review the amount.<br/>Approve exactly what you mean to pay.</p><div className="intro-note"><span className="circle">✓</span><span>Built for everyday payments.<small>Testing with USDC on Sepolia.</small></span></div><div className="honey-art" aria-hidden="true"><div className="hex one"/><div className="hex two"/><div className="hex three"/><span>MAKE IT<br/>HONEYBEE.</span></div></section>
+      {!(localWalletSetup && view === 'wallet') && <section className="intro"><span className="eyebrow">A LITTLE SIMPLER. A LITTLE SAFER.</span><h1>Good payments.<br/><span>Your rules.</span></h1><p>A checkout that keeps you in control.<br/>Choose the merchant. Review the amount.<br/>Approve exactly what you mean to pay.</p><div className="intro-note"><span className="circle">✓</span><span>Built for everyday payments.<small>Testing with USDC on Sepolia.</small></span></div><div className="honey-art" aria-hidden="true"><div className="hex one"/><div className="hex two"/><div className="hex three"/><span>MAKE IT<br/>HONEYBEE.</span></div></section>}
       {view === 'receipts' ? <ReceiptsPanel key={`${connection?.userId || 'signed-out'}:${wallet?.address || ''}`} connection={connection}/> : view === 'wallet' ? (localWalletSetup ? <PrivateWalletPanel key={connection?.userId || 'preview'} connection={connection} runtime={runtime}/> : <HostedWalletPanel key={connection?.userId || 'preview'} connection={connection}/>) : <section className="checkout" aria-labelledby="checkout-heading"><div className="card-top"><span className="eyebrow">HONEYBEE CHECKOUT</span><span className="pill">Test payment</span></div><h2 id="checkout-heading">{receipt ? 'Payment received.' : approval ? 'Everything look right?' : 'Let’s make a payment.'}</h2><p className="subtext">{receipt ? 'The approved USDC transfer was verified on Sepolia.' : 'A public test-USDC transfer. No real money.'}</p>
         <ol className="steps" aria-label="Checkout steps">{['Connect','Review','Pay'].map((step,index)=><li key={step} className={(index === 0 && !active || index === 1 && active && !approval || index === 2 && approval) ? 'selected' : ''}><span>{index + 1}</span>{step}</li>)}</ol>
         {!connection && <div className="notice"><strong>Checkout preview</strong><p>Wallet sign-in will be available once this app is connected to Privy.</p></div>}

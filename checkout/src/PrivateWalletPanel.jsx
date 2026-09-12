@@ -10,6 +10,13 @@ import { DepositActivity } from './DepositActivity.jsx';
 
 const actionNames = { create: 'Create private wallet', restore: 'Restore my wallet',
   unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance', 'shield-review': 'Review test deposit', 'invoice-create': 'Create payment request', 'invoice-history': 'Open request history', 'invoice-history-export': 'Back up request history', 'invoice-history-restore': 'Restore request history' };
+const sections = [['wallet', 'Wallet'], ['pay', 'Pay a request'], ['request', 'Request payment'], ['recovery', 'Recovery']];
+const sectionCopy = {
+  wallet: ['Your private wallet', 'Check your wallet or refresh its private test USDC balance.'],
+  pay: ['Review a merchant request', 'Open a request file to review its amount and receiving address.'],
+  request: ['Request a payment', 'Create a request for a buyer, or reopen one you saved.'],
+  recovery: ['Backups & recovery', 'Keep your wallet backup and request-history backup together, with the password stored separately.'],
+};
 
 export function PrivateWalletPanel({ connection, runtime }) {
   const accountId = connection?.ready && connection?.authenticated ? connection.userId : null;
@@ -18,6 +25,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
   const formRef = useRef(null);
   const [result, setResult] = useState(null), [busy, setBusy] = useState(false);
   const [mode, setMode] = useState('create'), [message, setMessage] = useState('');
+  const [section, setSection] = useState('wallet');
   const [download, setDownload] = useState(''), [uncertain, setUncertain] = useState(false);
   const [clock, setClock] = useState(Date.now());
   const supported = runtime?.mode === 'local-testnet' && isLocalDemo(window.location.origin);
@@ -59,8 +67,10 @@ export function PrivateWalletPanel({ connection, runtime }) {
       }
       setResult(next); setUncertain(false);
       setClock(Date.now());
-      setMode(next.privateWallet.status === 'not-created' ? 'create' : 'unlock');
+      setMode(next.privateWallet.status === 'not-created' ? 'create' : null);
+      if (action === 'create') setSection('recovery');
       if (next.encryptedBackup) setDownload(next.encryptedBackup);
+      if (action === 'verify-backup') setDownload('');
       if (action === 'create') setMessage('Wallet created. Download your encrypted backup and keep its password separately.');
       else if (action === 'invoice-create') setMessage('Payment request saved to this account’s encrypted local history. Your wallet is locked again.');
       else if (action === 'invoice-history-export') setMessage('Encrypted history backup ready. Keep it with your wallet recovery backup.');
@@ -133,24 +143,44 @@ export function PrivateWalletPanel({ connection, runtime }) {
     chainId: connection?.wallet?.chainId, now: clock });
   const reviewCurrent = review && clock < review.expiresAt
     && connection?.wallet?.address?.toLowerCase() === review.publicAddress.toLowerCase();
+  const chooseAction = action => {
+    if (inFlight.current) return;
+    historyReader.clear(); formRef.current?.reset(); setMode(action); setMessage('');
+    setResult(previous => previous ? { ...previous, shieldReview: null, shieldPreflight: null,
+      paymentRequest: null, requestHistory: null, encryptedRequestHistory: null } : previous);
+  };
+  const chooseSection = next => { if (!inFlight.current) { chooseAction(null); setSection(next); } };
+  const actions = !existing ? ['create', 'restore']
+    : section === 'wallet' ? ['unlock', ...(runtime?.accountSyncEnabled ? ['sync'] : [])]
+    : section === 'request' ? ['invoice-create', 'invoice-history']
+    : section === 'recovery' ? ['backup', 'verify-backup', ...(runtime?.privateRequestsEnabled ? ['invoice-history-export', 'invoice-history-restore'] : [])]
+    : [];
   return <section className="checkout wallet-panel" aria-labelledby="wallet-heading">
-    <div className="card-top"><span className="eyebrow">YOUR HONEYBEE WALLET</span><span className="pill">Testnet setup</span></div>
-    <h2 id="wallet-heading">Create here. Keep a recovery copy.</h2>
-    <p className="subtext">Sign in, set up your private wallet, and save an encrypted backup.</p>
-    <ol className="steps" aria-label="Wallet setup steps"><li className={!accountId ? 'selected' : ''}>1. Sign in</li><li className={accountId && !existing ? 'selected' : ''}>2. Create</li><li className={existing ? 'selected' : ''}>3. Back up</li></ol>
-    <div className="wallet-row"><div><span className="label">HONEYBEE ACCOUNT</span><strong>{accountId ? 'Signed in' : 'Sign in with email'}</strong></div>
+    <div className="card-top"><span className="eyebrow">YOUR HONEYBEE WALLET</span><span className="pill">Local · Sepolia testnet</span></div>
+    <h2 id="wallet-heading">{existing ? 'What would you like to do?' : 'Your wallet starts here.'}</h2>
+    <p className="subtext">{existing ? 'Choose one task below. Your wallet stays locked between actions.' : 'Sign in to create a private test wallet or recover one from a backup.'}</p>
+    <div className="wallet-row"><div><span className="label">HONEYBEE ACCOUNT</span><strong>{accountId ? connection.email || 'Signed in' : 'Sign in with email'}</strong></div>
       <button className="secondary" disabled={!connection?.ready || busy} onClick={() => accountId ? connection.logout() : connection.login()}>{accountId ? 'Sign out' : 'Create account / sign in'}</button></div>
     {!connection && <p className="notice">Sign-in is available after the local demo has its Privy app configuration.</p>}
     {!supported && <p className="notice">Private wallet setup is available in the local testnet demo. This preview cannot create a private wallet.</p>}
-    <p className="local-note"><strong>Local testnet demo.</strong> This computer’s payment runtime handles wallet keys and recovery passwords. Use test wallets and test assets only.</p>
     {accountId && supported && <>
-      <div className="wallet-toolbar"><strong>{busy ? 'Checking wallet…' : !result ? 'Wallet status unavailable' : existing ? 'Private wallet saved' : 'Create or restore your wallet'}</strong><button className="text-button" disabled={busy} onClick={() => perform('status')}>Refresh status</button></div>
-      {result?.privateWallet.privateAddress && <details className="wallet-details"><summary>Private wallet address</summary><code>{result.privateWallet.privateAddress}</code><p>Private payments are not enabled yet. This is not a public funding address.</p></details>}
+      <div className="wallet-toolbar"><strong>{busy ? 'Working…' : !result ? message ? 'Wallet status unavailable' : 'Checking wallet status' : existing ? 'Private wallet saved' : 'Create or restore your wallet'}</strong><button className="text-button" disabled={busy} onClick={() => perform('status')}>Refresh status</button></div>
+      {existing && <nav className="wallet-sections" aria-label="Private wallet tasks">
+        {sections.filter(([id]) => runtime?.privateRequestsEnabled || !['pay', 'request'].includes(id)).map(([id, label]) =>
+          <button type="button" key={id} aria-pressed={section === id} disabled={busy} onClick={() => chooseSection(id)}>{label}</button>)}
+      </nav>}
+      {existing && <div className="task-heading"><h3>{sectionCopy[section][0]}</h3><p>{sectionCopy[section][1]}</p></div>}
+      {message && <p className="status" role="status">{message}</p>}
+      {existing && section === 'wallet' && <details className="wallet-details"><summary>Private wallet address</summary>
+        {result.privateWallet.privateAddress ? <><code>{result.privateWallet.privateAddress}</code><p>This is a private receiving address. Use your public wallet address for test funding.</p></>
+          : <p>Choose “Check my wallet” and enter its recovery password to display the address.</p>}
+      </details>}
       {result && <>
-        <div className="wallet-actions" role="group" aria-label="Private wallet actions">
-          {(existing ? ['unlock', 'backup', 'verify-backup', ...(runtime?.accountSyncEnabled ? ['sync'] : []), ...(runtime?.shieldReviewEnabled ? ['shield-review'] : []), ...(runtime?.privateRequestsEnabled ? ['invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore'] : [])] : ['create', 'restore']).map(action => <button key={action} type="button" className="secondary" aria-pressed={mode === action} disabled={busy} onClick={() => { historyReader.clear(); setMode(action); formRef.current?.reset(); setMessage(''); setResult(previous => ({ ...previous, shieldReview: null, paymentRequest: null, requestHistory: null, encryptedRequestHistory: null })); }}>{actionNames[action]}</button>)}
-        </div>
-        <form ref={formRef} onSubmit={submit} key={mode}>
+        {!!actions.length && <div className="wallet-actions" role="group" aria-label="Actions for this task">
+          {actions.filter(action => action !== mode).map(action => <button key={action} type="button" className="secondary" disabled={busy} onClick={() => chooseAction(action)}>{actionNames[action]}</button>)}
+        </div>}
+        {mode && <form className="wallet-task-form" ref={formRef} onSubmit={submit} key={mode}>
+          <div className="task-form-heading"><h4>{actionNames[mode]}</h4>{existing && <button type="button" className="text-button" disabled={busy} onClick={() => chooseAction(null)}>Cancel</button>}</div>
           {mode === 'invoice-history-restore' && <>
             <label htmlFor="history-backup-file">Encrypted request-history backup</label>
             <input id="history-backup-file" name="historyBackup" type="file" accept="application/json,.json" required disabled={busy}/>
@@ -173,11 +203,11 @@ export function PrivateWalletPanel({ connection, runtime }) {
           <label htmlFor="recovery-password">{mode === 'create' ? 'Choose a recovery password' : 'Recovery password'}</label>
           <input id="recovery-password" name="password" type="password" minLength={16} maxLength={256} autoComplete={mode === 'create' ? 'new-password' : 'current-password'} required disabled={busy}/>
           {mode === 'create' && <><label htmlFor="repeat-password">Repeat recovery password</label><input id="repeat-password" name="repeat" type="password" minLength={16} maxLength={256} autoComplete="new-password" required disabled={busy}/></>}
-          <p className="hint">Use at least 16 characters. Recovery needs this Honeybee account, your backup file and its password. Email sign-in alone cannot recover this wallet.</p>
+          <p className="hint">{mode === 'create' ? 'Use at least 16 characters. Recovery needs this account, your backup file and its password.' : 'Enter the recovery password for this wallet. It clears when you submit.'}</p>
           <button className="primary" disabled={busy || uncertain}>{busy ? 'Working…' : actionNames[mode]}</button>
-        </form>
+        </form>}
       </>}
-      {result?.spendableBalanceVerified && result.spendableBalance && <div className="notice">
+      {section === 'wallet' && result?.spendableBalanceVerified && result.spendableBalance && <div className="notice">
         <strong>{formatUnits(BigInt(result.spendableBalance.amountUnits), 6)} test USDC available privately</strong>
         <p>Checked {new Date(result.synchronization.checkedAt).toLocaleString()}. This is a snapshot of spendable private funds, separate from your public wallet balance.</p>
         <p>{result.spendableBalance.amountUnits === '0' ? 'No spendable test USDC was found. Private funding is the next step.' : 'Private payment checkout is still being built.'}</p>
@@ -207,14 +237,17 @@ export function PrivateWalletPanel({ connection, runtime }) {
           <p>Approval and deposit submission are not enabled in this build. Wallet confirmation and live deposit verification come next.</p>
         </> : <p>Choose “Review test deposit” again to check fresh terms.</p>}
       </div>}
-      {runtime?.privateRequestsEnabled && <PrivatePaymentRequests key={accountId} created={result?.paymentRequest} history={result?.requestHistory} encryptedHistory={result?.encryptedRequestHistory}
+      {runtime?.privateRequestsEnabled && existing && ['pay', 'request', 'recovery'].includes(section) && <PrivatePaymentRequests key={`${accountId}:${section}`} view={section} created={result?.paymentRequest} history={result?.requestHistory} encryptedHistory={result?.encryptedRequestHistory}
         wallet={result?.privateWallet} checkPayment={runtime?.privatePaymentCheckEnabled ? checkPayment : null} busy={busy}
         onCloseHistory={() => setResult(previous => previous ? { ...previous, requestHistory: null, paymentRequest: null, encryptedRequestHistory: null } : previous)} isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
-      {download && <div className="notice protected"><strong>Your encrypted recovery copy is ready.</strong><p>Save it somewhere you can access if this device is lost. Then use “Verify saved backup” to check your saved file.</p><button className="secondary" onClick={saveBackup} disabled={busy}>Download encrypted backup</button></div>}
-      <DepositActivity key={accountId} connection={connection} accountId={accountId}/>
+      {download && section === 'recovery' && <div className="notice protected"><strong>Your encrypted recovery copy is ready.</strong><p>Save it, then choose “Verify saved backup” to check the downloaded file.</p><button className="secondary" onClick={saveBackup} disabled={busy}>Download encrypted backup</button></div>}
+      {existing && section === 'wallet' && <details className="wallet-tools"><summary>Test deposit tools</summary>
+        <p>Prepare a test deposit review or check a saved attempt. Deposit submission is not enabled yet.</p>
+        {runtime?.shieldReviewEnabled && <button type="button" className="secondary" disabled={busy} onClick={() => chooseAction('shield-review')}>Review test deposit</button>}
+        <DepositActivity key={accountId} connection={connection} accountId={accountId}/>
+      </details>}
     </>}
-    {message && <p className="status" role="status">{message}</p>}
-    <p className="kyc-note">Identity verification is deferred for this testnet demo. Signing in does not mean your identity has been verified.</p>
-    <div className="card-bottom"><span>Wallet setup only</span><span>Private payments coming next</span></div>
+    <p className="wallet-test-note">Test wallets and test assets only. Private payment submission is still in development.</p>
+    <details className="wallet-tools"><summary>About this local demo</summary><p>This computer handles wallet keys and recovery passwords. Email sign-in alone cannot recover a wallet.</p><p>Identity verification is deferred. Signing in does not verify a merchant’s identity.</p></details>
   </section>;
 }

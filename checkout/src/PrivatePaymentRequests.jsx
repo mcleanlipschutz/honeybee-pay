@@ -5,20 +5,23 @@ import { validateHistoryBackup } from '../../shared/request-history-backup.mjs';
 import { PrivatePaymentCheck } from './PrivatePaymentCheck.jsx';
 
 function RequestDetails({ request, now }) {
-  return <dl className="request-details">
-    <dt>Amount</dt><dd><strong>{formatUnits(BigInt(request.amountUnits), 6)} test USDC</strong></dd>
-    <dt>Network</dt><dd>Ethereum Sepolia testnet</dd>
+  return <>
+    <div className="request-amount"><strong>{formatUnits(BigInt(request.amountUnits), 6)}</strong><span>test USDC</span></div>
+    <p className="request-network">Ethereum Sepolia testnet</p>
+    <p>Expires {new Date(request.expiresAt * 1000).toLocaleString()}{now >= request.expiresAt && <strong> · Expired</strong>}</p>
+    <details className="request-identifiers"><summary>Request reference & receiving address</summary><dl className="request-details">
     <dt>Request reference</dt><dd><code>{request.id}</code></dd>
-    <dt>Expires</dt><dd>{new Date(request.expiresAt * 1000).toLocaleString()}{now >= request.expiresAt && <strong> — Expired</strong>}</dd>
     <dt>Merchant’s private receiving address</dt><dd><code>{request.recipient}</code></dd>
-  </dl>;
+    </dl></details>
+  </>;
 }
 
 // Parent mounts one instance per signed-in account. Decrypted requests remain
 // in page memory; merchant history is encrypted by the local account worker.
-export function PrivatePaymentRequests({ created, history, encryptedHistory, onCloseHistory, isCurrent, wallet, checkPayment, busy }) {
+export function PrivatePaymentRequests({ view, created, history, encryptedHistory, onCloseHistory, isCurrent, wallet, checkPayment, busy }) {
   const [imported, setImported] = useState(null), [message, setMessage] = useState('');
   const [selectedId, setSelectedId] = useState(null), [visible, setVisible] = useState(10);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   const alive = useRef(true), operation = useRef(0), current = useRef(isCurrent); current.current = isCurrent;
   const reader = useMemo(() => createPaymentRequestReader({ isCurrent: () => alive.current && current.current() }), []);
@@ -29,8 +32,8 @@ export function PrivatePaymentRequests({ created, history, encryptedHistory, onC
     const timer = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
     return () => clearInterval(timer);
   }, [created, imported, history]);
-  useEffect(() => { setSelectedId(null); setVisible(10); }, [history]);
-  const selected = history?.requests.find(request => request.id === selectedId) || created;
+  useEffect(() => { setSelectedId(created?.id ?? null); setVisible(10); setHistoryOpen(!!history && !created); }, [created, history]);
+  const selected = history?.requests.find(request => request.id === selectedId) || (created?.id === selectedId ? created : null);
   const open = async event => {
     const file = event.target.files?.[0]; event.target.value = '';
     const selection = ++operation.current;
@@ -67,50 +70,50 @@ export function PrivatePaymentRequests({ created, history, encryptedHistory, onC
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) { setMessage(error.message); }
   };
-  return <section className="private-requests" aria-labelledby="request-heading">
-    <h3 id="request-heading">Payment requests</h3>
-    <p>Create a request for a buyer, or open one you received from a merchant. Private payment submission is still in development.</p>
-    {selected && <div className="notice" aria-label="Merchant payment request">
-      <h4>Your payment request</h4>
-      <RequestDetails request={selected} now={now}/>
-      <p>Payment status: not checked. This record does not confirm payment.</p>
-      <p>This file includes the amount and private receiving address. It is not encrypted; share it only with the intended buyer.</p>
-      <button type="button" className="secondary" onClick={save} disabled={now >= selected.expiresAt}>Download payment request</button>
-    </div>}
-    {history && <div className="request-history" aria-label="Saved merchant requests">
-      <h4>Your saved requests</h4>
-      <p>Encrypted on this computer. Use “Back up request history” to save a separate encrypted copy alongside your wallet recovery backup.</p>
-      {encryptedHistory && <div className="notice protected">
+  return <section className="private-requests" aria-label={view === 'pay' ? 'Open a merchant request' : 'Saved payment requests'}>
+    {view !== 'pay' && encryptedHistory && <div className="notice protected">
         <strong>Your encrypted history backup is ready.</strong>
-        <p>Keep both backup files. To restore on another computer, sign in to the same Honeybee account, restore your wallet, then restore this history file.</p>
+        <p>Keep it with your wallet backup. Restore the wallet first, then its history.</p>
         <button type="button" className="secondary" onClick={saveHistory}>Download encrypted history backup</button>
-      </div>}
+    </div>}
+    {view !== 'pay' && history && <details className="request-history" open={historyOpen} onToggle={event => setHistoryOpen(event.currentTarget.open)}>
+      <summary>Saved requests <span>{history.requests.length}</span></summary>
+      <p className="hint">Encrypted on this computer. Payment status has not been checked.</p>
       {history.requests.length === 0 ? <p>No saved requests yet. Requests made before history was added will not appear here.</p> : <>
-        <p>{history.requests.length} saved · Payment status not checked</p>
         <ul>{history.requests.slice(0, visible).map(request => <li key={request.id}>
           <button type="button" className="request-history-item" aria-pressed={selected?.id === request.id}
-            onClick={() => { setSelectedId(request.id); setMessage(''); }}>
+            onClick={() => { setSelectedId(request.id); setHistoryOpen(false); setMessage(''); }}>
             <strong>{formatUnits(BigInt(request.amountUnits), 6)} test USDC</strong>
             <span>{now >= request.expiresAt ? 'Expired request' : 'Active request'} · {new Date(request.createdAt * 1000).toLocaleString()}</span>
-            <code>{request.id}</code>
+            <span className="request-reference-preview">Reference {request.id.slice(0, 8)}… · View details</span>
           </button>
         </li>)}</ul>
         {history.requests.length > visible && <button type="button" className="secondary" onClick={() => setVisible(count => count + 10)}>Show more requests</button>}
       </>}
       <button type="button" className="secondary" onClick={onCloseHistory}>Close history</button>
+    </details>}
+    {view !== 'pay' && selected && <div className="request-card" aria-label="Merchant payment request">
+      <div className="request-card-heading"><h4>Your payment request</h4><button type="button" className="text-button" onClick={() => setSelectedId(null)}>Close details</button></div>
+      <RequestDetails request={selected} now={now}/>
+      <p className="request-state">Payment status not checked · This is not a receipt.</p>
+      <p className="hint">The request file is not encrypted. Share it only with the intended buyer.</p>
+      <button type="button" className="primary" onClick={save} disabled={busy || now >= selected.expiresAt}>Download payment request</button>
     </div>}
-    <label htmlFor="payment-request-file">Open a merchant’s request</label>
-    <input id="payment-request-file" type="file" accept="application/json,.json" onChange={open}/>
-    <p className="hint">Choose a Honeybee request JSON file, up to 4 KB. It stays in this page and is cleared when you sign out.</p>
-    {imported && <div className="notice" aria-label="Imported payment request">
+    {view === 'pay' && <>
+    <div className="request-upload"><label htmlFor="payment-request-file">{imported ? 'Choose a different request' : 'Open a merchant’s request'}</label>
+    <input id="payment-request-file" type="file" accept="application/json,.json" disabled={busy} onChange={open}/>
+    <p className="hint">Choose the merchant’s Honeybee request file (.json). Opening it does not authorize payment.</p></div>
+    {imported && <div className="request-card" aria-label="Imported payment request">
       <h4>{now < imported.expiresAt ? 'Review the merchant’s request' : 'This request has expired'}</h4>
       <RequestDetails request={imported} now={now}/>
       <p>{now < imported.expiresAt ? 'Confirm the reference and terms with the merchant through a channel you trust. A request file does not verify their identity.' : 'Ask the merchant for a new request before proceeding.'}</p>
-      <p>Opening this file does not authorize a payment. This is a request, not a receipt.</p>
+      <p className="request-state">Request only · No payment authorized.</p>
       {checkPayment && wallet?.id && <PrivatePaymentCheck key={`${imported.digest}:${wallet.id}:${wallet.privateAddress}`}
         request={imported} wallet={wallet} checkPayment={checkPayment} disabled={busy} isCurrent={isCurrent}/>}
-      <button type="button" className="secondary" onClick={() => { operation.current++; reader.clear(); setImported(null); setMessage(''); }}>Clear request</button>
+      {checkPayment && !wallet?.id && <p className="hint">To check private funds, first choose Wallet → Check my wallet, then reopen this request.</p>}
+      <button type="button" className="text-button" disabled={busy} onClick={() => { operation.current++; reader.clear(); setImported(null); setMessage(''); }}>Clear request</button>
     </div>}
+    </>}
     {message && <p role="status" className="status">{message}</p>}
   </section>;
 }

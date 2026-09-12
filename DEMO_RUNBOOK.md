@@ -103,8 +103,10 @@ payment. Expected tamper tests can print two `ERROR: 4` lines before success.
    file, plus the private account-directory path. No app secret or wallet password
    belongs in these settings. Verify email and embedded Ethereum wallets in Privy.
 2. Allow the exact local origin, normally `http://127.0.0.1:4173`, in Privy.
-3. From `privacy/`, run `npm run wallet:web`. Open the printed loopback URL on
-   that same computer. A phone's 127.0.0.1 refers to the phone, not this computer.
+3. From `privacy/`, run `npm run wallet:web`. Paste the printed loopback URL
+   directly into that computer's address bar. Following a link from another
+   website can trigger `local-origin-required`; the server rejects cross-site
+   requests. A phone's 127.0.0.1 refers to the phone, not this computer.
 4. Sign in as buyer. Verify wallet creation/unlock, password clearing, encrypted
    recovery-file download and saved-file verification. Sign out. Verify the
    merchant account is separate and cannot open the buyer's backup.
@@ -115,8 +117,29 @@ payment. Expected tamper tests can print two `ERROR: 4` lines before success.
    private directory for the recovery rehearsal. Sign in to the same account,
    recover the wallet first, then restore its history backup. Compare wallet and
    request identities. Never delete the only original or backup copy.
-7. Reopen Deposit activity. With signing disabled, an empty list is normal.
+7. Under Wallet, expand Test deposit tools and reopen Deposit activity.
+   With signing disabled, an empty list is normal.
    Test real saved attempts only when they exist; do not seed fake transactions.
+
+The local Wallet setup page now separates tasks into four views:
+
+| View | Actions |
+| --- | --- |
+| Wallet | Check my wallet, Sync private balance, Private wallet address; expandable Test deposit tools |
+| Pay a request | Open one merchant request and review its terms; check private funds after unlocking/checking the wallet |
+| Request payment | Create payment request or Open request history; a compact saved list opens one request's details |
+| Recovery | Prepare recovery download, Verify saved backup, Back up request history, Restore request history |
+
+The selected action opens one password form. Switching tasks clears the form
+and request details. Saved history is collapsed after creating/selecting a
+request. Expiry and payment-status labels remain visible; a request is never
+presented as a paid receipt. The signed-in email distinguishes local accounts.
+
+McLean confirmed browser creation and verification of both wallet backups,
+request download/import, buyer restore with the same address and merchant
+wallet/history recovery. Pinned artifacts prepared successfully. The live buyer
+sync returned a generic wallet-operation error and remains unresolved; do not
+record this as a zero balance or a successful scan.
 
 ## Live test gates requiring further integration
 

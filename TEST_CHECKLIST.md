@@ -1,6 +1,6 @@
 # Honeybee Pay: first end-to-end test
 
-Updated September 11, 2026. Checked items are implemented/validated as stated;
+Updated September 12, 2026. Checked items are implemented/validated as stated;
 they do not imply a live payment has settled.
 
 ## Current checkpoint: Segment 1Z
@@ -19,7 +19,9 @@ command. At 90e68be, McLean's focused Windows rerun passed 9 tests with 0 failur
 0 cancellations and 1 expected POSIX-only skip. The HTTP, sync and independent
 wallet/recovery scenarios completed in 86.6, 42.4 and 43.0 seconds respectively.
 This resolves the three previously cancelled automated scenarios; it is not a
-new full-suite run. Actual browser sign-in and recovery checks remain pending.
+new full-suite run. McLean subsequently confirmed local browser sign-in, separate
+buyer/merchant wallet creation and backup verification, buyer recovery with a
+matching address, and merchant wallet/history restoration with a matching request.
 Individual runtime deadlines remain unchanged.
 Explicit Windows skips do not validate POSIX permissions or Windows ACLs.
 
@@ -34,8 +36,10 @@ Segment 1Y's build, wallet/proof checks and audit evidence remain recorded:
 5 low private-runtime and 23 moderate checkout findings, zero high/critical.
 This is not a live private-payment test or a complete security approval.
 
-The next gate is actual local browser sign-in and wallet-then-history recovery,
-followed by live account synchronization and deposit validation. Private signing
+The next gate is live account synchronization and deposit validation. McLean's
+balance scan returned a generic wallet-operation error; no balance was verified.
+Public deployment/circuit and POI prerequisites passed separately from Codex's
+environment; the Windows failure remains unresolved. Private signing
 remains disabled, the submission controller is not connected to the UI, and no
 complete private merchant payment has settled. The hosted mobile site remains
 on the public checkout/receipt/counter implementation through Segment 1O.
@@ -69,10 +73,12 @@ release.
 - [x] Email enabled in Privy (confirmed from the user’s dashboard screenshot).
 - [x] Mobile hosted-wallet view implemented; private recovery remains local.
 - [x] Verify live mobile email login and the same embedded wallet after sign-out/sign-in (user screenshots).
-- [ ] Allow the exact local demo origin in Privy and enable email/embedded wallets.
-- [ ] Test actual sign-in, sign-out and independently controlled buyer/merchant accounts.
+- [x] Allow the exact local demo origin in Privy and enable email/embedded wallets (user-confirmed local sign-in).
+- [x] Test actual sign-in/sign-out with separate buyer and merchant email accounts (user-reported).
 - [ ] Complete desktop/mobile browser checks, including password clearing and account changes.
-- [ ] Save a backup through the browser and verify recovery after a restart.
+- [x] Save buyer/merchant backups through the browser and verify recovery in a separate storage folder after restart (user-reported; buyer address matched).
+- [x] Separate wallet, buyer request, merchant request and recovery tasks in the local UI; show one selected request detail.
+- [ ] Confirm the reorganized layout on McLean's Windows browser and at phone width.
 
 ## Public payment and receipt milestone
 

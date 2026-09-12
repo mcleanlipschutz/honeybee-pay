@@ -801,3 +801,48 @@ merchant request/history checks. Live sync/deposit review and full private
 settlement still require their separate gates. This checkpoint changes only
 documentation; no runtime source, dependencies, signing gate or deployment
 changed. No tests were repeated for this documentation update.
+
+## September 12, 2026 - Desktop recovery checkpoint and wallet layout cleanup
+
+McLean confirmed local browser sign-in after adding the loopback origin in
+Privy. Following a chat link triggered the existing cross-site rejection;
+pasting the address directly opened the page. Both accounts created private
+wallets and downloaded/verified their encrypted recovery files. The merchant
+created a 1-test-USDC request, exported its history backup, and the buyer opened
+the request with matching terms. In separate recovery storage, the buyer's
+restored address matched and McLean reported merchant wallet/history recovery
+with a matching request. These are user-reported desktop checkpoints, not a
+new independent review of the user's private files.
+
+Pinned test artifacts prepared successfully on Windows. The subsequent buyer
+balance sync returned the generic wallet-operation error; no balance was
+verified. Codex separately passed the configured public deployment/circuit and
+POI prerequisites at finalized Sepolia block 0xb25280. This does not establish
+Windows connectivity or successful account-bound history scans. Sync diagnosis
+remains open; no runtime deadline or security check was weakened.
+
+At McLean's request, reorganized the local wallet page into Wallet, Pay a
+request, Request payment and Recovery views. Removed the marketing column from
+this workspace, showed the signed-in email, and replaced the always-visible
+action/form stack with one task form. Buyer imports are separate from merchant
+creation/history. Saved requests use a compact expandable list with one selected
+detail; creating/selecting a request collapses the list. Amount, network, expiry
+and unchecked-payment status remain clear; full references/addresses expand on
+demand. Recovery/history backups have their own view, and test deposit tools are
+collapsed under Wallet. Existing stored requests and wallets are retained.
+
+Switching tasks clears password inputs and request details; changing accounts
+still unmounts account-scoped state. The private-address disclosure now explains
+how to load the address after a status-only refresh. API calls, request-file
+validation, encrypted storage, expiry checks and signing restrictions are
+unchanged. This layout change does not resolve the outstanding sync failure.
+
+Validation: 38 checkout tests passed. Local component interaction checks with
+synthetic API responses passed task navigation, single-form rendering, request
+creation/history selection/import, recovery form selection, password clearing,
+visible sync errors and account-change cleanup. Production client/server build
+passed with existing chunk-size and worker externalization warnings. The cloud
+browser could not reach the loopback preview (ERR_BLOCKED_BY_CLIENT); desktop
+and phone visual review of the new layout remains with McLean. No real wallet,
+secret or transaction was used by the component checks. No main merge or hosted
+deployment occurred.
