@@ -1072,3 +1072,30 @@ See privacy/reports/zk-flow-validation.json for the evidence and remaining gates
 AI assistance: Codex implemented and tested the flow, used a separate source
 reviewer as required by the ETHSkills shipping workflow, and prepared the Windows
 handoff under McLean's direction. KYC remains deferred.
+
+## September 13, 2026 — broadcaster diagnostic output on Windows
+
+McLean installed 848 packages and reported that all six added transfer/POI
+artifacts passed their pinned checks. The subsequent broadcaster command
+returned to PowerShell without its required JSON result. This is neither a
+successful discovery nor evidence that the broadcaster network is unavailable;
+the exact cause of the missing Windows output has not been reproduced.
+
+The diagnostic previously printed only from the worker's close event and waited
+for SDK shutdown before reporting discovery. It now writes a startup line and
+one final result synchronously, independently of cleanup/close. An explicit
+argument identifies its private worker, so an inherited IPC channel cannot
+redirect top-level output. Early exit, disconnect, spawn failure, invalid IPC and
+the 95-second deadline each produce a fixed failure reason. Only an actual
+discovery result can report ready. This disposable process opens no account or
+wallet, uses no password and sends no transaction; its sockets end on exit.
+
+Five focused tests passed, including real subprocess IPC/early-exit checks,
+missing close events, a hanging worker, malformed messages and sanitized output.
+A live development run printed its startup line, then
+`private-broadcaster-unavailable` at `discovering-broadcaster` with reason
+`discovery-failed`, and exited with code 1. This confirms diagnostic output, not
+broadcaster availability. The Windows result still needs confirmation.
+This diagnostic-only update needs
+no dependency reinstall or frontend rebuild. The funded private-payment gate
+remains open and the signing/proof/broadcaster selection logic is unchanged.

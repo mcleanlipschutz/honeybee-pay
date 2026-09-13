@@ -34,9 +34,13 @@ proving files are about 29 MB uncompressed and are checked against pinned
 integrity hashes. Keep the original three files from `artifacts:prepare` too.
 If those were removed, run `npm.cmd run artifacts:prepare` again.
 
-The broadcaster check takes at most about 95 seconds. It opens no wallet and
-sends no payment. Look for **`private-broadcaster-ready`**. If it instead says
+The broadcaster check first prints **`private-broadcaster-checking`**, then a
+final result within about 95 seconds. It opens no wallet and sends no payment.
+Look for **`private-broadcaster-ready`**. If it instead says
 **`private-broadcaster-unavailable`**, report that result and stop before funding.
+The failure includes a fixed stage and reason; a silent or early worker exit
+cannot count as successful discovery. If PowerShell returns without a final
+result, run `Write-Output "Exit code: $LASTEXITCODE"` and share that output.
 TLS, POI requirements and private submission are not bypassed on failure.
 `paymentReady:false` in this diagnostic is expected: discovery alone does not
 authorize spending or establish a funded wallet.

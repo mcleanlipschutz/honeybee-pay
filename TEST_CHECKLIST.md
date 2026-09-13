@@ -16,6 +16,10 @@ details below are historical.
 - [x] Independent source review fixes tested: POI startup, faulty ACK recovery,
   still-live reverted authorization and unsupported incoming transaction isolation.
 - [ ] Broadcaster discovered from McLean's laptop; no test deposit before this check.
+- [x] Windows dependency installation and all six added pinned proving artifacts
+  completed, as reported by McLean. The subsequent broadcaster command returned
+  without a result; this is not a passing connection check. The diagnostic now
+  reports startup, early exit and its deadline independently of worker cleanup.
 - [ ] Actual approval and deposit wallet prompts, canonical deposit and spendable private balance.
 - [ ] Actual private proof broadcast, sender outgoing POI completion and matching merchant receipt.
 - [ ] Reload, original-attempt recovery and wallet recovery after the funded transfer.
