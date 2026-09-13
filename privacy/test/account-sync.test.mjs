@@ -144,12 +144,29 @@ test('real account workers reject unauthorized sync before network access and pr
   assert.equal(calls, 2, 'unauthorized payment checks must not reach the RPC');
   await assert.rejects(service.execute(payment));
   assert.equal(calls, 3, 'valid payment check stops at wrong-chain preflight without signing');
+  assert.deepEqual(diagnostics.at(-1), { stage: 'rpc-connection', reason: 'SDK_ERROR' });
+  const quoteDiagnosticStart = diagnostics.length;
+  await assert.rejects(service.execute({ ...payment, action: 'payment-quote', maxFeeUnits: '1000000000000000' }),
+    { message: 'Account wallet operation failed' });
+  assert.equal(calls, 4, 'quote diagnostics do not bypass the wrong-chain gate');
+  assert.deepEqual(diagnostics.slice(quoteDiagnosticStart), [
+    { stage: 'wallet-storage', reason: 'IN_PROGRESS' },
+    { stage: 'wallet-recovery', reason: 'IN_PROGRESS' },
+    { stage: 'rpc-connection', reason: 'IN_PROGRESS' },
+    { stage: 'rpc-connection', reason: 'SDK_ERROR' },
+  ], 'an actual worker failure crosses IPC and reaches the terminal observer despite reporter exceptions');
+  const history = await service.execute({ action: 'payment-history', accessToken: token, password });
+  assert.deepEqual(history.privatePayments, []);
+  assert.deepEqual(diagnostics.at(-1), { stage: 'shutdown', reason: 'COMPLETED' },
+    'a throwing terminal observer cannot turn successful read-only history into a failure');
+  assert.equal(calls, 4, 'saved history does not need a network scan or broadcast');
+  const diagnosticCount = diagnostics.length;
   checkpoint('payment checks completed');
   const owner = (await (await createAccountAuthenticator(auth))(token)).ownerId;
   assert.equal(await readFile(join(directory, owner, 'account.backup.json'), 'utf8'), created.encryptedBackup);
   const checked = await service.execute({ action: 'unlock', accessToken: token, password });
   assert.deepEqual(checked.privateWallet, created.privateWallet);
   assert.equal(checked.spendableBalanceVerified, false); assert.equal(checked.paymentReady, false);
-  assert.equal(diagnostics.length, 3, 'other wallet actions do not emit sync diagnostics');
+  assert.equal(diagnostics.length, diagnosticCount, 'unlock does not emit network diagnostics');
   checkpoint('recovery preserved and wallet unlocked');
 });

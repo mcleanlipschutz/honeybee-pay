@@ -17,6 +17,7 @@ import { checkAccountPayment } from './account-payment-check.mjs';
 import { preflightShield } from './shield-preflight.mjs';
 import { connectionErrorCode } from './rpc-transport.mjs';
 import { syncFailureDiagnostic } from './sync-diagnostic.mjs';
+import { paymentDiagnosticStages, paymentFailureReason } from './payment-diagnostic.mjs';
 import { trackWalletWork } from './wallet-work.mjs';
 import { operatePrivatePayment, preparePaymentRuntime } from './account-private-payment.mjs';
 import { checkMerchantReceipts } from './merchant-receipts.mjs';
@@ -106,7 +107,10 @@ async function operate({ directory, session, action, password, backup, syncConfi
       await writeBackup(join(slot, backupFile), encrypted);
     } else { await privateDirectory(join(slot, 'wallets')); }
     let prepared = usesNetwork ? await prepareAccountSync(syncConfig, checkSession, { onStage }) : null;
-    if (paymentAction && usesNetwork) prepared = await preparePaymentRuntime(prepared, checkSession);
+    if (paymentAction && usesNetwork) {
+      onStage('payment-runtime');
+      prepared = await preparePaymentRuntime(prepared, checkSession);
+    }
     checkSession();
     onStage('wallet-loading');
     const db = await createWalletDatabase(join(slot, 'wallets'));
@@ -182,7 +186,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href &
   process.once('message', async message => {
     const onStage = stage => {
       if (message.action?.startsWith('payment-') && process.connected) {
-        if (['history-scan', 'broadcaster', 'fee-estimate', 'proof-generation', 'proof-verification', 'broadcast'].includes(stage)) {
+        if (paymentDiagnosticStages.includes(stage)) {
           try { process.send({ paymentStage: stage }, () => {}); } catch {}
         }
         return;
@@ -193,7 +197,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href &
     };
     try { process.send({ ok: true, value: await operate(message, onStage) }, () => process.exit(0)); }
     catch (error) {
-      if (message.action === 'sync' && process.connected) {
+      if (message.action?.startsWith('payment-') && process.connected) {
+        process.send({ ok: false, paymentFailureReason: paymentFailureReason(error) }, () => process.exit(1));
+      } else if (message.action === 'sync' && process.connected) {
         const reason = error?.name === 'TimeoutError' ? 'TIMEOUT' : connectionErrorCode(error);
         process.send({ ok: false, syncFailureReason: syncFailureDiagnostic(undefined, reason).reason }, () => process.exit(1));
       } else process.exit(1);

@@ -1286,3 +1286,34 @@ Remaining user actions: local update and wallet confirmations, funded private
 buyer/merchant receipt validation and original-attempt recovery, recording/upload,
 and signed-in portal review/submission. Real-money deployment, KYC, commercial fees,
 new sponsor integrations and main merge remain outside this deadline pass.
+
+
+## September 13, 2026 — Preserve private quote failure diagnostics
+
+The laptop has now reported a completed WETH wrap/approval/shield sequence and a
+spendable private WETH balance of 0.0049875. The same supplied scan showed zero
+private test USDC; later USDC funding was reported without a new balance snapshot.
+A 1-USDC request quote failed with only repeated `history-scan: IN_PROGRESS` lines.
+Source inspection found the payment worker filtered out detailed scan stages and
+exited without delivering a final failure reason. The terminal therefore could
+not distinguish incomplete history from a successfully scanned zero balance.
+
+Added fixed allowlisted payment stages and error codes, sanitized independently
+in the worker and parent. Exact known application errors map to static codes;
+unknown exceptions stay SDK_ERROR, and raw exception text, account identifiers,
+amounts, URLs and recovery material never enter diagnostics. Payment operations
+now emit a final failure on worker exit/timeout or COMPLETED on successful exit.
+Adjacent duplicate progress stages are suppressed. The public HTTP error remains
+generic. Original account locks, child deadlines, fee/freshness limits, balance
+checks and broadcast controls are unchanged; no automatic payment retry exists.
+
+All 20 focused tests passed (0 failed): diagnostic redaction, nested network
+errors and malformed errors; actual payment-quote logic with controlled SDK/RPC/broadcaster fixtures
+rejecting incomplete scans, missing private assets and over-limit fees without
+proof generation or sending; existing private-payment regressions; and a real
+account worker whose wrong-chain quote failure reaches a throwing terminal
+observer without changing the failure. Successful local saved-payment history
+also remains successful when the diagnostic observer throws. This pass does not
+claim the user's unknown quote failure is fixed; the next local result must
+identify its stage/code. No frontend or dependency change and no funded
+transaction, production deployment or main merge in this pass.

@@ -74,6 +74,7 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
   sdk, wallet, key, privateKey, directory, session, prepared, checkSession, signal, onStage = () => {},
   openBroadcaster = openPaymentBroadcaster, paymentProver = createBoundPaymentProver() }) {
   const store = createPaymentStore({ directory, privateKey, ownerId: session.ownerId, checkSession });
+  onStage('payment-store');
   const data = await store.read();
   checkSession();
   if (action === 'payment-history') return { privatePayments: data.payments.map(summary) };
@@ -111,6 +112,7 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
   // An outer Ethereum revert does not consume the private nullifier or revoke
   // the delivered proof. Keep that authorization unresolved: a broadcaster may
   // still execute it later, including after the request's offchain expiry.
+  onStage('payment-validation');
   if (data.payments.some(p => ['unknown', 'pending', 'reverted'].includes(p.status))) throw new Error('Check the unfinished private payment before another attempt');
   let record;
   if (action === 'payment-submit') {
@@ -125,8 +127,8 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
     if (data.payments.filter(p => p.status !== 'quoted').length >= 16) throw new Error('This test wallet has reached its 16-payment journal limit');
   }
   if (paymentRequest.recipient === wallet.railgunAddress) throw new Error('Choose a separate merchant wallet');
-  onStage('history-scan');
   const scanned = await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage, includeFeeBalance: true });
+  onStage('payment-balance');
   if (BigInt(scanned.spendableBalance.amountUnits) < BigInt(paymentRequest.amountUnits)) throw new Error('More spendable private test USDC is required for the merchant amount');
   const feeBalance = BigInt(scanned.spendableFeeBalance.amountUnits);
   if (feeBalance <= 0n) throw new Error('Deposit Sepolia WETH for the private broadcaster fee first');
@@ -167,6 +169,7 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
         maxFeeUnits, feeUnits: fee.toString(), totalUnits: total.toString(),
         broadcasterAddress: selected.railgunAddress, minGasPriceWei: price.toString(), createdAt,
         expiresAt: Math.min(createdAt + 600000, paymentRequest.expiresAt * 1000, session.expiresAt, selected.tokenFee.expiration) };
+      onStage('quote-validation');
       const quote = validatePaymentQuote({ ...body, quoteId: digest(body) }, { wallet });
       record = { quote, gas: serializable(gas), broadcaster: selected, status: 'quoted', hash: null };
       data.payments = data.payments.filter(p => p.status !== 'quoted');

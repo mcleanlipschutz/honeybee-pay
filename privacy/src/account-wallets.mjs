@@ -10,6 +10,7 @@ import { validatePrivateRequest } from '../../shared/private-request.mjs';
 import { shieldInput } from './account-shield.mjs';
 import { createShieldReviewCache } from './shield-review-cache.mjs';
 import { syncDiagnosticStages, syncFailureDiagnostic } from './sync-diagnostic.mjs';
+import { paymentDiagnosticStages, paymentFailureDiagnostic } from './payment-diagnostic.mjs';
 import { withAccountLock } from './account-lock.mjs';
 import { paymentFeeLimit } from './account-private-payment.mjs';
 
@@ -24,7 +25,8 @@ function runWorker(message, onSyncDiagnostic) {
       // address preference explicitly into isolated wallet network requests.
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'], execArgv: ['--dns-result-order=ipv4first'],
     });
-    let result, stage = 'worker-start', reason = 'CHECK_FAILED', timedOut = false;
+    let result, stage = 'worker-start', reason = 'CHECK_FAILED', timedOut = false, reportedStage;
+    const paymentOperation = message.action.startsWith('payment-');
     const budget = message.action === 'payment-submit' ? 900000 : message.action === 'payment-quote' ? 650000
       : ['sync', 'payment-check', 'payment-status', 'invoice-receipts'].includes(message.action) ? 320000
       : ['shield-review', 'shield-preflight'].includes(message.action) ? 120000 : 30000;
@@ -32,10 +34,12 @@ function runWorker(message, onSyncDiagnostic) {
     let workerError = false;
     child.once('error', () => { workerError = true; });
     child.on('message', value => {
-      if (message.action.startsWith('payment-') && ['history-scan', 'broadcaster', 'fee-estimate', 'proof-generation', 'proof-verification', 'broadcast'].includes(value?.paymentStage)) {
+      if (paymentOperation && paymentDiagnosticStages.includes(value?.paymentStage)) {
         stage = value.paymentStage;
-        if (typeof onSyncDiagnostic === 'function') { try { onSyncDiagnostic({ stage, reason: 'IN_PROGRESS' }); } catch {} }
+        if (stage !== reportedStage && typeof onSyncDiagnostic === 'function') { try { onSyncDiagnostic({ stage, reason: 'IN_PROGRESS' }); } catch {} }
+        reportedStage = stage;
       }
+      else if (paymentOperation && value?.ok === false) reason = paymentFailureDiagnostic(stage, value.paymentFailureReason).reason;
       else if (message.action === 'sync' && syncDiagnosticStages.includes(value?.syncStage)) stage = value.syncStage;
       else if (message.action === 'sync' && value?.ok === false) reason = syncFailureDiagnostic(stage, value.syncFailureReason).reason;
       else result = value;
@@ -44,10 +48,16 @@ function runWorker(message, onSyncDiagnostic) {
     // error event while an existing child might still be holding the database.
     child.once('close', code => {
       clearTimeout(timer);
-      if (!workerError && code === 0 && result?.ok && Date.now() < message.session.expiresAt) resolveResult(result.value);
+      if (!workerError && code === 0 && result?.ok && Date.now() < message.session.expiresAt) {
+        if (paymentOperation && typeof onSyncDiagnostic === 'function') {
+          try { onSyncDiagnostic({ stage, reason: 'COMPLETED' }); } catch {}
+        }
+        resolveResult(result.value);
+      }
       else {
-        if (message.action === 'sync' && typeof onSyncDiagnostic === 'function') {
-          try { onSyncDiagnostic(syncFailureDiagnostic(stage, timedOut ? 'TIMEOUT' : reason)); }
+        if ((message.action === 'sync' || paymentOperation) && typeof onSyncDiagnostic === 'function') {
+          const diagnostic = paymentOperation ? paymentFailureDiagnostic : syncFailureDiagnostic;
+          try { onSyncDiagnostic(diagnostic(stage, timedOut ? 'TIMEOUT' : reason)); }
           catch { /* Reporting must never change the rejected operation. */ }
         }
         reject(new Error('Account wallet operation failed'));

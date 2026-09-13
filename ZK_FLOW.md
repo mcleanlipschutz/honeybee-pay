@@ -18,9 +18,25 @@ live Sepolia verifier; that does not establish spendable roots, POI or settlemen
 
 ## Current laptop checkpoint
 
-The `0.005` WETH review shows a `0.0000125` WETH protocol fee and `0.0049875` WETH expected
-private credit. Simulation succeeded, but its short quote expired before a wallet
-confirmation was reported. No funded private transaction is claimed.
+McLean subsequently confirmed the WETH wrapping, approval and shield deposit.
+The buyer's completed private scan displayed **0.0049875 Sepolia WETH spendable
+for fees** and **0 test USDC** at that checkpoint. The wrap hash was
+`0x52c718cb96b81cef8be3c976c2f49f0d0f4d26f8a25af4d84e9c927fe733444f`.
+Later USDC funding was reported, but the latest private USDC balance has not been
+provided. A 1-test-USDC merchant quote failed; six old `history-scan: IN_PROGRESS`
+lines do not identify the failure or prove a completed scan. These are user-reported
+browser/terminal observations, not a new independent chain check. No private
+merchant payment is confirmed.
+
+The payment-diagnostic update reports each allowed scan stage and a final fixed
+failure code to the server terminal, or `COMPLETED` when the server operation
+succeeds. It reports no passwords, addresses, balances, proof data, URLs or raw
+exception messages. This backend-only update needs `git pull --ff-only` and a
+normal `wallet:web` restart; no dependency install, artifacts or frontend build.
+Retry only **Check total and fee** after the server restarts, then copy the final
+`[Private wallet]` lines. Do not type those output labels into PowerShell. This is
+a quote-only retry; the payment still requires separate explicit confirmation.
+Unknown SDK failures remain `SDK_ERROR`; the code does not pretend to know more.
 
 For the fee-delay update, use the exact pull/build/restart sequence in
 [FINAL_HOURS.md](FINAL_HOURS.md); no reinstall or artifact download is needed.
