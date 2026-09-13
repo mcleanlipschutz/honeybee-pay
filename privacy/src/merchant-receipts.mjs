@@ -1,8 +1,8 @@
 import { TXIDVersion, RailgunWalletBalanceBucket } from '@railgun-community/shared-models';
 import { testNetwork } from './network-preflight.mjs';
-import { walletInterface } from './deployment-check.mjs';
+import { walletInterface, relayInterface } from './deployment-check.mjs';
 import { paymentMemo } from './account-private-payment.mjs';
-import { paymentHash, decodePrivatePayment, verifyPrivatePaymentReceipt } from './payment-verification.mjs';
+import { paymentRelay, paymentHash, decodePrivatePaymentBatch, verifyPrivatePaymentReceipt } from './payment-verification.mjs';
 
 // SDK-decrypted, account-local receiving notes are matched with an existing
 // merchant request AND canonical protocol transaction events. A public USDC
@@ -25,11 +25,12 @@ export async function checkMerchantReceipts({ sdk, wallet, requests, rpc, checkS
       if (!tx?.input) continue;
       let record;
       try {
-        const decoded = walletInterface.decodeFunctionData('transact', tx.input)[0];
-        if (decoded.length !== 1) continue;
+        const isRelay = tx.to?.toLowerCase() === paymentRelay.toLowerCase();
+        const decoded = (isRelay ? relayInterface : walletInterface).decodeFunctionData(isRelay ? 'relay' : 'transact', tx.input)[0];
+        if (![1, 2].includes(decoded.length)) continue;
         record = { quote: { request, minGasPriceWei: decoded[0].boundParams.minGasPrice.toString() }, hash,
-          populated: { transaction: { to: tx.to, data: tx.input, value: tx.value }, nullifiers: decoded[0].nullifiers.map(paymentHash) } };
-        decodePrivatePayment(record.populated.transaction, record.populated.nullifiers, record.quote.minGasPriceWei);
+          populated: { transaction: { to: tx.to, data: tx.input, value: tx.value }, nullifiers: decoded.flatMap(tx => tx.nullifiers.map(paymentHash)) } };
+        decodePrivatePaymentBatch(record.populated.transaction, record.populated.nullifiers, record.quote.minGasPriceWei);
       } catch { continue; /* Another client's unsupported transfer cannot hide valid Honeybee receipts. */ }
       const receipt = await verifyPrivatePaymentReceipt({ record, hash, rpc, checkSession });
       if (receipt.status === 'confirmed') results.push({ requestId: request.id, requestDigest: request.digest,

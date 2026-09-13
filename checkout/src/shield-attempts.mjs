@@ -2,7 +2,7 @@ import { keccak256, stringToHex } from 'viem';
 
 const HASH = /^0x[0-9a-fA-F]{64}$/;
 const unsettled = new Set(['awaiting-wallet', 'pending', 'unknown']);
-const states = new Set([...unsettled, 'not-submitted', 'rejected', 'reverted', 'approval-confirmed', 'deposit-confirmed']);
+const states = new Set([...unsettled, 'not-submitted', 'rejected', 'reverted', 'approval-confirmed', 'deposit-confirmed', 'wrap-confirmed']);
 const digest = value => keccak256(stringToHex(JSON.stringify(value)));
 
 // The scope is a local account correlation key, not an authentication credential.
@@ -18,14 +18,15 @@ export function sealShieldIntent(intent) {
 
 export function validateShieldAttempt(record) {
   const { intentId, ...intent } = record.intent;
-  if (Object.keys(intent).sort().join(',') !== 'amountUnits,createdAt,feeUnits,quoteId,receivedUnits,reviewId,stage,transaction'
+  if (!['amountUnits,createdAt,feeUnits,quoteId,receivedUnits,reviewId,stage,transaction', 'amountUnits,createdAt,feeUnits,quoteId,receivedUnits,reviewId,stage,token,transaction'].includes(Object.keys(intent).sort().join(','))
       || Object.keys(intent.transaction).sort().join(',') !== 'chainId,data,from,gasLimit,maxFeePerGas,maxPriorityFeePerGas,nonce,to,type,value'
       || Object.keys(record).some(key => !['intent', 'hash', 'status', 'verification'].includes(key))
       || intentId !== digest(intent) || !HASH.test(intent.reviewId) || !HASH.test(intent.quoteId)
-      || !['approval', 'shield'].includes(intent.stage) || !states.has(record.status)
+      || !['approval', 'shield', 'wrap'].includes(intent.stage) || !states.has(record.status)
       || (record.hash !== null && !HASH.test(record.hash))
-      || (['pending', 'reverted', 'approval-confirmed', 'deposit-confirmed'].includes(record.status) && !record.hash)
+      || (['pending', 'reverted', 'approval-confirmed', 'deposit-confirmed', 'wrap-confirmed'].includes(record.status) && !record.hash)
       || (record.status === 'approval-confirmed' && intent.stage !== 'approval')
+      || (record.status === 'wrap-confirmed' && intent.stage !== 'wrap')
       || (record.status === 'deposit-confirmed' && intent.stage !== 'shield')) throw new Error('Deposit record is invalid');
   return record;
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createAccountWalletClient, isLocalDemo, readRecoveryFile } from './account-client.mjs';
 import { createHistoryBackupReader } from '../../shared/request-history-backup.mjs';
 import { formatUnits } from 'viem';
-import { shieldAmountUnits } from './shield-review.mjs';
+import { shieldAmountUnits, assetForToken } from './shield-review.mjs';
 import { PrivatePaymentRequests } from './PrivatePaymentRequests.jsx';
 import { privateRequestAmount } from './private-request.mjs';
 import { shieldConfirmationStep } from './shield-preflight.mjs';
@@ -27,6 +27,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
   const formRef = useRef(null);
   const [result, setResult] = useState(null), [busy, setBusy] = useState(false);
   const [mode, setMode] = useState('create'), [message, setMessage] = useState('');
+  const [depositAssetId, setDepositAssetId] = useState('usdc');
   const [section, setSection] = useState('wallet');
   const [download, setDownload] = useState(''), [uncertain, setUncertain] = useState(false);
   const [clock, setClock] = useState(Date.now());
@@ -119,7 +120,8 @@ export function PrivateWalletPanel({ connection, runtime }) {
       const fields = { password };
       if (mode === 'shield-review') {
         fields.amount = values.get('amount'); fields.publicAddress = latest.current.wallet?.address;
-        shieldAmountUnits(fields.amount);
+        fields.assetId = values.get('assetId');
+        shieldAmountUnits(fields.amount, fields.assetId);
         if (!fields.publicAddress) throw new Error('Wait for your public wallet to connect, then review the deposit.');
       }
       if (mode === 'invoice-create') {
@@ -146,6 +148,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
   };
   const existing = result?.privateWallet.status === 'locked';
   const review = result?.shieldReview;
+  const reviewAsset = review ? assetForToken(review.token) : null;
   const quote = result?.shieldPreflight;
   const quoteCurrent = quote && clock < quote.expiresAt;
   const confirmationStep = shieldConfirmationStep({ review, quote, publicAddress: connection?.wallet?.address,
@@ -204,9 +207,13 @@ export function PrivateWalletPanel({ connection, runtime }) {
             <p className="hint">Maximum 10 test USDC. The request uses this account’s private receiving address.</p>
           </>}
           {mode === 'shield-review' && <>
-            <label htmlFor="shield-amount">Test USDC to move into your private wallet</label>
-            <input id="shield-amount" name="amount" type="text" inputMode="decimal" defaultValue="1.00" maxLength={16} required disabled={busy}/>
-            <p className="hint">Maximum 10 test USDC. Test assets have no real-money value. This prepares a review only.</p>
+            <label htmlFor="shield-asset">What are you funding?</label>
+            <select id="shield-asset" name="assetId" value={depositAssetId} onChange={e => setDepositAssetId(e.target.value)} disabled={busy}>
+              <option value="usdc">Merchant payments · test USDC</option><option value="fee-weth">Private payment fees · Sepolia WETH</option>
+            </select>
+            <label htmlFor="shield-amount">Amount to move into your private wallet</label>
+            <input key={depositAssetId} id="shield-amount" name="amount" type="text" inputMode="decimal" defaultValue={depositAssetId === 'usdc' ? '2.00' : '0.005'} maxLength={32} required disabled={busy}/>
+            <p className="hint">{depositAssetId === 'usdc' ? 'Maximum 10 test USDC.' : 'Maximum 0.01 Sepolia WETH. If needed, first wrap Sepolia ETH in your public wallet, then approve and deposit WETH. Each step needs your confirmation.'} Test assets only. This prepares a review.</p>
           </>}
           {['restore', 'verify-backup'].includes(mode) && <><label htmlFor="recovery-file">Encrypted Honeybee backup</label><input id="recovery-file" name="backup" type="file" accept="application/json,.json" required disabled={busy}/></>}
           <label htmlFor="recovery-password">{mode === 'create' ? 'Choose a recovery password' : 'Recovery password'}</label>
@@ -218,20 +225,22 @@ export function PrivateWalletPanel({ connection, runtime }) {
       </>}
       {section === 'wallet' && result?.spendableBalanceVerified && result.spendableBalance && <div className="notice">
         <strong>{formatUnits(BigInt(result.spendableBalance.amountUnits), 6)} test USDC available privately</strong>
+        {result.spendableFeeBalance && <p>{formatUnits(BigInt(result.spendableFeeBalance.amountUnits), 18)} Sepolia WETH available privately for fees</p>}
         <p>Checked {new Date(result.synchronization.checkedAt).toLocaleString()}. This is a snapshot of spendable private funds, separate from your public wallet balance.</p>
         <p>{result.spendableBalance.amountUnits === '0' ? 'No spendable test USDC was found. Private funding is the next step.' : 'Open Pay a request to review a merchant payment and its broadcaster fee.'}</p>
       </div>}
       {review && <div className="notice" aria-label="Test deposit review">
         <strong>{reviewCurrent ? 'Review your test deposit' : 'This deposit review has expired or your funding wallet changed.'}</strong>
         {reviewCurrent ? <>
-          <p>From your public wallet: {formatUnits(BigInt(review.amountUnits), 6)} test USDC</p>
-          <p>Protocol fee: {formatUnits(BigInt(review.feeUnits), 6)} test USDC</p>
-          <p>Expected in your private wallet: {formatUnits(BigInt(review.receivedUnits), 6)} test USDC</p>
-          <p>{(quoteCurrent ? quote.stage === 'approval' : review.approvalRequired) ? `A separate approval for exactly ${formatUnits(BigInt(review.amountUnits), 6)} test USDC would be needed.` : 'An existing allowance covers this amount at the checked block.'}</p>
+          <p>Token: {reviewAsset.label}</p>
+          <p>From your public wallet: {formatUnits(BigInt(review.amountUnits), reviewAsset.decimals)} {reviewAsset.label}</p>
+          <p>Protocol fee: {formatUnits(BigInt(review.feeUnits), reviewAsset.decimals)} {reviewAsset.label}</p>
+          <p>Expected in your private wallet: {formatUnits(BigInt(review.receivedUnits), reviewAsset.decimals)} {reviewAsset.label}</p>
+          <p>{(quoteCurrent ? BigInt(quote.allowanceUnits) < BigInt(review.amountUnits) : review.approvalRequired) ? `A separate approval for exactly ${formatUnits(BigInt(review.amountUnits), reviewAsset.decimals)} ${reviewAsset.label} would be needed.` : 'An existing allowance covers this amount at the checked block.'}</p>
           {quoteCurrent ? <>
-            <p>Estimated maximum network fee for {quote.stage === 'approval' ? 'approval' : 'the deposit'}: <strong>{formatUnits(BigInt(quote.maxNetworkFeeWei), 18)} Sepolia ETH</strong></p>
-            <p>{quote.stage === 'approval' ? 'This covers approval only. The deposit needs a separate fee check after approval confirms.' : 'The exact deposit was simulated successfully. This does not mean it has been submitted or confirmed.'}</p>
-            <p>Next wallet step: {confirmationStep === 'switch-network' ? 'switch to Sepolia' : quote.stage === 'approval' ? 'confirm the exact USDC approval' : 'confirm the deposit'}.</p>
+            <p>Estimated maximum network fee for {quote.stage === 'wrap' ? 'wrapping Sepolia ETH' : quote.stage === 'approval' ? 'approval' : 'the deposit'}: <strong>{formatUnits(BigInt(quote.maxNetworkFeeWei), 18)} Sepolia ETH</strong></p>
+            <p>{quote.stage === 'wrap' ? 'Wrapping creates WETH in your public wallet. Approval and private deposit are separate steps.' : quote.stage === 'approval' ? 'This covers approval only. The deposit needs a separate fee check after approval confirms.' : 'The exact deposit was simulated successfully. This does not mean it has been submitted or confirmed.'}</p>
+            <p>Next wallet step: {confirmationStep === 'switch-network' ? 'switch to Sepolia' : quote.stage === 'wrap' ? 'confirm wrapping Sepolia ETH' : quote.stage === 'approval' ? 'confirm the exact token approval' : 'confirm the deposit'}.</p>
             <p>Fee check expires at {new Date(quote.expiresAt).toLocaleTimeString()}. The actual network fee may be lower.</p>
           </> : <p>{quote ? 'The network fee check expired.' : 'Network fee: not checked yet.'} Check it before proceeding to wallet confirmation.</p>}
           {runtime?.shieldPreflightEnabled && <button type="button" className="secondary" disabled={busy} onClick={() => perform('shield-preflight')}>{busy ? 'Checking…' : quoteCurrent ? 'Refresh network fee' : 'Check network fee'}</button>}

@@ -27,9 +27,16 @@ details below are historical.
   Circle test-USDC fee offer was observed; the command remained unavailable.
 - [x] Twelve focused diagnostic tests passed, including bounded public fee-token
   contracts, evidence retention after offer expiry/worker timeout and no false readiness.
-- [ ] Capture live offered fee-token contracts on Windows and verify a compatible
-  test asset. Supporting a separate fee token also requires explicit quote,
-  balance/deposit, proof-batch and receipt handling; the diagnostic does not enable it.
+- [x] Captured seven offered token contracts from Windows; verified Sepolia WETH
+  runtime and metadata against Sourcify/Uniswap and live canonical Sepolia state.
+- [x] Implemented separate WETH fee balance, exact wrap/approval/shield, explicit
+  18-decimal fee consent, and two cryptographically bound 01x02 proofs.
+- [x] Two real synthetic bound proofs passed the live Sepolia verifier; modified
+  single-proof binding failed. No funded roots/POI/settlement claim.
+- [x] 43 focused runtime and 39 checkout tests plus production build passed.
+  Independent reviewer verified cross-tree lost-response recovery and early
+  unsupported-shape rejection. See separate-fee-validation.json.
+- [ ] Fresh WETH/RelayAdapt broadcaster offer and laptop visual/wallet-flow check.
 - [ ] Actual approval and deposit wallet prompts, canonical deposit and spendable private balance.
 - [ ] Actual private proof broadcast, sender outgoing POI completion and matching merchant receipt.
 - [ ] Reload, original-attempt recovery and wallet recovery after the funded transfer.

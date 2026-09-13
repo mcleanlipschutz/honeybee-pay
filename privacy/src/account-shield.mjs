@@ -1,10 +1,11 @@
 import { randomBytes } from 'node:crypto';
 import { getAddress, Interface, keccak256, toUtf8Bytes } from 'ethers';
 import { RailgunEngine, ShieldNoteERC20 } from '@railgun-community/engine';
-import { accountSyncNetwork, accountSyncToken } from './account-sync.mjs';
+import { accountSyncNetwork } from './account-sync.mjs';
 import { walletInterface } from './deployment-check.mjs';
 import { makeReadOnlyRpc, testNetwork } from './network-preflight.mjs';
-import { parseUSDC } from './private-transfer.mjs';
+import { testAsset, testAmountUnits } from '../../shared/test-assets.mjs';
+import { verifyFeeToken } from './fee-token.mjs';
 
 export const shieldReviewLifetime = 300000;
 export const shieldTestLimit = 10_000_000n;
@@ -15,21 +16,20 @@ export const tokenInterface = new Interface([
   'function approve(address,uint256) returns (bool)',
 ]);
 
-export function shieldInput(amount, publicAddress) {
-  if (typeof amount !== 'string' || amount.length > 16) throw new Error('Invalid test amount');
-  const units = parseUSDC(amount);
-  if (units > shieldTestLimit) throw new Error('Test deposits are limited to 10 USDC');
+export function shieldInput(amount, publicAddress, assetId = 'usdc') {
+  const asset = testAsset(assetId), units = testAmountUnits(amount, assetId);
   const from = getAddress(publicAddress);
   if (/^0x0{40}$/i.test(from)) throw new Error('A public funding wallet is required');
-  return { units, from };
+  return { units, from, asset };
 }
 
 // Read-only review, never a signing authorization. The worker supplies the wallet
 // recovered from its authenticated owner's backup; HTTP cannot supply a recipient.
-export async function prepareShieldReview({ wallet, amount, publicAddress, prepared,
+export async function prepareShieldReview({ wallet, amount, publicAddress, assetId = 'usdc', prepared,
   checkSession, expiresAt, rpc = makeReadOnlyRpc(prepared.rpcURL), now = Date.now }) {
   checkSession();
-  const { units, from } = shieldInput(amount, publicAddress);
+  const { units, from, asset } = shieldInput(amount, publicAddress, assetId);
+  const token = asset.token;
   const { proxyContract, chain } = testNetwork(accountSyncNetwork);
   const { deployment } = prepared;
   if (deployment?.status !== 'reviewed-deployment-and-circuit-matched'
@@ -45,11 +45,12 @@ export async function prepareShieldReview({ wallet, amount, publicAddress, prepa
     checkSession();
     return abi.decodeFunctionResult(name, result);
   };
-  const [decimals] = await call(tokenInterface, accountSyncToken, 'decimals');
-  if (decimals !== 6n) throw new Error('Unexpected test-USDC decimals');
-  const [balance] = await call(tokenInterface, accountSyncToken, 'balanceOf', [from]);
-  if (balance < units) throw new Error('Insufficient test USDC at the reviewed block');
-  const [allowance] = await call(tokenInterface, accountSyncToken, 'allowance', [from, proxyContract]);
+  if (asset.id === 'fee-weth') await verifyFeeToken(rpc, deployment, checkSession);
+  const [decimals] = await call(tokenInterface, token, 'decimals');
+  if (decimals !== BigInt(asset.decimals)) throw new Error('Unexpected test-token decimals');
+  const [balance] = await call(tokenInterface, token, 'balanceOf', [from]);
+  if (balance < units && asset.id !== 'fee-weth') throw new Error('Insufficient test USDC at the reviewed block');
+  const [allowance] = await call(tokenInterface, token, 'allowance', [from, proxyContract]);
   const [feeBps] = await call(walletInterface, proxyContract, 'shieldFee');
   if (feeBps < 0n || feeBps >= 10000n) throw new Error('Shield fee unavailable');
   // Ask the reviewed contract for its inclusive fee. Never substitute an assumed
@@ -66,7 +67,7 @@ export async function prepareShieldReview({ wallet, amount, publicAddress, prepa
   const shieldPrivateKey = randomBytes(32);
   let request;
   try {
-    const note = new ShieldNoteERC20(masterPublicKey, randomBytes(16).toString('hex'), units, accountSyncToken);
+    const note = new ShieldNoteERC20(masterPublicKey, randomBytes(16).toString('hex'), units, token);
     request = await note.serialize(shieldPrivateKey, viewingPublicKey);
   } finally { shieldPrivateKey.fill(0); }
   checkSession();
@@ -79,11 +80,11 @@ export async function prepareShieldReview({ wallet, amount, publicAddress, prepa
   const review = {
     version: 1, status: 'prepared-not-submitted', submissionEnabled: false,
     network: accountSyncNetwork, chainId: chain.id, walletId: wallet.id,
-    privateAddress: wallet.railgunAddress, publicAddress: from, token: accountSyncToken,
+    privateAddress: wallet.railgunAddress, publicAddress: from, token,
     amountUnits: units.toString(), feeBps: feeBps.toString(), feeUnits: fee.toString(),
     receivedUnits: received.toString(), publicBalanceUnits: balance.toString(),
     allowanceUnits: allowance.toString(), approvalRequired,
-    approval: approvalRequired ? unsigned(accountSyncToken, tokenInterface.encodeFunctionData('approve', [proxyContract, units])) : null,
+    approval: approvalRequired ? unsigned(token, tokenInterface.encodeFunctionData('approve', [proxyContract, units])) : null,
     transaction: unsigned(proxyContract, walletInterface.encodeFunctionData('shield', [[request]])),
     blockNumber: blockTag, blockHash: deployment.blockHash, createdAt, expiresAt: until,
     gasEstimate: null,

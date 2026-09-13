@@ -9,26 +9,31 @@ import { makeReadOnlyRpc, testNetwork } from './network-preflight.mjs';
 import { createTransferArtifactStore } from './transfer-artifacts.mjs';
 import { openPaymentBroadcaster } from './payment-broadcaster.mjs';
 import { createPaymentStore } from './payment-store.mjs';
-import { decodePrivatePayment, verifyPreparedPayment, verifyPrivatePaymentReceipt, paymentHash } from './payment-verification.mjs';
+import { decodePrivatePaymentBatch, verifyPreparedPayment, verifyPrivatePaymentReceipt, paymentHash } from './payment-verification.mjs';
+
+import { feeWETH } from '../../shared/test-assets.mjs';
+import { verifyFeeToken } from './fee-token.mjs';
+import { createBoundPaymentProver } from './bound-payment-prover.mjs';
 
 const version = TXIDVersion.V2_PoseidonMerkle;
 const digest = value => keccak256(toUtf8Bytes(JSON.stringify(value)));
 export const paymentMemo = request => `hb:v1:${request.id}:${request.digest}`;
-export function paymentFeeLimit(value) {
-  if (typeof value !== 'string' || !/^[1-9][0-9]{0,6}$/.test(value) || BigInt(value) > 1000000n) {
-    throw new Error('Choose a broadcaster fee limit above zero and at most 1 test USDC');
+export function paymentFeeLimit(value, legacy = false) {
+  if (typeof value !== 'string' || !/^[1-9][0-9]{0,16}$/.test(value) || BigInt(value) > (legacy ? 1000000n : BigInt(feeWETH.maxFeeUnits))) {
+    throw new Error('Choose a broadcaster fee limit above zero and at most 0.01 Sepolia WETH');
   }
   return BigInt(value);
 }
 export function validatePaymentQuote(value, { wallet, now = Date.now(), allowExpired = false } = {}) {
   const { quoteId, ...body } = structuredClone(value);
   const request = validatePrivateRequest(body.request, invoiceValidation(allowExpired ? body.request.createdAt : Math.floor(now / 1000)));
-  const maximum = paymentFeeLimit(body.maxFeeUnits);
+  const maximum = paymentFeeLimit(body.maxFeeUnits, body.version === 1);
   validatePrivateRecipient(body.broadcasterAddress);
-  if (quoteId !== digest(body) || body.version !== 1 || body.network !== accountSyncNetwork
+  if (quoteId !== digest(body) || ![1, 2].includes(body.version) || body.network !== accountSyncNetwork
       || body.chainId !== 11155111 || body.walletId !== wallet.id || body.privateAddress !== wallet.railgunAddress
-      || !/^[1-9][0-9]{0,6}$/.test(body.feeUnits) || BigInt(body.feeUnits) > maximum
-      || body.totalUnits !== (BigInt(request.amountUnits) + BigInt(body.feeUnits)).toString()
+      || !/^[1-9][0-9]{0,16}$/.test(body.feeUnits) || BigInt(body.feeUnits) > maximum
+      || (body.version === 2 && (body.feeToken !== feeWETH.token || body.feeDecimals !== 18))
+      || body.totalUnits !== (BigInt(request.amountUnits) + (body.version === 1 ? BigInt(body.feeUnits) : 0n)).toString()
       || !/^[1-9][0-9]{0,11}$/.test(body.minGasPriceWei) || BigInt(body.minGasPriceWei) > 50000000000n
       || !Number.isSafeInteger(body.createdAt) || body.createdAt > now + 5000
       || !Number.isSafeInteger(body.expiresAt) || body.expiresAt <= body.createdAt
@@ -58,15 +63,16 @@ export async function preparePaymentRuntime(prepared, checkSession) {
     checkSession();
     const key = JSON.parse(await artifacts.get(`artifacts-v2.1/01x0${outputs}/vkey.json`));
     const result = await inspectDeployment(accountSyncNetwork, rpc, pins, key, { blockTag: 'latest', outputs });
+    await verifyFeeToken(rpc, result, checkSession);
     checkSession(); return result;
   };
-  await inspect(3);
+  await inspect(2);
   return { ...prepared, artifacts, rpc, inspect };
 }
 
 export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnits, quoteId, hash,
   sdk, wallet, key, privateKey, directory, session, prepared, checkSession, signal, onStage = () => {},
-  openBroadcaster = openPaymentBroadcaster }) {
+  openBroadcaster = openPaymentBroadcaster, paymentProver = createBoundPaymentProver() }) {
   const store = createPaymentStore({ directory, privateKey, ownerId: session.ownerId, checkSession });
   const data = await store.read();
   checkSession();
@@ -79,8 +85,16 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
     // Refresh sent commitments and finish protocol POI proofs before checking
     // settlement. This never generates or broadcasts another payment.
     await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage });
-    const completed = await sdk.getCompletedTxidFromNullifiers(version, testNetwork(accountSyncNetwork).chain, record.populated.nullifiers);
-    const candidates = [...new Set([completed?.txid, record.hash, hash, record.candidateHash].filter(Boolean).map(paymentHash))];
+    // The SDK searches one input tree at a time. Separate asset proofs can
+    // spend different trees; discover each nullifier independently, then
+    // require the original complete batch and receipt for every candidate.
+    const discovered = [];
+    for (const nullifier of record.populated.nullifiers) {
+      checkSession();
+      const completed = await sdk.getCompletedTxidFromNullifiers(version, testNetwork(accountSyncNetwork).chain, [nullifier]);
+      if (completed?.txid) discovered.push(completed.txid);
+    }
+    const candidates = [...new Set([...discovered, record.hash, hash, record.candidateHash].filter(Boolean).map(paymentHash))];
     let receipt;
     for (const candidate of candidates) {
       try {
@@ -103,6 +117,7 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
     record = data.payments.find(p => p.quote.quoteId === quoteId);
     if (!record || record.status !== 'quoted') throw new Error('This private payment was already attempted or its quote is unavailable');
     validatePaymentQuote(record.quote, { wallet });
+    if (record.quote.version !== 2) throw new Error('Get a new quote with the Sepolia WETH fee');
     paymentRequest = record.quote.request;
   } else {
     paymentRequest = validatePrivateRequest(paymentRequest, invoiceValidation()); paymentFeeLimit(maxFeeUnits);
@@ -111,8 +126,10 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
   }
   if (paymentRequest.recipient === wallet.railgunAddress) throw new Error('Choose a separate merchant wallet');
   onStage('history-scan');
-  const scanned = await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage });
-  if (BigInt(scanned.spendableBalance.amountUnits) <= BigInt(paymentRequest.amountUnits)) throw new Error('More spendable private test USDC is required for the amount and broadcaster fee');
+  const scanned = await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage, includeFeeBalance: true });
+  if (BigInt(scanned.spendableBalance.amountUnits) < BigInt(paymentRequest.amountUnits)) throw new Error('More spendable private test USDC is required for the merchant amount');
+  const feeBalance = BigInt(scanned.spendableFeeBalance.amountUnits);
+  if (feeBalance <= 0n) throw new Error('Deposit Sepolia WETH for the private broadcaster fee first');
   checkSession();
   onStage('broadcaster');
   const broadcaster = await openBroadcaster(checkSession, record?.broadcaster);
@@ -123,7 +140,7 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
       const feeRate = selected.tokenFee.feePerUnitGas;
       if (typeof feeRate !== 'string' || !/^(?:[1-9][0-9]{0,29}|0x[a-fA-F0-9]{1,25})$/.test(feeRate)
           || BigInt(feeRate) <= 0n || BigInt(feeRate) > 10n ** 30n
-          || selected.tokenAddress.toLowerCase() !== accountSyncToken.toLowerCase()) throw new Error('Invalid broadcaster fee');
+          || selected.tokenAddress.toLowerCase() !== feeWETH.token.toLowerCase()) throw new Error('Invalid broadcaster fee');
       const block = await prepared.rpc('eth_getBlockByNumber', ['latest', false]);
       const priority = BigInt(await prepared.rpc('eth_maxPriorityFeePerGas', []));
       const price = BigInt(block.baseFeePerGas) * 2n + priority;
@@ -132,20 +149,20 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
       if (![0, 1, 2].includes(evmGasType)) throw new Error('Unsupported broadcaster gas type');
       let gas = { evmGasType, gasEstimate: 0n, ...([0, 1].includes(evmGasType)
         ? { gasPrice: price } : { maxFeePerGas: price, maxPriorityFeePerGas: priority }) };
-      const feeDetails = { tokenAddress: accountSyncToken, feePerUnitGas: BigInt(feeRate) };
+      const feeDetails = { tokenAddress: feeWETH.token, feePerUnitGas: BigInt(feeRate) };
       const recipients = [{ tokenAddress: accountSyncToken, amount: BigInt(paymentRequest.amountUnits), recipientAddress: paymentRequest.recipient }];
       onStage('fee-estimate');
-      const estimate = await sdk.gasEstimateForUnprovenTransfer(version, accountSyncNetwork, wallet.id, key,
+      const estimate = await paymentProver.gasEstimateForUnprovenTransfer(version, accountSyncNetwork, wallet.id, key,
         paymentMemo(paymentRequest), recipients, [], gas, feeDetails, false);
       if (typeof estimate.gasEstimate !== 'bigint' || estimate.gasEstimate < 21000n || estimate.gasEstimate > 2000000n) throw new Error('Invalid private payment gas estimate');
       gas = { ...gas, gasEstimate: estimate.gasEstimate };
       const fee = sdk.calculateBroadcasterFeeERC20Amount(feeDetails, gas).amount;
       if (fee <= 0n || fee > paymentFeeLimit(maxFeeUnits)) throw new Error('Broadcaster fee exceeds your limit');
-      const total = BigInt(paymentRequest.amountUnits) + fee;
-      if (total > BigInt(scanned.spendableBalance.amountUnits)) throw new Error('Insufficient spendable private funds including the fee');
+      const total = BigInt(paymentRequest.amountUnits);
+      if (fee > feeBalance) throw new Error('Insufficient spendable private Sepolia WETH for the fee');
       checkSession();
       const createdAt = Date.now();
-      const body = { version: 1, network: accountSyncNetwork, chainId: 11155111,
+      const body = { version: 2, feeToken: feeWETH.token, feeDecimals: 18, network: accountSyncNetwork, chainId: 11155111,
         walletId: wallet.id, privateAddress: wallet.railgunAddress, request: paymentRequest,
         maxFeeUnits, feeUnits: fee.toString(), totalUnits: total.toString(),
         broadcasterAddress: selected.railgunAddress, minGasPriceWei: price.toString(), createdAt,
@@ -157,18 +174,19 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
       return { privatePayment: summary(record) };
     }
     const quote = validatePaymentQuote(record.quote, { wallet });
-    if (BigInt(quote.totalUnits) > BigInt(scanned.spendableBalance.amountUnits)) throw new Error('Private balance changed');
+    if (BigInt(quote.totalUnits) > BigInt(scanned.spendableBalance.amountUnits) || BigInt(quote.feeUnits) > feeBalance) throw new Error('Private balance changed');
     const recipients = [{ tokenAddress: accountSyncToken, amount: BigInt(quote.request.amountUnits), recipientAddress: quote.request.recipient }];
-    const fee = { tokenAddress: accountSyncToken, amount: BigInt(quote.feeUnits), recipientAddress: quote.broadcasterAddress };
+    const fee = { tokenAddress: feeWETH.token, amount: BigInt(quote.feeUnits), recipientAddress: quote.broadcasterAddress };
     onStage('proof-generation');
-    await sdk.generateTransferProof(version, accountSyncNetwork, wallet.id, key, false,
+    await paymentProver.generateTransferProof(version, accountSyncNetwork, wallet.id, key, false,
       paymentMemo(quote.request), recipients, [], fee, false, BigInt(quote.minGasPriceWei), () => checkSession());
     checkSession(); validatePaymentQuote(quote, { wallet });
-    const populated = await sdk.populateProvedTransfer(version, accountSyncNetwork, wallet.id, false,
+    const populated = await paymentProver.populateProvedTransfer(version, accountSyncNetwork, wallet.id, false,
       paymentMemo(quote.request), recipients, [], fee, false, BigInt(quote.minGasPriceWei), gasDetails(record.gas));
-    const tx = decodePrivatePayment(populated.transaction, populated.nullifiers, quote.minGasPriceWei);
+    const txs = decodePrivatePaymentBatch(populated.transaction, populated.nullifiers, quote.minGasPriceWei);
+    if (txs.length !== 2) throw new Error('Separate fee payment must contain two bound proofs');
     onStage('proof-verification');
-    const deployment = await prepared.inspect(tx.commitments.length);
+    const deployment = await prepared.inspect(2);
     const feeBlock = await prepared.rpc('eth_getBlockByNumber', [deployment.blockNumber, false]);
     if (feeBlock?.hash !== deployment.blockHash || BigInt(feeBlock.baseFeePerGas) >= BigInt(quote.minGasPriceWei)) {
       throw new Error('The network fee changed. Get a new quote before submitting.');

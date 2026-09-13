@@ -1,7 +1,8 @@
 import { WakuBroadcasterClient, BroadcasterTransaction } from '@railgun-community/waku-broadcaster-client-node';
 import { TXIDVersion } from '@railgun-community/shared-models';
 import { testNetwork } from './network-preflight.mjs';
-import { accountSyncNetwork, accountSyncToken } from './account-sync.mjs';
+import { accountSyncNetwork } from './account-sync.mjs';
+import { feeWETH } from '../../shared/test-assets.mjs';
 
 const chain = testNetwork(accountSyncNetwork).chain;
 export async function openPaymentBroadcaster(checkSession, expected, onDiagnostic) {
@@ -25,11 +26,11 @@ export async function openPaymentBroadcaster(checkSession, expected, onDiagnosti
     clearTimeout(timer);
     for (;;) {
       check();
-      const choices = WakuBroadcasterClient.findBroadcastersForToken(chain, accountSyncToken, false) || [];
+      const choices = WakuBroadcasterClient.findBroadcastersForToken(chain, feeWETH.token, true) || [];
       const selected = expected ? choices.find(b => b.railgunAddress === expected.railgunAddress
         && b.tokenFee.feesID === expected.tokenFee.feesID
         && b.tokenFee.feePerUnitGas === expected.tokenFee.feePerUnitGas)
-        : WakuBroadcasterClient.findBestBroadcaster(chain, accountSyncToken, false);
+        : WakuBroadcasterClient.findBestBroadcaster(chain, feeWETH.token, true);
       if (selected && selected.tokenFee.expiration > Date.now() + 30000) {
         return { selected: structuredClone(selected),
           async create(populated, minGas) {
@@ -37,7 +38,7 @@ export async function openPaymentBroadcaster(checkSession, expected, onDiagnosti
             if (Date.now() >= selected.tokenFee.expiration) throw new Error('Broadcaster fee expired');
             return BroadcasterTransaction.create(TXIDVersion.V2_PoseidonMerkle,
               populated.transaction.to, populated.transaction.data, selected.railgunAddress,
-              selected.tokenFee.feesID, chain, populated.nullifiers, minGas, false,
+              selected.tokenFee.feesID, chain, populated.nullifiers, minGas, true,
               populated.preTransactionPOIsPerTxidLeafPerList);
           },
           close: () => WakuBroadcasterClient.stop(),

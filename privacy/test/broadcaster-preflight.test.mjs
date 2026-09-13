@@ -74,7 +74,7 @@ test('alternative fee-token evidence survives deadline but cannot make the reque
   const child = fixture(), { lines, promise } = start(child, 25);
   const token = '0x7b79995e5f793a07bc00c21412e50ecae098e7f9';
   child.emit('message', { type, kind: 'diagnostic', diagnostic: {
-    maxEligibleSepoliaOffers: 10, maxEligibleTestUSDCOffers: 0,
+    maxEligibleSepoliaOffers: 10, maxEligibleRequestedTokenOffers: 0,
     observedFeeTokenAddresses: [token, 'synthetic-private-string'],
     paymentReady: true, feeTokenStatus: 'ready',
   } });

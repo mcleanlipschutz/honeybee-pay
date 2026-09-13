@@ -1,0 +1,14 @@
+{
+  "network": "Ethereum_Sepolia",
+  "chainID": 11155111,
+  "reviewedAt": "2026-09-13",
+  "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+  "runtimeCodeHash": "0xc864e10689f2da18833652a3b075d43106e87f0f90d95ee64f6f0b33bc026083",
+  "sourceContract": "WETH9.sol:WETH9",
+  "compilerVersion": "0.4.19+commit.c4cbbb05",
+  "runtimeMatch": "exact_match",
+  "matchId": "1079487",
+  "sourceURL": "https://sourcify.dev/server/v2/contract/11155111/0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14?fields=all",
+  "tokenListURL": "https://github.com/Uniswap/default-token-list/blob/250fe8df887cb23e06f3a8eb49039a9f65c60c1f/src/tokens/sepolia.json",
+  "note": "Sourcify onchain and recompiled runtime match exactly; a live Sepolia code/metadata check is required before funding. Existing WETH9 is GPL-3.0-or-later. No custom contract deployment."
+}

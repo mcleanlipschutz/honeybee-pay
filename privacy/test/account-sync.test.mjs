@@ -11,10 +11,11 @@ import { createAccountWalletService } from '../src/account-wallets.mjs';
 import { createAccountAuthenticator } from '../src/account-auth.mjs';
 import { accountFixture } from './account-fixture.mjs';
 import { createAccountInvoice } from '../src/account-invoice.mjs';
+import { feeWETH } from '../../shared/test-assets.mjs';
 
 const chain = { type: 0, id: 11155111 }, wallet = { id: 'only-this-account' };
 const prepared = { rpcURL: 'http://127.0.0.1:9999', deployment: { status: 'reviewed-deployment-and-circuit-matched' } };
-function fixture({ incomplete = false, otherWallet = false, units = 7000000n, onRead = () => {} } = {}) {
+function fixture({ incomplete = false, otherWallet = false, units = 7000000n, feeUnits = 5000000000000000n, onRead = () => {} } = {}) {
   let utxo, txid, balance, reads = 0;
   return {
     setOnUTXOMerkletreeScanCallback: fn => { utxo = fn; },
@@ -29,7 +30,7 @@ function fixture({ incomplete = false, otherWallet = false, units = 7000000n, on
     walletForID: id => { assert.equal(id, wallet.id); return wallet; },
     balanceForERC20Token: async (version, selected, network, token, onlySpendable) => {
       reads++; assert.equal(version, TXIDVersion.V2_PoseidonMerkle); assert.equal(selected, wallet);
-      assert.equal(token, accountSyncToken); assert.equal(onlySpendable, true); onRead(); return units;
+      assert.ok([accountSyncToken, feeWETH.token].includes(token)); assert.equal(onlySpendable, true); onRead(); return token === feeWETH.token ? feeUnits : units;
     },
     reads: () => reads,
   };
@@ -47,6 +48,15 @@ test('account scan waits for both histories and its own balance update, returnin
   const empty = await scan(fixture({ units: 0n }));
   assert.equal(empty.spendableBalance.amountUnits, '0');
   assert.ok(empty.blockers.includes('no-spendable-test-usdc'));
+});
+test('fee balance uses the same completed wallet scan with independent 18-decimal spendable units', async () => {
+  const sdk = fixture(), result = await scan(sdk, { includeFeeBalance: true });
+  assert.equal(sdk.reads(), 2);
+  assert.equal(result.spendableBalance.amountUnits, '7000000');
+  assert.equal(result.spendableFeeBalance.token, feeWETH.token);
+  assert.equal(result.spendableFeeBalance.decimals, 18);
+  assert.equal(result.spendableFeeBalance.amountUnits, '5000000000000000');
+  for (const feeUnits of [-1n, 2n ** 256n, '5000000000000000']) await assert.rejects(scan(fixture({ feeUnits }), { includeFeeBalance: true }));
 });
 test('incomplete histories, another wallet, expired sessions, cancellation and invalid balances fail closed', async () => {
   const incomplete = fixture({ incomplete: true });

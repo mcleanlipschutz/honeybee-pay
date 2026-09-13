@@ -34,7 +34,7 @@ export function DepositActivity({ connection, accountId }) {
     <button type="button" className="secondary" disabled={busy} onClick={() => { setVisible(5); void run(); }}>{busy ? 'Checking…' : loaded ? 'Refresh saved attempts' : 'Open saved attempts'}</button>
     {loaded && rows.length === 0 && <p className="notice">No attempts are saved here for this account. This does not prove a transaction was never sent from another browser or before storage was cleared.</p>}
     <ul className="receipt-list">{rows.slice(0, visible).map(row => <li key={row.quoteId} className="deposit-attempt">
-      <h4>{row.stage === 'approval' ? 'USDC approval' : 'Private-wallet deposit'} · {formatUnits(BigInt(row.amountUnits), 6)} test USDC</h4>
+      <h4>{row.stage === 'wrap' ? 'WETH wrapping' : row.stage === 'approval' ? 'Token approval' : 'Private-wallet deposit'} · {formatUnits(BigInt(row.amountUnits), row.decimals)} {row.tokenLabel}</h4>
       <p>Saved status: <strong>{row.statusLabel}</strong></p>
       <p>Recorded {new Date(row.createdAt).toLocaleString()}</p>
       <details className="wallet-details"><summary>Funding wallet and transaction</summary>

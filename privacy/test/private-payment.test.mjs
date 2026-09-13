@@ -7,6 +7,11 @@ import { paymentMemo } from '../src/account-private-payment.mjs';
 import { createPaymentStore } from '../src/payment-store.mjs';
 import { validatePaymentSummary } from '../../checkout/src/private-payment.mjs';
 import { checkMerchantReceipts } from '../src/merchant-receipts.mjs';
+import { keccak256, toUtf8Bytes } from 'ethers';
+import { validatePaymentQuote } from '../src/account-private-payment.mjs';
+import { decodePrivatePaymentBatch, bindingHash, paymentProxy } from '../src/payment-verification.mjs';
+import { relayInterface, walletInterface } from '../src/deployment-check.mjs';
+import { feeWETH } from '../../shared/test-assets.mjs';
 
 test('quote is read-only; explicit confirmation binds recipient, amount, private memo and fee before durable broadcast', async t => {
   const f = await paymentFixture(t);
@@ -30,7 +35,7 @@ test('quote is read-only; explicit confirmation binds recipient, amount, private
 });
 
 test('unspendable notes, changed expiry, excessive fee, invalid proof, extra outputs and spent nullifiers cannot broadcast', async t => {
-  for (const mutate of [f => { f.state.balance = 1000000n; }, f => { f.state.scanComplete = false; }, f => { f.state.fee = 100001n; }]) {
+  for (const mutate of [f => { f.state.balance = 999999n; }, f => { f.state.scanComplete = false; }, f => { f.state.fee = 100001n; }]) {
     const f = await paymentFixture(t); mutate(f); await assert.rejects(f.run('payment-quote')); assert.equal(f.state.sends, 0);
   }
   for (const mutate of [f => { f.state.acceptProof = false; }, f => { f.state.nullifierSpent = true; },
@@ -48,11 +53,64 @@ test('lost broadcaster response survives reload and is reconciled by original nu
   assert.equal((await f.run('payment-submit', { quoteId: q.quoteId })).privatePayment.status, 'unknown');
   await assert.rejects(f.run('payment-quote'), /unfinished/);
   f.mined(); f.state.discoveredHash = hash;
+  const lookups = [];
+  // Mirrors the pinned Engine's per-tree search: a combined cross-tree lookup
+  // cannot resolve, although each proof settled in this same outer transaction.
+  f.sdk.getCompletedTxidFromNullifiers = async (_version, _chain, nullifiers) => {
+    lookups.push(nullifiers);
+    return nullifiers.length === 1 ? { txid: hash } : undefined;
+  };
   const result = await f.run('payment-status', { quoteId: q.quoteId });
+  assert.deepEqual(lookups, f.state.structs.map(tx => tx.nullifiers));
+  assert.notEqual(f.state.structs[0].boundParams.treeNumber, f.state.structs[1].boundParams.treeNumber);
   assert.equal(result.privatePayment.status, 'confirmed'); assert.equal(result.privatePayment.hash, hash);
   assert.equal(f.state.sends, 1);
   validatePaymentSummary(result.privatePayment, { id: f.wallet.id, privateAddress: f.wallet.railgunAddress });
   await assert.rejects(f.run('payment-quote'), /already has/);
+});
+
+test('merchant amount and WETH fee have separate units, balance requirements and tamper checks', async t => {
+  const f = await paymentFixture(t);
+  f.state.balance = 1000000n;
+  const quoted = (await f.run('payment-quote')).privatePayment;
+  assert.equal(quoted.quote.totalUnits, '1000000');
+  assert.equal(quoted.quote.feeToken, feeWETH.token); assert.equal(quoted.quote.feeDecimals, 18);
+  for (const patch of [{ feeToken: f.request.token }, { feeDecimals: 6 }, { totalUnits: '1010000' }, { maxFeeUnits: '10000000000000001' }]) {
+    const { quoteId: _id, ...body } = { ...quoted.quote, ...patch };
+    const quote = { ...body, quoteId: keccak256(toUtf8Bytes(JSON.stringify(body))) };
+    assert.throws(() => validatePaymentQuote(quote, { wallet: f.wallet }));
+    assert.throws(() => validatePaymentSummary({ ...quoted, quote }, { id: f.wallet.id, privateAddress: f.wallet.railgunAddress }));
+  }
+  f.state.feeBalance = 9999n;
+  await assert.rejects(f.run('payment-submit', { quoteId: quoted.quote.quoteId }), /balance changed/);
+  await assert.rejects(f.run('payment-quote'), /Insufficient spendable/);
+  f.state.feeBalance = 0n;
+  await assert.rejects(f.run('payment-quote'), /Deposit Sepolia WETH/);
+  assert.equal(f.state.sends, 0);
+});
+
+test('bound relay payload rejects removed or reordered proofs, direct execution, changed actions and duplicate nullifiers', async t => {
+  const f = await paymentFixture(t), q = (await f.run('payment-quote')).privatePayment.quote;
+  await f.run('payment-submit', { quoteId: q.quoteId });
+  const original = f.state.populated;
+  const decode = value => decodePrivatePaymentBatch(value, original.nullifiers, q.minGasPriceWei);
+  assert.equal(decode(original.transaction).length, 2);
+  for (const edit of [
+    (txs) => txs.pop(), (txs) => txs.reverse(),
+    (txs) => { txs[1].boundParams.adaptParams = word('00'); },
+    (txs) => { txs[1].boundParams.adaptContract = paymentProxy; },
+    (_txs, action) => { action.requireSuccess = false; },
+    (_txs, action) => { action.minGasLimit = 1n; },
+    (_txs, action) => { action.calls = [{ to: paymentProxy, data: '0x', value: 0n }]; },
+    (txs, action) => { txs[1].nullifiers = txs[0].nullifiers; for (const tx of txs) tx.boundParams.adaptParams = bindingHash(txs, action); },
+    (txs) => { txs[1].commitments.pop(); txs[1].boundParams.commitmentCiphertext.pop(); },
+  ]) {
+    const [, a] = relayInterface.decodeFunctionData('relay', original.transaction.data);
+    const txs = structuredClone(f.state.structs), action = { random: a.random, requireSuccess: a.requireSuccess, minGasLimit: a.minGasLimit, calls: [] };
+    edit(txs, action);
+    assert.throws(() => decode({ ...original.transaction, data: relayInterface.encodeFunctionData('relay', [txs, action]) }));
+  }
+  assert.throws(() => decode({ to: paymentProxy, data: walletInterface.encodeFunctionData('transact', [[f.state.structs[0]]]) }));
 });
 
 test('a late broadcaster hash remains durable when the authorization expires during delivery', async t => {

@@ -20,7 +20,7 @@ export async function reconcileShieldSubmission({ journal, quoteId, hash, reques
   if (!attempt) throw new Error('Deposit attempt unavailable');
   const verification = await checkShieldAttempt({ attempt, hash: hash ?? attempt.hash, request });
   assertCurrent();
-  if (['reverted', 'approval-confirmed', 'deposit-confirmed'].includes(attempt.status)) return verification;
+  if (['reverted', 'approval-confirmed', 'deposit-confirmed', 'wrap-confirmed'].includes(attempt.status)) return verification;
   await journal.update(quoteId, { status: verification.status, hash: verification.hash, verification }, assertCurrent);
   return { ...verification, quoteId };
 }
@@ -64,7 +64,7 @@ export function createShieldSubmission({ review: source, expected, userId, getCo
         const transaction = { ...q.transaction, type: 2, nonce,
           gasLimit: hex(q.gasLimitUnits), maxFeePerGas: hex(q.maxFeePerGasWei), maxPriorityFeePerGas: hex(q.maxPriorityFeePerGasWei) };
         const intent = sealShieldIntent({ reviewId: review.reviewId, quoteId, stage: q.stage,
-          amountUnits: review.amountUnits, receivedUnits: review.receivedUnits, feeUnits: review.feeUnits,
+          token: review.token, amountUnits: review.amountUnits, receivedUnits: review.receivedUnits, feeUnits: review.feeUnits,
           transaction, createdAt: now() });
         await journal.claim(intent); // Persist BEFORE entering a wallet prompt.
         claimed = true;

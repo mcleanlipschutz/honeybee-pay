@@ -1,13 +1,13 @@
 import { getAddress } from 'viem';
 import { createShieldAttemptJournal, shieldAttemptScope, validateShieldAttempt } from './shield-attempts.mjs';
 import { reconcileShieldSubmission } from './shield-submission.mjs';
-import { shieldProxy, shieldToken } from './shield-review.mjs';
+import { shieldProxy, shieldToken, assetForToken } from './shield-review.mjs';
 
 const HASH = /^0x[0-9a-fA-F]{64}$/;
 const reads = new Set(['eth_chainId', 'eth_getTransactionByHash', 'eth_getTransactionReceipt', 'eth_getBlockByNumber']);
 const labels = Object.freeze({ 'awaiting-wallet': 'Wallet outcome not recorded', pending: 'Pending confirmation',
   unknown: 'Outcome unknown', 'not-submitted': 'Not submitted', rejected: 'Declined in wallet', reverted: 'Reverted',
-  'approval-confirmed': 'Approval confirmed', 'deposit-confirmed': 'Deposit confirmed' });
+  'wrap-confirmed': 'WETH wrapping confirmed', 'approval-confirmed': 'Approval confirmed', 'deposit-confirmed': 'Deposit confirmed' });
 const canCheck = status => !['not-submitted', 'rejected'].includes(status);
 const address = value => getAddress(value.toLowerCase());
 export class DepositActivityError extends Error {}
@@ -17,17 +17,17 @@ const problem = message => new DepositActivityError(message);
 // material, provider errors, or unchecked stored verification objects to the UI.
 export function depositActivitySummary(record) {
   validateShieldAttempt(record);
-  const i = record.intent, tx = i.transaction;
+  const i = record.intent, tx = i.transaction, asset = assetForToken(i.token ?? shieldToken);
   const units = value => {
-    if (typeof value !== 'string' || !/^(0|[1-9][0-9]{0,7})$/.test(value)) throw Error();
+    if (typeof value !== 'string' || !/^(0|[1-9][0-9]{0,17})$/.test(value)) throw Error();
     return BigInt(value);
   };
   const amount = units(i.amountUnits), received = units(i.receivedUnits), fee = units(i.feeUnits);
-  if (amount < 1n || amount > 10000000n || received < 1n || received + fee !== amount
+  if (amount < 1n || amount > BigInt(asset.maxDepositUnits) || received < 1n || received + fee !== amount
       || !Number.isSafeInteger(i.createdAt) || i.createdAt <= 0 || i.createdAt > 8640000000000000
-      || tx.chainId !== 11155111 || tx.type !== 2 || tx.value !== '0x0'
-      || address(tx.to) !== address(i.stage === 'approval' ? shieldToken : shieldProxy)) throw Error();
-  return Object.freeze({ quoteId: i.quoteId, stage: i.stage, amountUnits: i.amountUnits,
+      || tx.chainId !== 11155111 || tx.type !== 2 || (i.stage === 'wrap' ? asset.id !== 'fee-weth' || !/^0x[0-9a-f]+$/.test(tx.value) || BigInt(tx.value) <= 0n || BigInt(tx.value) > amount : tx.value !== '0x0')
+      || address(tx.to) !== address(i.stage === 'shield' ? shieldProxy : asset.token)) throw Error();
+  return Object.freeze({ quoteId: i.quoteId, stage: i.stage, amountUnits: i.stage === 'wrap' ? BigInt(tx.value).toString() : i.amountUnits, token: asset.token, decimals: asset.decimals, tokenLabel: asset.label,
     receivedUnits: i.receivedUnits, feeUnits: i.feeUnits, createdAt: i.createdAt,
     fundingAddress: address(tx.from), hash: record.hash, status: record.status,
     statusLabel: labels[record.status], canCheck: canCheck(record.status) });

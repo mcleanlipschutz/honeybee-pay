@@ -5,6 +5,7 @@ import { validateShieldReview } from './shield-review.mjs';
 import { validateShieldPreflight } from './shield-preflight.mjs';
 import { validatePrivatePaymentCheck, validateSpendableSnapshot } from '../../shared/private-payment-check.mjs';
 import { validatePrivateRecipient } from './private-request.mjs';
+import { feeWETH } from '../../shared/test-assets.mjs';
 import { validatePaymentSummary } from './private-payment.mjs';
 
 const messages = {
@@ -92,7 +93,7 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
         } else {
           result.privatePayment = validatePaymentSummary(result.privatePayment, expectedWallet, { allowExpired: action !== 'payment-quote' });
           const q = result.privatePayment.quote;
-          if (action === 'payment-quote' && (result.privatePayment.status !== 'quoted'
+          if (action === 'payment-quote' && (result.privatePayment.status !== 'quoted' || q.version !== 2
               || JSON.stringify(q.request) !== JSON.stringify(fields.paymentRequest) || q.maxFeeUnits !== fields.maxFeeUnits)) throw new Error();
           if (action !== 'payment-quote' && q.quoteId !== fields.quoteId) throw new Error();
           if (expectedReview && JSON.stringify(q) !== JSON.stringify(expectedReview)) throw new Error();
@@ -106,6 +107,12 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
           || result.spendableBalance?.token !== '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
           || result.spendableBalance?.source !== 'sdk-spendable-snapshot'
           || !/^(0|[1-9][0-9]{0,77})$/.test(result.spendableBalance?.amountUnits))) throw new Error();
+      if (result.spendableFeeBalance !== undefined) {
+        const f = result.spendableFeeBalance;
+        if (action !== 'sync' || f.token !== feeWETH.token || f.decimals !== 18
+            || f.source !== 'sdk-spendable-snapshot' || !/^(0|[1-9][0-9]{0,77})$/.test(f.amountUnits)
+            || BigInt(f.amountUnits) >= 2n ** 256n) throw new Error();
+      }
       if (['invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore', 'invoice-receipts'].includes(action)) {
         if (result.privateWallet.status !== 'locked' || !result.privateWallet.id
             || result.networkLoaded !== false || result.spendableBalanceVerified !== false) throw new Error();

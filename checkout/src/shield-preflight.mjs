@@ -1,6 +1,7 @@
-import { encodeFunctionData, getAddress, keccak256, stringToHex } from 'viem';
-import { approvalAbi, shieldProxy, shieldToken } from './shield-review.mjs';
+import { encodeFunctionData, getAddress, keccak256, stringToHex, parseAbi } from 'viem';
+import { approvalAbi, shieldProxy, assetForToken } from './shield-review.mjs';
 
+const wrapAbi = parseAbi(['function deposit() payable']);
 const units = value => {
   if (typeof value !== 'string' || !/^(0|[1-9][0-9]{0,77})$/.test(value) || BigInt(value) >= 2n ** 256n) throw new Error('Invalid fee quantity');
   return BigInt(value);
@@ -10,19 +11,20 @@ const exactTransaction = (left, right) => Object.keys(left).sort().join(',') ===
 
 export function validateShieldPreflight(value, review, now = Date.now()) {
   const quote = structuredClone(value), { quoteId, ...body } = quote;
-  const amount = units(review.amountUnits), allowance = units(quote.allowanceUnits);
-  const stage = allowance < amount ? 'approval' : 'shield';
-  const expectedTransaction = stage === 'shield' ? review.transaction : { ...review.transaction,
-    to: shieldToken, data: encodeFunctionData({ abi: approvalAbi, functionName: 'approve', args: [shieldProxy, amount] }) };
+  const amount = units(review.amountUnits), allowance = units(quote.allowanceUnits), balance = units(quote.publicBalanceUnits);
+  const asset = assetForToken(review.token), token = asset.token;
+  const stage = asset.id === 'fee-weth' && balance < amount ? 'wrap' : allowance < amount ? 'approval' : 'shield';
+  const expectedTransaction = stage === 'wrap' ? { ...review.transaction, to: token, value: '0x' + (amount - balance).toString(16), data: encodeFunctionData({ abi: wrapAbi, functionName: 'deposit' }) } : stage === 'shield' ? review.transaction : { ...review.transaction,
+    to: token, data: encodeFunctionData({ abi: approvalAbi, functionName: 'approve', args: [shieldProxy, amount] }) };
   const estimate = units(quote.gasEstimateUnits), limit = units(quote.gasLimitUnits);
   const maxFee = units(quote.maxFeePerGasWei), priority = units(quote.maxPriorityFeePerGasWei);
   if (quoteId !== keccak256(stringToHex(JSON.stringify(body))) || quote.version !== 1
       || quote.status !== 'simulated-not-submitted' || quote.submissionEnabled !== false
       || quote.reviewId !== review.reviewId || quote.chainId !== 11155111 || quote.stage !== stage
       || !exactTransaction(quote.transaction, expectedTransaction)
-      || units(quote.publicBalanceUnits) < amount || estimate < 21000n || limit > 2_000_000n
+      || (stage !== 'wrap' && balance < amount) || estimate < 21000n || limit > 2_000_000n
       || limit !== (estimate * 120n + 99n) / 100n || maxFee === 0n || maxFee > 50_000_000_000n || priority > maxFee
-      || units(quote.maxNetworkFeeWei) !== limit * maxFee || units(quote.nativeBalanceWei) < limit * maxFee
+      || units(quote.maxNetworkFeeWei) !== limit * maxFee || units(quote.nativeBalanceWei) < limit * maxFee + BigInt(expectedTransaction.value)
       || !Number.isSafeInteger(quote.createdAt) || quote.createdAt <= 0 || quote.createdAt > now + 5000
       || !Number.isSafeInteger(quote.expiresAt) || quote.expiresAt <= now || quote.expiresAt <= quote.createdAt
       || quote.expiresAt > quote.createdAt + 60000 || quote.expiresAt > review.expiresAt

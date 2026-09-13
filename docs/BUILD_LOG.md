@@ -1183,3 +1183,53 @@ remaining unavailable at timeout. No wallet was opened or transaction sent.
 Live fee-token identification, compatible fee-path implementation and the funded
 private transfer/merchant receipt remain pending. This update needs only a Git
 pull and the existing preflight command on Windows; no reinstall or build.
+
+
+## September 13, 2026 — Bound Sepolia WETH broadcaster fee
+
+McLean's Windows diagnostic reached Waku and eligible Sepolia offers, but none
+accepted Circle test USDC. Seven other token contracts were observed. Selected
+Sepolia WETH `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` after checking the
+pinned Uniswap token list, Sourcify exact-match WETH9 source/runtime and live
+Sepolia code/metadata at finalized block 0xb27552. Merchant requests remain
+Circle test USDC. No mainnet tokens or real-money funding are needed.
+
+Implemented fixed-asset 6/18-decimal handling, separate spendable WETH balances
+and quote consent, WETH runtime rechecks, exact-shortfall Sepolia ETH wrapping,
+exact approval, recoverable shield notes and original-attempt receipts. Native
+balance checks include wrap value plus bounded gas. Private fee/deposit caps
+are 0.01 WETH; deposit review defaults to 0.005, payment fee cap to 0.001.
+
+Rejected an unbound direct two-proof design: the fee proof could be submitted
+alone. Both 01x02 proofs now bind the reviewed RelayAdapt address and the full
+ordered nullifier list/count with empty actions. SDK 10.9.0 internal generation
+and iterative gas helpers are pinned, preserving transfer/POI generation and
+using RelayAdapt-aware broadcaster discovery/submission. Exact-balance or
+fragmented note shapes fail before quotes/proofs. Receipt validation expects
+one Nullified per proof and one combined Transact. Existing single-proof
+history remains readable; old quotes cannot submit through the new route.
+
+Independent review found a cross-tree lost-response bug in the SDK lookup:
+combined nullifiers only resolve within one tree. Fixed by finding each
+nullifier separately and retaining exact full-calldata receipt verification.
+Also fixed allowance wording during wrap and added adapter argument/POI/shape
+regressions using the actual SDK estimator with explicit generator/RPC doubles.
+The final reviewer reported no remaining must-fix source issue in scope and
+reran 16 focused tests successfully. This is not a security audit.
+
+Validation: 43 focused privacy tests and all 39 checkout tests passed; production
+client/server build passed with existing warnings. Actual two-proof Groth16
+smoke used synthetic WETH/USDC notes and pinned 01x02 artifacts. Both proofs
+passed deployed Sepolia verify at finalized block 0xb27572, hash
+0x488f7e693571dba87fa2f4b7813a8068318301b271bbfa8b279b63bf76935335.
+Changed single-proof binding was rejected by that live verifier; the deployed
+relay getAdaptParams matched the independent encoder. All network calls were
+read-only from a non-bypass sender. No spendable root, POI, or funded settlement
+was established. The remote browser could not open the isolated local preview
+(ERR_BLOCKED_BY_CLIENT), so laptop UI/wallet validation remains pending.
+
+See ZK_FLOW.md and privacy/reports/separate-fee-validation.json for exact Windows
+steps, evidence scope, CROPS compromises and remaining funded gates. Root MIT
+licensing does not imply the verified Relay (UNLICENSED), WETH9 (GPL-3.0-or-later)
+or all dependencies share that license. No merge, public deployment, new
+contract, or real-money transaction is included.

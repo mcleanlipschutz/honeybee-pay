@@ -13,6 +13,8 @@ import { installPOITransport } from './poi-transport.mjs';
 import { checkPOIService } from './poi-preflight.mjs';
 import { transferManifest } from './transfer-artifacts.mjs';
 
+import { feeWETH } from '../../shared/test-assets.mjs';
+
 export const accountSyncNetwork = 'Ethereum_Sepolia';
 export const accountSyncToken = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 export const accountSyncDeadline = 300000;
@@ -54,7 +56,7 @@ export async function prepareAccountSync(config, checkSession, { blockTag = 'fin
   return { artifacts, deployment, rpcURL, poiURL };
 }
 
-export async function scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage = () => {} }) {
+export async function scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage = () => {}, includeFeeBalance = false }) {
   const { chain } = testNetwork(accountSyncNetwork);
   const version = TXIDVersion.V2_PoseidonMerkle;
   const tracker = createScanTracker(chain);
@@ -96,7 +98,13 @@ export async function scanAccountWallet({ sdk, wallet, prepared, checkSession, s
     const units = await sdk.balanceForERC20Token(version, loaded, accountSyncNetwork, accountSyncToken, true);
     check();
     if (!tracker.complete() || typeof units !== 'bigint' || units < 0n || units >= 2n ** 256n) throw new Error('Spendable balance unavailable');
-    return { synchronization: { status: 'history-scans-complete', checkedAt: new Date().toISOString(),
+    let feeUnits;
+    if (includeFeeBalance) {
+      feeUnits = await sdk.balanceForERC20Token(version, loaded, accountSyncNetwork, feeWETH.token, true);
+      check();
+      if (typeof feeUnits !== 'bigint' || feeUnits < 0n || feeUnits >= 2n ** 256n) throw new Error('Spendable fee balance unavailable');
+    }
+    return { ...(includeFeeBalance ? { spendableFeeBalance: { token: feeWETH.token, decimals: 18, amountUnits: feeUnits.toString(), source: 'sdk-spendable-snapshot' } } : {}), synchronization: { status: 'history-scans-complete', checkedAt: new Date().toISOString(),
       scans: tracker.snapshot(), walletScanned: true, deployment: prepared.deployment },
       spendableBalanceVerified: true,
       spendableBalance: { token: accountSyncToken, decimals: 6, amountUnits: units.toString(), source: 'sdk-spendable-snapshot' },

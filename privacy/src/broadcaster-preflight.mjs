@@ -87,9 +87,10 @@ async function runWorker() {
     await send({ kind: 'phase', stage });
     const { openPaymentBroadcaster } = await import('./payment-broadcaster.mjs');
     const { WakuBroadcasterClient } = await import('@railgun-community/waku-broadcaster-client-node');
-    const { accountSyncNetwork, accountSyncToken } = await import('./account-sync.mjs');
+    const { accountSyncNetwork } = await import('./account-sync.mjs');
     const { testNetwork } = await import('./network-preflight.mjs');
-    diagnostic = createBroadcasterDiagnostics(WakuBroadcasterClient, testNetwork(accountSyncNetwork).chain, accountSyncToken);
+    const { feeWETH } = await import('../../shared/test-assets.mjs');
+    diagnostic = createBroadcasterDiagnostics(WakuBroadcasterClient, testNetwork(accountSyncNetwork).chain, feeWETH.token, { useRelayAdapt: true });
     interval = setInterval(() => {
       void diagnostic.sample().then(value => send({ kind: 'diagnostic', diagnostic: value })).catch(() => {});
     }, 3000);

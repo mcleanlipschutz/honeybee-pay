@@ -30,10 +30,10 @@ test('read-only samples distinguish discovered peers, connected protocols and el
   assert.equal(state.maxConnectedPeers, 1); assert.equal(state.maxFilterPeers, 1);
   assert.equal(state.maxStorePeers, 1); assert.equal(state.maxLightPushV2Peers, 1); assert.equal(state.maxLightPushV3Peers, 0);
   assert.equal(state.clientStartedObserved, true); assert.equal(state.maxEligibleSepoliaOffers, 1);
-  assert.equal(state.maxEligibleTestUSDCOffers, 0);
+  assert.equal(state.maxEligibleRequestedTokenOffers, 0);
   network.tokenOffers = [secret]; network.peers[0].protocols.push('/vac/waku/lightpush/3.0.0');
   state = await diagnostics.sample();
-  assert.equal(state.maxEligibleTestUSDCOffers, 1); assert.equal(state.maxLightPushV3Peers, 1);
+  assert.equal(state.maxEligibleRequestedTokenOffers, 1); assert.equal(state.maxLightPushV3Peers, 1);
   network.peers = []; network.connected = []; network.started = false;
   state = await diagnostics.sample();
   assert.equal(state.maxConnectedPeers, 1); assert.equal(state.clientStartedObserved, true);
@@ -80,7 +80,7 @@ test('eligible fee-token contracts are normalized, bounded and retained after of
   assert.equal(state.requestedFeeToken, token.toLowerCase());
   assert.deepEqual(state.observedFeeTokenAddresses, [alternative]);
   assert.equal(state.feeTokenStatus, 'other-token-offers-only');
-  assert.equal(state.maxEligibleTestUSDCOffers, 0);
+  assert.equal(state.maxEligibleRequestedTokenOffers, 0);
   assert.equal(state.paymentReady, undefined);
   assert.ok(!JSON.stringify(state).includes(secret));
   network.chainOffers = [];

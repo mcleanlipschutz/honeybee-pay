@@ -4,7 +4,7 @@
 const counts = [
   'maxDiscoveredPeers', 'maxConnectedPeers', 'maxFilterPeers', 'maxStorePeers',
   'maxLightPushV2Peers', 'maxLightPushV3Peers', 'maxConfiguredTopics',
-  'maxEligibleSepoliaOffers', 'maxEligibleTestUSDCOffers', 'feeMessagesObserved',
+  'maxEligibleSepoliaOffers', 'maxEligibleRequestedTokenOffers', 'feeMessagesObserved',
   'feeUpdatesObserved', 'skippedVersion', 'skippedPOI', 'skippedExpired',
 ];
 const statuses = new Set(['Disconnected', 'Searching', 'Connected', 'AllUnavailable', 'Error']);
@@ -29,13 +29,13 @@ export function sanitizeBroadcasterDiagnostics(value) {
     lastFailure: failures.has(value.lastFailure) ? value.lastFailure : 'none',
     requestedFeeToken: tokenAddress(value.requestedFeeToken),
     observedFeeTokenAddresses: tokenAddresses(value.observedFeeTokenAddresses),
-    feeTokenStatus: boundedCount(value.maxEligibleTestUSDCOffers) > 0 ? 'requested-token-offer-observed'
+    feeTokenStatus: boundedCount(value.maxEligibleRequestedTokenOffers) > 0 ? 'requested-token-offer-observed'
       : boundedCount(value.maxEligibleSepoliaOffers) > 0 ? 'other-token-offers-only' : 'no-eligible-offers-observed',
     ...Object.fromEntries(counts.map(key => [key, boundedCount(value[key])])),
   };
 }
 
-export function createBroadcasterDiagnostics(client, chain, token, { sampleTimeoutMs = 1000 } = {}) {
+export function createBroadcasterDiagnostics(client, chain, token, { sampleTimeoutMs = 1000, useRelayAdapt = false } = {}) {
   const state = sanitizeBroadcasterDiagnostics({ requestedFeeToken: token });
   let pending;
   const increment = key => { state[key] = Math.min(10000, state[key] + 1); };
@@ -79,7 +79,7 @@ export function createBroadcasterDiagnostics(client, chain, token, { sampleTimeo
       peak('maxConnectedPeers', connected.length);
       state.clientStartedObserved ||= client.isStarted() === true;
       peak('maxConfiguredTopics', client.getContentTopics()?.length || 0);
-      const offers = client.findAllBroadcastersForChain(chain, false) || [];
+      const offers = client.findAllBroadcastersForChain(chain, useRelayAdapt) || [];
       peak('maxEligibleSepoliaOffers', offers.length);
       // Read only SDK-filtered eligible offers, never unverified fee messages.
       // Preserve a bounded union across samples so expiry cannot erase evidence.
@@ -87,7 +87,7 @@ export function createBroadcasterDiagnostics(client, chain, token, { sampleTimeo
         ...state.observedFeeTokenAddresses,
         ...offers.slice(0, 10000).map(offer => offer?.tokenAddress),
       ]);
-      peak('maxEligibleTestUSDCOffers', client.findBroadcastersForToken(chain, token, false)?.length || 0);
+      peak('maxEligibleRequestedTokenOffers', client.findBroadcastersForToken(chain, token, useRelayAdapt)?.length || 0);
       if (!core?.libp2p?.peerStore?.all) return;
       const peers = await Promise.race([
         core.libp2p.peerStore.all(),

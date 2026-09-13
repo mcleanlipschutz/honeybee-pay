@@ -7,10 +7,12 @@ import { RailgunEngine } from '@railgun-community/engine';
 import { TXIDVersion } from '@railgun-community/shared-models';
 import { createAccountInvoice } from '../src/account-invoice.mjs';
 import { accountSyncToken } from '../src/account-sync.mjs';
-import { walletInterface } from '../src/deployment-check.mjs';
-import { paymentProxy } from '../src/payment-verification.mjs';
+import { walletInterface, relayInterface } from '../src/deployment-check.mjs';
+import { paymentProxy, paymentRelay, bindingHash } from '../src/payment-verification.mjs';
 import { operatePrivatePayment } from '../src/account-private-payment.mjs';
 import { createPaymentStore } from '../src/payment-store.mjs';
+
+import { feeWETH } from '../../shared/test-assets.mjs';
 
 export const word = byte => '0x' + byte.repeat(32), hash = word('aa');
 export async function paymentFixture(t) {
@@ -22,7 +24,7 @@ export async function paymentFixture(t) {
   const session = { ownerId: '01'.repeat(32), expiresAt: Date.now() + 3600000 };
   const privateKey = '0x' + '02'.repeat(32), checkSession = () => { if (Date.now() >= session.expiresAt) throw Error('Expired session'); };
   const store = createPaymentStore({ directory, privateKey, ownerId: session.ownerId, checkSession });
-  const state = { balance: 3000000n, fee: 10000n, sends: 0, proofs: 0, acceptProof: true,
+  const state = { balance: 3000000n, feeBalance: 3000000n, fee: 10000n, sends: 0, proofs: 0, acceptProof: true,
     nullifierSpent: false, scanComplete: true, sendFailure: false, beforeSend: async () => {}, changeProof: () => {} };
   const block = { number: '0x123', hash: word('bb'), timestamp: '0x' + Math.floor(Date.now() / 1000).toString(16), baseFeePerGas: '0x3b9aca00' };
   let utxo, txid, balance;
@@ -33,28 +35,31 @@ export async function paymentFixture(t) {
       utxo({ chain, scanStatus: state.scanComplete ? 'Complete' : 'Incomplete' }); txid({ chain, scanStatus: 'Complete' });
       balance({ railgunWalletID: wallet.id, chain, txidVersion: TXIDVersion.V2_PoseidonMerkle });
     },
-    walletForID: () => wallet, balanceForERC20Token: async (_v, _w, _n, _t, onlySpendable) => { if (!onlySpendable) throw Error('Spendability bypass'); return state.balance; },
+    walletForID: () => wallet, balanceForERC20Token: async (_v, _w, _n, _t, onlySpendable) => { if (!onlySpendable) throw Error('Spendability bypass'); return _t.toLowerCase() === feeWETH.token.toLowerCase() ? state.feeBalance : state.balance; },
     gasEstimateForUnprovenTransfer: async () => ({ gasEstimate: 100000n }),
-    calculateBroadcasterFeeERC20Amount: () => ({ tokenAddress: accountSyncToken, amount: state.fee }),
+    calculateBroadcasterFeeERC20Amount: () => ({ tokenAddress: feeWETH.token, amount: state.fee }),
     getProver: () => ({ setSnarkJSGroth16() {} }),
     generateTransferProof: async (...args) => { state.proofs++; state.proofArgs = args; },
     populateProvedTransfer: async (...args) => {
       const struct = { proof: { a: { x: 1n, y: 2n }, b: { x: [3n, 4n], y: [5n, 6n] }, c: { x: 7n, y: 8n } },
-        merkleRoot: word('11'), nullifiers: [word('22')], commitments: [word('33'), word('44'), word('55')],
+        merkleRoot: word('11'), nullifiers: [word('22')], commitments: [word('33'), word('44')],
         boundParams: { treeNumber: 0, minGasPrice: args[9], unshield: 0, chainID: 11155111,
-          adaptContract: '0x' + '00'.repeat(20), adaptParams: word('00'),
-          commitmentCiphertext: Array.from({ length: 3 }, () => ({ ciphertext: Array(4).fill(word('66')),
+          adaptContract: paymentRelay, adaptParams: word('00'),
+          commitmentCiphertext: Array.from({ length: 2 }, () => ({ ciphertext: Array(4).fill(word('66')),
             blindedSenderViewingKey: word('77'), blindedReceiverViewingKey: word('88'), annotationData: '0x', memo: '0x' })) },
         unshieldPreimage: { npk: word('00'), token: { tokenType: 0, tokenAddress: '0x' + '00'.repeat(20), tokenSubID: 0 }, value: 0 } };
-      state.changeProof(struct);
-      state.struct = struct;
-      state.populated = { transaction: { to: paymentProxy, value: 0n, data: walletInterface.encodeFunctionData('transact', [[struct]]) },
-        nullifiers: struct.nullifiers, preTransactionPOIsPerTxidLeafPerList: { unitTestDouble: true } };
+      const second = structuredClone(struct); second.nullifiers = [word('99')]; second.commitments = [word('aa'), word('bb')];
+      second.boundParams.treeNumber = 1;
+      const structs = [struct, second], action = { random: '0x' + '01'.repeat(31), requireSuccess: true, minGasLimit: 0n, calls: [] };
+      for (const tx of structs) tx.boundParams.adaptParams = bindingHash(structs, action);
+      state.changeProof(struct); state.struct = struct; state.structs = structs;
+      state.populated = { transaction: { to: paymentRelay, value: 0n, data: relayInterface.encodeFunctionData('relay', [structs, action]) },
+        nullifiers: structs.flatMap(tx => tx.nullifiers), preTransactionPOIsPerTxidLeafPerList: { unitTestDouble: true } };
       return state.populated;
     },
     getCompletedTxidFromNullifiers: async () => ({ txid: state.discoveredHash }),
   };
-  const selected = { railgunAddress: privateAddress(3), tokenAddress: accountSyncToken,
+  const selected = { railgunAddress: privateAddress(3), tokenAddress: feeWETH.token,
     tokenFee: { feePerUnitGas: '0x1', feesID: 'unit-test', expiration: Date.now() + 600000, availableWallets: 1 } };
   const rpc = async (method, params) => {
     if (method === 'eth_chainId') return state.wrongChain ? '0x1' : '0xaa36a7';
@@ -75,15 +80,15 @@ export async function paymentFixture(t) {
   } }) });
   const run = (action, fields = {}) => operatePrivatePayment({ action, paymentRequest: request, maxFeeUnits: '100000',
     sdk, wallet, key: 'unit-encryption-key', privateKey, directory, session, prepared,
-    checkSession, signal: AbortSignal.timeout(10000), openBroadcaster, ...fields });
+    checkSession, signal: AbortSignal.timeout(10000), openBroadcaster, paymentProver: sdk, ...fields });
   const mined = () => {
     const s = state.struct;
     const log = (name, args, index) => ({ address: paymentProxy, ...walletInterface.encodeEventLog(walletInterface.getEvent(name), args),
       blockHash: block.hash, blockNumber: block.number, transactionHash: hash, logIndex: '0x' + index.toString(16), removed: false });
     const from = '0x' + '99'.repeat(20);
-    state.tx = { hash, from, to: paymentProxy, input: state.populated.transaction.data, value: '0x0', chainId: '0xaa36a7', blockHash: block.hash, blockNumber: block.number };
-    state.receipt = { transactionHash: hash, from, to: paymentProxy, blockHash: block.hash, blockNumber: block.number, status: '0x1',
-      logs: [log('Nullified', [s.boundParams.treeNumber, s.nullifiers], 0), log('Transact', [0, 0, s.commitments, s.boundParams.commitmentCiphertext], 1)] };
+    state.tx = { hash, from, to: paymentRelay, input: state.populated.transaction.data, value: '0x0', chainId: '0xaa36a7', blockHash: block.hash, blockNumber: block.number };
+    state.receipt = { transactionHash: hash, from, to: paymentRelay, blockHash: block.hash, blockNumber: block.number, status: '0x1',
+      logs: [...state.structs.map((tx, i) => log('Nullified', [tx.boundParams.treeNumber, tx.nullifiers], i)), log('Transact', [0, 0, state.structs.flatMap(tx => tx.commitments), state.structs.flatMap(tx => tx.boundParams.commitmentCiphertext)], 2)] };
   };
   return { run, state, store, wallet, request, directory, privateKey, session, selected, sdk, rpc, checkSession, mined };
 }

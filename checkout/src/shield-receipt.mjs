@@ -1,11 +1,12 @@
 import { decodeEventLog, decodeFunctionData, encodeEventTopics, encodeAbiParameters, getAddress, parseAbi } from 'viem';
-import { shieldAbi, approvalAbi, shieldToken, shieldProxy } from './shield-review.mjs';
+import { shieldAbi, approvalAbi, shieldToken, shieldProxy, assetForToken } from './shield-review.mjs';
 import { validateShieldAttempt } from './shield-attempts.mjs';
 
 // Engine 9.6.0, dist/abi/V2.1/RailgunSmartWallet.json. A parity test uses that ABI.
 export const shieldEventAbi = parseAbi([
   'event Shield(uint256 treeNumber,uint256 startPosition,(bytes32 npk,(uint8 tokenType,address tokenAddress,uint256 tokenSubID) token,uint120 value)[] commitments,(bytes32[3] encryptedBundle,bytes32 shieldKey)[] shieldCiphertext,uint256[] fees)',
 ]);
+export const wrapEventAbi = parseAbi(['event Deposit(address indexed dst,uint256 wad)']);
 export const approvalEventAbi = parseAbi(['event Approval(address indexed owner,address indexed spender,uint256 value)']);
 const HASH = /^0x[0-9a-fA-F]{64}$/;
 const equalAddress = (a, b) => getAddress(a.toLowerCase()) === getAddress(b.toLowerCase());
@@ -17,11 +18,12 @@ const quantity = value => {
 const requireMatch = condition => { if (!condition) throw new Error('Transaction does not match the deposit record'); };
 
 function verifyEvent(receipt, intent) {
-  const approval = intent.stage === 'approval';
-  const abi = approval ? approvalEventAbi : shieldEventAbi;
-  const eventName = approval ? 'Approval' : 'Shield';
+  const approval = intent.stage === 'approval', wrap = intent.stage === 'wrap';
+  const asset = assetForToken(intent.token ?? shieldToken), token = asset.token;
+  const abi = wrap ? wrapEventAbi : approval ? approvalEventAbi : shieldEventAbi;
+  const eventName = wrap ? 'Deposit' : approval ? 'Approval' : 'Shield';
   const topic = encodeEventTopics({ abi, eventName })[0];
-  const contract = approval ? shieldToken : shieldProxy;
+  const contract = wrap || approval ? token : shieldProxy;
   const logs = receipt.logs.filter(log => equalAddress(log.address, contract) && equalHex(log.topics[0], topic));
   requireMatch(logs.length === 1);
   const log = logs[0];
@@ -34,7 +36,11 @@ function verifyEvent(receipt, intent) {
   const event = abi[0], nonIndexed = event.inputs.filter(input => !input.indexed);
   requireMatch(equalHex(log.data, encodeAbiParameters(nonIndexed, nonIndexed.map(input => args[input.name])))
     && JSON.stringify(log.topics.map(x => x.toLowerCase())) === JSON.stringify(encodeEventTopics({ abi, eventName, args }).map(x => x.toLowerCase())));
-  if (approval) {
+  if (wrap) {
+    requireMatch(asset.id === 'fee-weth' && intent.transaction.data === '0xd0e30db0'
+      && equalAddress(args.dst, intent.transaction.from) && args.wad === quantity(intent.transaction.value)
+      && args.wad > 0n && args.wad <= BigInt(intent.amountUnits));
+  } else if (approval) {
     const decoded = decodeFunctionData({ abi: approvalAbi, data: intent.transaction.data });
     requireMatch(decoded.functionName === 'approve' && equalAddress(decoded.args[0], shieldProxy)
       && decoded.args[1] === BigInt(intent.amountUnits)
@@ -48,7 +54,7 @@ function verifyEvent(receipt, intent) {
     requireMatch(original.preimage.value === BigInt(intent.amountUnits)
       && equalHex(original.preimage.npk, commitment.npk)
       && original.preimage.token.tokenType === 0 && commitment.token.tokenType === 0
-      && equalAddress(original.preimage.token.tokenAddress, shieldToken) && equalAddress(commitment.token.tokenAddress, shieldToken)
+      && equalAddress(original.preimage.token.tokenAddress, token) && equalAddress(commitment.token.tokenAddress, token)
       && original.preimage.token.tokenSubID === 0n && commitment.token.tokenSubID === 0n
       && commitment.value === BigInt(intent.receivedUnits) && args.fees[0] === BigInt(intent.feeUnits)
       && commitment.value + args.fees[0] === BigInt(intent.amountUnits)
@@ -66,15 +72,16 @@ export async function checkShieldAttempt({ attempt, hash = attempt.hash, request
   if (!HASH.test(hash)) throw new Error('A transaction hash is required to reconcile this attempt');
   if (attempt.hash && !equalHex(hash, attempt.hash)) throw new Error('Replacement transactions need separate review');
   const { intent } = attempt, expected = intent.transaction;
-  requireMatch(expected.chainId === 11155111 && expected.type === 2 && quantity(expected.value) === 0n
-    && equalAddress(expected.to, intent.stage === 'approval' ? shieldToken : shieldProxy)
-    && BigInt(intent.amountUnits) > 0n && BigInt(intent.amountUnits) <= 10_000_000n);
+  const asset = assetForToken(intent.token ?? shieldToken), token = asset.token, wrap = intent.stage === 'wrap';
+  requireMatch(expected.chainId === 11155111 && expected.type === 2 && (wrap ? asset.id === 'fee-weth' && quantity(expected.value) > 0n && quantity(expected.value) <= BigInt(intent.amountUnits) : quantity(expected.value) === 0n)
+    && equalAddress(expected.to, intent.stage === 'shield' ? shieldProxy : token)
+    && BigInt(intent.amountUnits) > 0n && BigInt(intent.amountUnits) <= BigInt(asset.maxDepositUnits));
   requireMatch(quantity(await request('eth_chainId', [])) === 11155111n);
   const tx = await request('eth_getTransactionByHash', [hash]);
   if (!tx) return { status: 'unknown', hash: attempt.hash, spendableBalanceVerified: false };
   requireMatch(equalHex(tx.hash, hash) && quantity(tx.chainId) === 11155111n && quantity(tx.type) === 2n
     && equalAddress(tx.from, expected.from) && equalAddress(tx.to, expected.to) && equalHex(tx.input, expected.data)
-    && quantity(tx.value) === 0n && quantity(tx.nonce) === quantity(expected.nonce)
+    && quantity(tx.value) === quantity(expected.value) && quantity(tx.nonce) === quantity(expected.nonce)
     && quantity(tx.gas) === quantity(expected.gasLimit)
     && quantity(tx.maxFeePerGas) === quantity(expected.maxFeePerGas)
     && quantity(tx.maxPriorityFeePerGas) === quantity(expected.maxPriorityFeePerGas)
@@ -92,17 +99,17 @@ export async function checkShieldAttempt({ attempt, hash = attempt.hash, request
   requireMatch(equalHex(block?.hash, receipt.blockHash) && quantity(block.number) === quantity(receipt.blockNumber));
   // Approval needs two canonical confirmations plus a fresh allowance preflight.
   // Waiting for finalization here would outlast the original five-minute review.
-  const headTag = intent.stage === 'approval' ? 'latest' : 'finalized';
+  const headTag = intent.stage !== 'shield' ? 'latest' : 'finalized';
   const head = await request('eth_getBlockByNumber', [headTag, false]);
   if (!head || !HASH.test(head.hash)) throw new Error('Confirmation block is unavailable');
-  const minimum = quantity(receipt.blockNumber) + (intent.stage === 'approval' ? 1n : 0n);
+  const minimum = quantity(receipt.blockNumber) + (intent.stage !== 'shield' ? 1n : 0n);
   if (quantity(head.number) < minimum) return { status: 'pending', hash, spendableBalanceVerified: false };
   const logIndex = receipt.status === '0x1' ? verifyEvent(receipt, intent) : null;
   const canonical = await request('eth_getBlockByNumber', [receipt.blockNumber, false]);
   requireMatch(equalHex(canonical?.hash, receipt.blockHash) && quantity(canonical.number) === quantity(receipt.blockNumber));
-  return { status: receipt.status === '0x0' ? 'reverted' : intent.stage === 'approval' ? 'approval-confirmed' : 'deposit-confirmed',
+  return { status: receipt.status === '0x0' ? 'reverted' : wrap ? 'wrap-confirmed' : intent.stage === 'approval' ? 'approval-confirmed' : 'deposit-confirmed',
     hash, blockHash: receipt.blockHash, blockNumber: receipt.blockNumber, logIndex,
-    confirmationPolicy: intent.stage === 'approval' ? 'two-canonical-confirmations' : 'finalized',
+    confirmationPolicy: intent.stage !== 'shield' ? 'two-canonical-confirmations' : 'finalized',
     networkFeeWei: (quantity(receipt.gasUsed) * quantity(receipt.effectiveGasPrice)).toString(),
     spendableBalanceVerified: false, merchantPayment: false };
 }

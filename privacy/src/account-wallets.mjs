@@ -73,16 +73,16 @@ export async function createAccountWalletService({ directory, appId, verificatio
     const session = await authenticate(request?.accessToken);
     try {
       if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error();
-      const { action, password, backup, amount, publicAddress, reviewId, lifetimeSeconds, historyBackup, paymentRequest, maxFeeUnits, quoteId, hash } = request;
+      const { action, password, backup, amount, publicAddress, assetId, reviewId, lifetimeSeconds, historyBackup, paymentRequest, maxFeeUnits, quoteId, hash } = request;
       const paymentAction = ['payment-quote', 'payment-submit', 'payment-status', 'payment-history'].includes(action);
       const usesNetwork = ['sync', 'shield-review', 'shield-preflight', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'invoice-receipts'].includes(action);
       const needsPassword = !['status', 'shield-preflight'].includes(action);
       const importsBackup = ['restore', 'verify-backup'].includes(action);
-      const allowed = ['action', 'accessToken', ...(needsPassword ? ['password'] : []), ...(importsBackup ? ['backup'] : []), ...(action === 'shield-review' ? ['amount', 'publicAddress'] : []), ...(action === 'shield-preflight' ? ['reviewId'] : []), ...(action === 'invoice-create' ? ['amount', 'lifetimeSeconds'] : []), ...(action === 'invoice-history-restore' ? ['historyBackup'] : []), ...(['payment-check', 'payment-quote'].includes(action) ? ['paymentRequest'] : []), ...(action === 'payment-quote' ? ['maxFeeUnits'] : []), ...(['payment-submit', 'payment-status'].includes(action) ? ['quoteId'] : []), ...(action === 'payment-status' ? ['hash'] : [])];
+      const allowed = ['action', 'accessToken', ...(needsPassword ? ['password'] : []), ...(importsBackup ? ['backup'] : []), ...(action === 'shield-review' ? ['amount', 'publicAddress', 'assetId'] : []), ...(action === 'shield-preflight' ? ['reviewId'] : []), ...(action === 'invoice-create' ? ['amount', 'lifetimeSeconds'] : []), ...(action === 'invoice-history-restore' ? ['historyBackup'] : []), ...(['payment-check', 'payment-quote'].includes(action) ? ['paymentRequest'] : []), ...(action === 'payment-quote' ? ['maxFeeUnits'] : []), ...(['payment-submit', 'payment-status'].includes(action) ? ['quoteId'] : []), ...(action === 'payment-status' ? ['hash'] : [])];
       if (Object.keys(request).some(key => !allowed.includes(key))
           || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync', 'shield-review', 'shield-preflight', 'invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'payment-history', 'invoice-receipts'].includes(action)) throw new Error();
       if (usesNetwork && !synchronization) throw new Error();
-      if (action === 'shield-review') shieldInput(amount, publicAddress);
+      if (action === 'shield-review') shieldInput(amount, publicAddress, assetId);
       if (action === 'invoice-create') invoiceInput(amount, lifetimeSeconds);
       const checkedRequest = ['payment-check', 'payment-quote'].includes(action) ? validatePrivateRequest(paymentRequest, invoiceValidation()) : null;
       if (action === 'payment-quote') paymentFeeLimit(maxFeeUnits);
@@ -95,7 +95,7 @@ export async function createAccountWalletService({ directory, appId, verificatio
         review => runWorker({ session, action, review, syncConfig: synchronization }));
       if (action === 'shield-review') shieldReviews.discard(session);
       const result = await runWorker({ directory, session, action, password, backup,
-        ...(action === 'shield-review' ? { amount, publicAddress } : {}),
+        ...(action === 'shield-review' ? { amount, publicAddress, assetId } : {}),
         ...(action === 'invoice-create' ? { amount, lifetimeSeconds } : {}),
         ...(['payment-check', 'payment-quote'].includes(action) ? { paymentRequest: checkedRequest } : {}),
         ...(paymentAction ? { maxFeeUnits, quoteId, hash } : {}),

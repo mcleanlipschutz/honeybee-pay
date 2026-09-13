@@ -1,16 +1,19 @@
 import { keccak256, stringToHex } from 'viem';
 import { validatePaymentRequest, validatePrivateRecipient } from './private-request.mjs';
 
+import { feeWETH } from '../../shared/test-assets.mjs';
+
 export function validatePaymentSummary(value, wallet, { allowExpired = true, now = Date.now() } = {}) {
   const result = structuredClone(value), { quoteId, ...q } = result.quote;
   const request = validatePaymentRequest(q.request, allowExpired ? q.request.createdAt : Math.floor(now / 1000));
   validatePrivateRecipient(q.broadcasterAddress);
-  if (quoteId !== keccak256(stringToHex(JSON.stringify(q))) || q.version !== 1
+  if (quoteId !== keccak256(stringToHex(JSON.stringify(q))) || ![1, 2].includes(q.version)
       || q.network !== 'Ethereum_Sepolia' || q.chainId !== 11155111 || q.walletId !== wallet.id
-      || q.privateAddress !== wallet.privateAddress || !/^[1-9][0-9]{0,6}$/.test(q.maxFeeUnits)
-      || BigInt(q.maxFeeUnits) > 1000000n || !/^[1-9][0-9]{0,6}$/.test(q.feeUnits)
+      || q.privateAddress !== wallet.privateAddress || !/^[1-9][0-9]{0,16}$/.test(q.maxFeeUnits)
+      || BigInt(q.maxFeeUnits) > (q.version === 1 ? 1000000n : BigInt(feeWETH.maxFeeUnits)) || !/^[1-9][0-9]{0,16}$/.test(q.feeUnits)
       || BigInt(q.feeUnits) > BigInt(q.maxFeeUnits)
-      || q.totalUnits !== (BigInt(request.amountUnits) + BigInt(q.feeUnits)).toString()
+      || (q.version === 2 && (q.feeToken !== feeWETH.token || q.feeDecimals !== 18))
+      || q.totalUnits !== (BigInt(request.amountUnits) + (q.version === 1 ? BigInt(q.feeUnits) : 0n)).toString()
       || !/^[1-9][0-9]{0,11}$/.test(q.minGasPriceWei) || BigInt(q.minGasPriceWei) > 50000000000n
       || !Number.isSafeInteger(q.createdAt) || q.createdAt > now + 5000
       || !Number.isSafeInteger(q.expiresAt) || q.expiresAt <= q.createdAt
