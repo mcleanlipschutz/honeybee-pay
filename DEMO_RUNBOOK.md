@@ -4,6 +4,14 @@ Prepared September 11, 2026. The public checkout works; private signing remains
 disabled. These steps do not enable it. Use test assets and separately controlled
 buyer and merchant accounts.
 
+September 13 deadline update: start with [FINAL_HOURS.md](FINAL_HOURS.md) for the
+short recording/submission path. McLean's POI check succeeded with IPv4 preferred
+on the cellular hotspot. `wallet:web`, `poi:preflight` and isolated wallet workers
+now carry this preference without changing TLS verification or operation limits.
+Full account synchronization remains the next check. The hosted Site was
+confirmed owner-restricted; judge access needs an explicitly authorized audience
+change and signed-out verification.
+
 ## Things McLean can do on the phone
 
 1. Paste CHECK_IN_2.md into the check-in form, review it and submit it yourself.

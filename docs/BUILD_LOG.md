@@ -929,3 +929,44 @@ server, pull this update and run the isolated connection check. Windows retest,
 the later history/shutdown failures observed separately on disposable wallets,
 and successful account synchronization remain pending. No main merge, hosted
 deployment or signing-gate change occurred.
+
+## September 13, 2026 - IPv4 POI success and submission handoff
+
+McLean reports eight hours until submission and is at work using a phone's
+cellular hotspot. The native PowerShell POST and Node's TLS-1.2-only probe both
+failed. The subsequent `--dns-result-order=ipv4first` POI preflight returned
+`poi-service-ready`. Test-NetConnection separately reached IPv6 TCP port 443;
+that is not evidence of a successful IPv6 TLS/HTTP exchange. The successful
+address preference suggests an address-selection/path issue; it does not prove
+the carrier or a particular intermediary caused the reset.
+
+Applied the successful preference to `wallet:web` and `poi:preflight`, and to
+the isolated account-wallet fork's explicit execArgv. The fork intentionally
+discards inherited CLI arguments, so changing the parent launch alone would not
+carry the preference to the wallet's reads. No endpoint, certificate-validation,
+TLS-version, response-size, session, operation-deadline or signing rule changed.
+
+All nine focused account-sync and POI-preflight tests passed with the new fork
+configuration, including actual isolated SDK workers and recovery after rejected
+network checks. The offline three-case approval demo passed again. A fresh real
+offline synthetic-input proof passed verification and output/approval/recipient/
+value tamper rejection; the two expected invalid-witness ERROR: 4 lines preceded
+the successful JSON result. Evidence is in
+`privacy/reports/submission-checkpoint.json`. Full account sync on Windows and
+private merchant settlement remain unverified. No new transaction was sent.
+
+Prepared FINAL_HOURS.md with the restart/sync check, existing public receipt hash
+lookup, short narration, local request/recovery demonstrations, offline proof
+and rules commands, and a submit-with-buffer checklist. Updated submission text
+and the README to reflect user-confirmed Windows wallet/history recovery and the
+latest limits. The eight-hour budget is user-supplied; the public event/prize
+pages returned errors again, so the signed-in portal remains authoritative for
+the deadline, video limit and final sponsor selections.
+
+Read-only Sites inspection confirmed that published version 3 is owner-restricted
+at the existing hosted URL. Judges cannot yet use it as a generally accessible
+demo. The access tool and Sites instructions require an explicit audience-change
+request, so no public access grant, invitation, source publication or deployment
+was performed. That decision does not block preparing the complete submission
+package or the local IPv4 repair. The user still needs to authorize judge access,
+record/upload the video, review portal fields and submit before the deadline.

@@ -1,7 +1,11 @@
 # Honeybee Pay submission draft
 
-Prepared September 11, 2026. Review this against the portal's current fields and
+Updated September 13, 2026. Review this against the portal's current fields and
 limits before submitting. This file is a draft; no submission has been sent.
+
+McLean reports eight hours remaining. Use [FINAL_HOURS.md](FINAL_HOURS.md) for the
+recording and submission sequence. The current source is on
+[`codex/privacy-segment-1a`](https://github.com/mcleanlipschutz/honeybee-pay/tree/codex/privacy-segment-1a).
 
 ## Short description
 
@@ -17,7 +21,9 @@ then verifies the matching payment event before issuing a public receipt.
 
 The private-payment work adds account-bound RAILGUN wallets, encrypted recovery,
 merchant requests, private-funds checks, and deposit preparation and recovery
-tools. Real offline zero-knowledge proof and tamper-rejection checks pass with
+tools. Browser tests have confirmed separate buyer and merchant accounts,
+matching recovered wallet addresses, and merchant request/history recovery.
+Real offline zero-knowledge proof and tamper-rejection checks pass with
 synthetic inputs. A complete private merchant payment and encrypted settlement
 receipts are still under integration. Public test payments and offline privacy
 tests are presented separately so the demo does not overstate what is working.
@@ -70,22 +76,30 @@ sponsor. Do not represent optional future integrations as completed features.
 ## Submission package
 
 - Repository: https://github.com/mcleanlipschutz/honeybee-pay
+- Current implementation: https://github.com/mcleanlipschutz/honeybee-pay/tree/codex/privacy-segment-1a
 - Reviewed development: https://github.com/mcleanlipschutz/honeybee-pay/pull/1
 - Current status and tests: README.md and privacy/reports/segment-1z-validation.json
 - Presentation steps: DEMO_RUNBOOK.md
+- Deadline checklist and narration: FINAL_HOURS.md
 - Security boundaries and residual risks: SECURITY_REVIEW.md
 - Check-in text: CHECK_IN_2.md
 
 Point judges to the actual draft branch if main has not been updated. Verify that
 the source and hosted demo are accessible to them before submitting. The hosted
-demo remains the public implementation through Segment 1O; later private work
-is local only. Do not promise judges a private-payment button on the hosted site.
+demo remains the public-payment implementation through Segment 1O; later private
+work is local only. The existing hosted URL is
+https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site . Its current audience is
+restricted to the owner, confirmed September 13. It must be made accessible with
+McLean's explicit authorization and tested from a signed-out browser before it
+is offered as a judge-accessible demo. A video remains necessary evidence of the
+local private-wallet features. Do not promise a private-payment button online.
 
 ## Details requiring the organizer portal
 
-The public prize page was readable, but the event overview returned errors and
-the schedule could not be verified. The exact submission deadline, its timezone,
-live-judging time and video limit therefore remain unconfirmed. Do not reuse an
-old deadline estimate. Check the signed-in dashboard and organizer notices.
+The public prize page was readable September 11; the September 13 retry timed
+out and the overview returned an error. Prize requirements were not freshly
+reverified. McLean reports eight hours until submission; use that as the working
+budget and the signed-in dashboard for its exact deadline/timezone, video limit
+and live-judging time. Do not rely on old public schedule estimates.
 Choose live judging only after checking personal availability. KYC and the
 commercial fee idea remain deferred; this draft makes no real-money launch claim.

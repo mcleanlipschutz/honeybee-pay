@@ -1,6 +1,6 @@
 # Honeybee Pay: first end-to-end test
 
-Updated September 12, 2026. Checked items are implemented/validated as stated;
+Updated September 13, 2026. Checked items are implemented/validated as stated;
 they do not imply a live payment has settled.
 
 ## Current checkpoint: Segment 1Z
@@ -44,8 +44,11 @@ separately from Codex's environment. McLean's Windows diagnostic then identified
 `poi-service: ECONNRESET`; the POI availability connection reset. That public
 read now retries a reset once within its existing 15-second deadline, and
 `npm.cmd run poi:preflight` checks the connection without opening wallet storage.
-The isolated connection check passed from Codex's environment; Windows retesting
-and successful account synchronization remain pending.
+The isolated connection check subsequently passed on Windows with IPv4 preferred.
+Normal launchers and isolated wallet workers now use that preference. The user
+was on a cellular hotspot; an IPv6 TCP-port check also passed, which does not
+establish successful IPv6 HTTPS. The precise reset source is not proven.
+Successful account synchronization remains pending.
 The local server now reports a sanitized fixed-label sync stage and reason in
 PowerShell; HTTP errors remain generic. Private signing
 remains disabled, the submission controller is not connected to the UI, and no

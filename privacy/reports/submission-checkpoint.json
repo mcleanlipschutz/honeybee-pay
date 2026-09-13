@@ -1,0 +1,72 @@
+{
+  "date": "2026-09-13",
+  "sourceBaseCommit": "7ac723caba3b3df8d795353566816e7e10ec12fb",
+  "scope": "deadline preparation and IPv4 preference for the local runtime",
+  "focusedTests": {
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "platform": "linux",
+    "files": [
+      "test/account-sync.test.mjs",
+      "test/poi-preflight.test.mjs"
+    ]
+  },
+  "ruleDemo": {
+    "status": "passed",
+    "offline": true,
+    "usesSDKDoubles": true,
+    "actualPromptInjectionExecuted": false,
+    "transactionsSignedOrBroadcast": 0
+  },
+  "offlineProof": {
+    "status": "offline-joinsplit-proof-check-passed",
+    "proofGenerated": true,
+    "proofVerified": true,
+    "alteredOutputRejected": true,
+    "alteredApprovalRejected": true,
+    "alteredRecipientWitnessRejected": true,
+    "alteredValueWitnessRejected": true,
+    "syntheticInputs": true,
+    "networkLoaded": false,
+    "paymentSettled": false,
+    "paymentReady": false
+  },
+  "windows": {
+    "evidence": "user-reported terminal output",
+    "connection": "cellular hotspot",
+    "defaultPOI": "ECONNRESET",
+    "tls12OnlyPOI": "ECONNRESET",
+    "ipv4PreferredPOI": "poi-service-ready",
+    "ipv6TCP443": true,
+    "fullAccountScanVerified": false
+  },
+  "runtimeChange": {
+    "launchersPreferIPv4": true,
+    "isolatedWalletForksPreferIPv4": true,
+    "certificateVerificationDisabled": false,
+    "operationDeadlinesChanged": false
+  },
+  "hostedDemo": {
+    "url": "https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site",
+    "audience": "owner-restricted",
+    "publishedVersionNumber": 3,
+    "accessChanged": false,
+    "deploymentChanged": false
+  },
+  "submission": {
+    "userReportedHoursRemaining": 8,
+    "exactPortalDeadlineVerified": false,
+    "videoLimitVerified": false,
+    "videoRecorded": false,
+    "formSubmitted": false,
+    "preparedFiles": [
+      "FINAL_HOURS.md",
+      "SUBMISSION.md",
+      "DEMO_RUNBOOK.md"
+    ]
+  },
+  "privatePaymentSettled": false,
+  "privateSigningEnabled": false,
+  "paymentReady": false
+}

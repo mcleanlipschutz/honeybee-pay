@@ -1,5 +1,19 @@
 # Honeybee Pay mobile access
 
+## Current submission access checkpoint - September 13
+
+The Site currently serves published version 3 and remains restricted to the
+owner, confirmed through its access configuration. The working hosted flow is
+the public Sepolia checkout/receipts/test-payment counter through Segment 1O;
+the local private-wallet runtime is not hosted. A public test payment and mobile
+login were verified after the original publication notes below.
+
+Judges need an explicitly authorized access change before this URL can be used
+as a generally accessible demo. After changing access, test it in a signed-out
+browser. No audience change or new deployment was performed for this checkpoint.
+See [FINAL_HOURS.md](FINAL_HOURS.md) for the deadline handoff. The original
+publication identifiers and first-test instructions below are historical.
+
 Published privately on September 10, 2026:
 
 [Open Honeybee Pay](https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site)

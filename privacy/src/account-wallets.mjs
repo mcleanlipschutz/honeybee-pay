@@ -18,7 +18,9 @@ function runWorker(message, onSyncDiagnostic) {
   activeWorkers += 1;
   return new Promise((resolveResult, reject) => {
     const child = fork(fileURLToPath(new URL('./account-wallet-worker.mjs', import.meta.url)), [], {
-      stdio: ['ignore', 'ignore', 'ignore', 'ipc'], execArgv: [],
+      // Forks deliberately discard inherited CLI flags. Carry the reviewed
+      // address preference explicitly into isolated wallet network requests.
+      stdio: ['ignore', 'ignore', 'ignore', 'ipc'], execArgv: ['--dns-result-order=ipv4first'],
     });
     let result, stage = 'worker-start', reason = 'CHECK_FAILED', timedOut = false;
     const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, ['sync', 'shield-review', 'shield-preflight', 'payment-check'].includes(message.action) ? 120000 : 30000);
