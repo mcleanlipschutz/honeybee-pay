@@ -36,8 +36,10 @@ function runWorker(message, onSyncDiagnostic) {
     child.on('message', value => {
       if (paymentOperation && paymentDiagnosticStages.includes(value?.paymentStage)) {
         stage = value.paymentStage;
-        if (stage !== reportedStage && typeof onSyncDiagnostic === 'function') { try { onSyncDiagnostic({ stage, reason: 'IN_PROGRESS' }); } catch {} }
-        reportedStage = stage;
+        const diagnostic = paymentFailureDiagnostic(stage, value.paymentProgressReason ?? 'IN_PROGRESS');
+        const label = `${stage}:${diagnostic.reason}`;
+        if (label !== reportedStage && typeof onSyncDiagnostic === 'function') { try { onSyncDiagnostic(diagnostic); } catch {} }
+        reportedStage = label;
       }
       else if (paymentOperation && value?.ok === false) reason = paymentFailureDiagnostic(stage, value.paymentFailureReason).reason;
       else if (message.action === 'sync' && syncDiagnosticStages.includes(value?.syncStage)) stage = value.syncStage;

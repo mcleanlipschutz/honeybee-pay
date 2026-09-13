@@ -64,7 +64,9 @@ export async function paymentFixture(t) {
   const rpc = async (method, params) => {
     if (method === 'eth_chainId') return state.wrongChain ? '0x1' : '0xaa36a7';
     if (method === 'eth_maxPriorityFeePerGas') return '0x3b9aca00';
-    if (method === 'eth_getBlockByNumber') return params[0] === 'latest' ? { ...block, number: '0x124' } : { ...block, ...(state.reorg ? { hash: word('cc') } : {}) };
+    if (method === 'eth_getBlockByNumber') return params[0] === 'latest' ? { ...block, number: '0x124' } : { ...block, number: params[0], ...(state.reorg ? { hash: word('cc') } : {}) };
+    if (method === 'eth_getLogs') return (state.receipt?.logs || []).filter(log => log.topics[0] === params[0].topics[0]
+      && BigInt(log.blockNumber) >= BigInt(params[0].fromBlock) && BigInt(log.blockNumber) <= BigInt(params[0].toBlock));
     if (method === 'eth_getTransactionByHash') return state.tx ?? null;
     if (method === 'eth_getTransactionReceipt') return state.receipt ?? null;
     if (method === 'eth_call') {
@@ -76,12 +78,13 @@ export async function paymentFixture(t) {
   };
   const prepared = { rpc, rpcURL: 'http://127.0.0.1:9999', deployment: {}, inspect: async () => ({ blockNumber: block.number, blockHash: block.hash }) };
   const openBroadcaster = async () => ({ selected, close: async () => {}, create: async () => ({ send: async () => {
-    state.sends++; await state.beforeSend(); if (state.sendFailure) throw Error('Lost response'); return state.ackHash || hash;
+    state.sends++; await state.beforeSend(); if (state.sendFailure) throw state.sendError || Error('Lost response'); return state.ackHash || hash;
   } }) });
   const run = (action, fields = {}) => operatePrivatePayment({ action, paymentRequest: request, maxFeeUnits: '100000',
     sdk, wallet, key: 'unit-encryption-key', privateKey, directory, session, prepared,
     checkSession, signal: AbortSignal.timeout(10000), openBroadcaster, paymentProver: sdk, ...fields });
   const mined = () => {
+    state.nullifierSpent = true;
     const s = state.struct;
     const log = (name, args, index) => ({ address: paymentProxy, ...walletInterface.encodeEventLog(walletInterface.getEvent(name), args),
       blockHash: block.hash, blockNumber: block.number, transactionHash: hash, logIndex: '0x' + index.toString(16), removed: false });

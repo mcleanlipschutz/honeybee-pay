@@ -1392,3 +1392,39 @@ ZK_FLOW.md records the required pull/build/restart commands. No backend,
 dependency, contract, real-money transaction, main merge or hosted-site update
 is included. The next laptop action must demonstrate proof generation and
 eventual original-payment/merchant receipt verification.
+
+
+## September 13, 2026 — Read-only recovery for an unknown broadcast outcome
+
+McLean supplied a log reaching proof-generation, proof-verification and broadcast,
+then a saved unknown outcome without a hash. The merchant found zero confirmed,
+POI-validated matching receipts. The earlier code swallowed broadcaster exceptions
+while retaining unknown status, and original-status lookup depended on SDK or
+saved transaction hashes. The historical exception cannot be recovered now.
+
+Added a direct-chain fallback for the same persisted proof. It reads each original
+nullifier at a fixed Sepolia head, rechecks canonical block identity, and searches
+protocol Nullified events only if notes are spent. Event discovery uses at most
+4096 recent blocks in eight 512-block queries, 4096 logs per response/16384 total,
+eight candidate hashes, and a 45-second budget checked around bounded RPC calls.
+A returned candidate must still pass the existing exact saved-calldata, canonical
+receipt, two-confirmation and complete proof-event checks. This does not discover
+pending transactions or certify nonexecution outside the searched window.
+
+Unspent/partly spent notes, no event match, lookup errors and rejected receipts
+retain unknown and its no-replacement guard. No recovery action connects to a
+broadcaster, creates a proof or sends a transaction. New broadcast attempts save
+only an allowlisted reason code in the encrypted journal. Worker and parent both
+sanitize progress reasons; old attempts explicitly report DELIVERY_REASON_NOT_RECORDED.
+
+All 33 focused tests passed, including nine new recovery/diagnostic tests, existing
+payment/broadcaster/receipt regressions and real account-worker IPC, authentication,
+wrong-chain and recovery-preservation checks. SDK/RPC/proof/transport fixtures are
+explicit doubles; these tests do not establish the laptop payment's outcome.
+No frontend or dependency changes and no frontend rebuild are required. ZK_FLOW.md
+records the pull/restart and original-payment check. No main merge, hosted update,
+contract deployment or funded transaction was performed in this pass.
+
+Primary references: the installed pinned SDK's original-nullifier lookup and
+broadcaster response handling, plus the official Ethereum JSON-RPC definitions:
+https://ethereum.org/developers/docs/apis/json-rpc/ .

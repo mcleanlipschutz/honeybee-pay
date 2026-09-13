@@ -17,7 +17,7 @@ import { checkAccountPayment } from './account-payment-check.mjs';
 import { preflightShield } from './shield-preflight.mjs';
 import { connectionErrorCode } from './rpc-transport.mjs';
 import { syncFailureDiagnostic } from './sync-diagnostic.mjs';
-import { paymentDiagnosticStages, paymentFailureReason } from './payment-diagnostic.mjs';
+import { paymentDiagnosticStages, paymentFailureReason, paymentFailureDiagnostic } from './payment-diagnostic.mjs';
 import { trackWalletWork } from './wallet-work.mjs';
 import { operatePrivatePayment, preparePaymentRuntime } from './account-private-payment.mjs';
 import { checkMerchantReceipts } from './merchant-receipts.mjs';
@@ -184,10 +184,10 @@ async function operate({ directory, session, action, password, backup, syncConfi
 // This private IPC entry point accepts trusted parent messages, never HTTP.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href && process.send) {
   process.once('message', async message => {
-    const onStage = stage => {
+    const onStage = (stage, reason = 'IN_PROGRESS') => {
       if (message.action?.startsWith('payment-') && process.connected) {
         if (paymentDiagnosticStages.includes(stage)) {
-          try { process.send({ paymentStage: stage }, () => {}); } catch {}
+          try { process.send({ paymentStage: stage, paymentProgressReason: paymentFailureDiagnostic(stage, reason).reason }, () => {}); } catch {}
         }
         return;
       }

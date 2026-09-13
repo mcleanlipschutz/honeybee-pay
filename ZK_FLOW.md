@@ -18,6 +18,40 @@ live Sepolia verifier; that does not establish spendable roots, POI or settlemen
 
 ## Current laptop checkpoint
 
+**Latest recovery update:** The buyer's supplied log reached proof generation,
+proof verification and the broadcast stage; its stored outcome is `unknown`
+without a transaction hash. The merchant's read-only check found zero confirmed,
+POI-validated payments matching saved requests. Neither observation establishes
+that the payment cannot execute later. Preserve the original attempt.
+
+Check original payment now falls back to direct Sepolia reads when no SDK or
+saved candidate hash verifies. It checks the original notes at one block,
+rechecks that block's hash, and searches protocol Nullified events when notes
+are spent. The search covers at most 4096 recent blocks in eight 512-block
+queries, with log/candidate limits and a 45-second lookup budget checked around
+each bounded RPC call. A found hash still needs the existing exact-calldata,
+canonical-receipt and complete-proof-event checks. No proof is regenerated or
+sent. Unspent notes and absent recent events keep the payment unknown and do
+not unlock a replacement. These observations do not cover pending transactions
+or guarantee nonexecution in future blocks.
+
+This recovery update is backend-only: stop wallet:web in the original PowerShell
+window (Ctrl+C, Y if asked), run `git pull --ff-only` from the privacy directory,
+then `npm.cmd run wallet:web`. No checkout rebuild or dependency install is
+required if the prior explicit-confirmation UI update is already installed.
+Sign in as the buyer, reopen Saved private payments with the recovery password,
+leave the optional original hash blank, re-enter the password and click Check
+original payment once. Copy the new terminal diagnostics and resulting status.
+
+Diagnostics distinguish `NOTES_UNSPENT_AT_CHECK`, `NOTES_SPENT_AT_CHECK`,
+`NOTES_PARTLY_SPENT`, `CHAIN_MATCH_FOUND`, `CHAIN_MATCH_NOT_FOUND_IN_WINDOW`
+and the verified payment outcome. New submissions save a fixed broadcaster
+outcome code in the encrypted journal. The older attempt reports
+`DELIVERY_REASON_NOT_RECORDED`; its swallowed exception cannot be reconstructed.
+No addresses, nullifiers, passwords, raw exceptions or endpoint URLs are logged.
+
+### Earlier confirmation UI checkpoint
+
 **Latest UI update:** The next supplied terminal log contained a saved-history
 read followed by three successful quote operations (`fee-estimate` and
 `quote-validation`), with no `proof-generation` or `broadcast`. It does not

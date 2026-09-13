@@ -6,7 +6,8 @@ import { connectionErrorCode } from './rpc-transport.mjs';
 export const paymentDiagnosticStages = Object.freeze([...syncDiagnosticStages,
   'payment-runtime', 'payment-store', 'payment-validation', 'payment-balance',
   'broadcaster', 'fee-estimate', 'quote-validation', 'proof-generation',
-  'proof-verification', 'broadcast']);
+  'proof-verification', 'broadcast', 'transaction-lookup', 'receipt-verification',
+  'nullifier-check', 'chain-event-search', 'payment-outcome']);
 const applicationReasons = new Map([
   ['Incomplete wallet scan', 'SCAN_INCOMPLETE'],
   ['Spendable balance unavailable', 'BALANCE_UNAVAILABLE'],
@@ -30,9 +31,17 @@ const applicationReasons = new Map([
   ['Check the unfinished private payment before another attempt', 'UNFINISHED_PAYMENT'],
   ['This request already has a payment attempt', 'REQUEST_ALREADY_ATTEMPTED'],
   ['Private balance changed', 'PRIVATE_BALANCE_CHANGED'],
+  ['Request timed out.', 'BROADCAST_RESPONSE_TIMEOUT'],
+  ['Received response error from broadcaster.', 'BROADCAST_RESPONSE_ERROR'],
+  ['Invalid private transaction hash', 'BROADCAST_ACK_INVALID'],
+  ['Recovery lookup budget exceeded', 'RECOVERY_LOOKUP_TIMEOUT'],
   ['This test payment needs one spendable note per token and change in both tokens. Choose a smaller payment or fund separate test deposits.', 'UNSUPPORTED_NOTE_SHAPE'],
 ]);
-const allowedReasons = new Set(applicationReasons.values());
+const allowedReasons = new Set([...applicationReasons.values(), 'IN_PROGRESS',
+  'DELIVERY_REASON_NOT_RECORDED', 'BROADCAST_ACK_RECEIVED', 'TRANSACTION_CANDIDATE_FOUND',
+  'NO_TRANSACTION_CANDIDATE', 'RECEIPT_UNAVAILABLE', 'RECEIPT_REJECTED',
+  'NOTES_SPENT_AT_CHECK', 'NOTES_PARTLY_SPENT', 'NOTES_UNSPENT_AT_CHECK',
+  'CHAIN_MATCH_FOUND', 'CHAIN_MATCH_NOT_FOUND_IN_WINDOW', 'CONFIRMED', 'PENDING', 'UNKNOWN', 'REVERTED']);
 
 export function paymentFailureReason(error) {
   try {

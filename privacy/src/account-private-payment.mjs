@@ -14,6 +14,8 @@ import { decodePrivatePaymentBatch, verifyPreparedPayment, verifyPrivatePaymentR
 import { feeWETH } from '../../shared/test-assets.mjs';
 import { verifyFeeToken } from './fee-token.mjs';
 import { createBoundPaymentProver } from './bound-payment-prover.mjs';
+import { inspectOriginalPaymentChain } from './payment-chain-recovery.mjs';
+import { paymentFailureDiagnostic, paymentFailureReason } from './payment-diagnostic.mjs';
 
 const version = TXIDVersion.V2_PoseidonMerkle;
 const digest = value => keccak256(toUtf8Bytes(JSON.stringify(value)));
@@ -76,6 +78,7 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
   const store = createPaymentStore({ directory, privateKey, ownerId: session.ownerId, checkSession });
   onStage('payment-store');
   const data = await store.read();
+  const report = (stage, reason) => { try { const d = paymentFailureDiagnostic(stage, reason); onStage(d.stage, d.reason); } catch {} };
   checkSession();
   if (action === 'payment-history') return { privatePayments: data.payments.map(summary) };
   if (action === 'payment-status') {
@@ -83,6 +86,7 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
     if (!record) throw new Error('Private payment attempt unavailable');
     validatePaymentQuote(record.quote, { wallet, allowExpired: true });
     if (record.status === 'quoted') return { privatePayment: summary(record) };
+    report('broadcast', record.deliveryDiagnostic || 'DELIVERY_REASON_NOT_RECORDED');
     // Refresh sent commitments and finish protocol POI proofs before checking
     // settlement. This never generates or broadcasts another payment.
     await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage });
@@ -90,23 +94,42 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
     // spend different trees; discover each nullifier independently, then
     // require the original complete batch and receipt for every candidate.
     const discovered = [];
+    report('transaction-lookup', 'IN_PROGRESS');
     for (const nullifier of record.populated.nullifiers) {
       checkSession();
-      const completed = await sdk.getCompletedTxidFromNullifiers(version, testNetwork(accountSyncNetwork).chain, [nullifier]);
-      if (completed?.txid) discovered.push(completed.txid);
+      try {
+        const completed = await sdk.getCompletedTxidFromNullifiers(version, testNetwork(accountSyncNetwork).chain, [nullifier]);
+        if (completed?.txid) discovered.push(paymentHash(completed.txid));
+      } catch (error) { checkSession(); report('transaction-lookup', paymentFailureReason(error)); }
     }
     const candidates = [...new Set([...discovered, record.hash, hash, record.candidateHash].filter(Boolean).map(paymentHash))];
+    report('transaction-lookup', candidates.length ? 'TRANSACTION_CANDIDATE_FOUND' : 'NO_TRANSACTION_CANDIDATE');
     let receipt;
-    for (const candidate of candidates) {
+    const checkedCandidates = new Set();
+    const inspectCandidates = async values => {
+      for (const candidate of values) {
+        if (checkedCandidates.has(candidate)) continue;
+        checkedCandidates.add(candidate);
+        report('receipt-verification', 'IN_PROGRESS');
+        try {
+          const checked = await verifyPrivatePaymentReceipt({ record, hash: candidate, rpc: prepared.rpc, checkSession });
+          if (checked.status !== 'unknown') { receipt = checked; break; }
+          report('receipt-verification', 'RECEIPT_UNAVAILABLE');
+        } catch { checkSession(); report('receipt-verification', 'RECEIPT_REJECTED'); }
+      }
+    };
+    await inspectCandidates(candidates);
+    if (!receipt) {
       try {
-        const checked = await verifyPrivatePaymentReceipt({ record, hash: candidate, rpc: prepared.rpc, checkSession });
-        if (checked.status !== 'unknown') { receipt = checked; break; }
-      } catch { checkSession(); /* An ACK or manual hash is not settlement evidence. */ }
+        const lookup = await inspectOriginalPaymentChain({ record, rpc: prepared.rpc, checkSession, onStage: report });
+        await inspectCandidates(lookup.candidates);
+      } catch (error) { checkSession(); report('chain-event-search', paymentFailureReason(error)); }
     }
     receipt ||= { status: 'unknown', hash: record.hash || null };
     // Recheck canonical settlement even for a previously confirmed record.
     Object.assign(record, { status: receipt.status, hash: receipt.hash, receipt });
     await store.write(data);
+    report('payment-outcome', record.status.toUpperCase());
     return { privatePayment: summary(record) };
   }
   // An outer Ethereum revert does not consume the private nullifier or revoke
@@ -209,8 +232,14 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
     try {
       validatePaymentQuote(quote, { wallet }); checkSession();
       record.candidateHash = paymentHash(await send.send()); record.status = 'pending';
-    } catch { /* Delivery may have occurred. Keep the durable unknown state. */ }
+      record.deliveryDiagnostic = 'BROADCAST_ACK_RECEIVED';
+    } catch (error) {
+      // Delivery may have occurred. Record only a fixed code and keep unknown.
+      record.deliveryDiagnostic = paymentFailureReason(error);
+    }
     await store.write(data, { retainOutcome: true });
+    report('broadcast', record.deliveryDiagnostic);
+    report('payment-outcome', record.status.toUpperCase());
     return { privatePayment: summary(record) };
   } finally { await broadcaster.close(); }
 }

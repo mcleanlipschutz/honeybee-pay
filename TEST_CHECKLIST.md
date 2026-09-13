@@ -276,3 +276,14 @@ nor a valid local proof establishes a settled private merchant payment.
 - [x] Startup keeps its 90-second deadline and diagnostics remain sanitized.
 - [ ] Windows: fresh quote reconnects, generates/verifies funded proofs, then reports original payment status.
 - [ ] Merchant independently verifies receipt for the same request and original transaction.
+
+### Read-only unknown-payment recovery — September 13
+- [x] Missing SDK hash can recover from protocol events and exact original receipt verification.
+- [x] Unspent notes remain unknown and block replacement; no recovery action proves or sends.
+- [x] Spent-note lookup is bounded to 4096 recent blocks and eight 512-block log queries.
+- [x] Altered calldata, incomplete events, removed/foreign logs and reorgs cannot confirm payment.
+- [x] Wrong chain, lookup failure, deadline and logout preserve the original proof and unresolved state.
+- [x] Only fixed diagnostic codes cross the worker boundary; new delivery codes persist encrypted.
+- [x] Read-only event RPC is allowed; transaction-sending methods remain rejected.
+- [ ] Laptop: apply backend update and run Check original payment on the existing unknown attempt.
+- [ ] Obtain a verified original receipt and matching merchant receipt before claiming settlement.

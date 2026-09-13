@@ -37,7 +37,7 @@ export function makeReadOnlyRpc(url) {
   return async (method, params) => {
     if (!['eth_chainId', 'eth_getCode', 'eth_getBlockByNumber', 'eth_getStorageAt', 'eth_call',
       'eth_getBalance', 'eth_estimateGas', 'eth_maxPriorityFeePerGas',
-      'eth_getTransactionByHash', 'eth_getTransactionReceipt'].includes(method)) throw new Error('RPC method not allowed');
+      'eth_getTransactionByHash', 'eth_getTransactionReceipt', 'eth_getLogs'].includes(method)) throw new Error('RPC method not allowed');
     const requestID = ++id;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
