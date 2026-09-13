@@ -50,7 +50,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
     setResult(previous => previous ? { ...previous, shieldReview: savedReview, shieldPreflight: null, paymentRequest: null, requestHistory: null, encryptedRequestHistory: null } : previous);
     if (action === 'sync') {
       setResult(previous => previous ? { ...previous, synchronization: null, spendableBalance: null, spendableBalanceVerified: false } : previous);
-      setMessage('Checking private wallet history and spendable test USDC. This can take up to two minutes.');
+      setMessage('Checking private wallet history and spendable test USDC. The first scan can take up to five minutes. Keep this page open.');
     }
     if (action === 'shield-review') setMessage('Checking the test deposit amount, protocol fee and allowance. This can take up to two minutes.');
     if (action === 'shield-preflight') setMessage('Simulating the next transaction and checking its network fee. No wallet signature is requested.');

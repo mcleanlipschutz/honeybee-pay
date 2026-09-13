@@ -17,6 +17,7 @@ import { checkAccountPayment } from './account-payment-check.mjs';
 import { preflightShield } from './shield-preflight.mjs';
 import { connectionErrorCode } from './rpc-transport.mjs';
 import { syncFailureDiagnostic } from './sync-diagnostic.mjs';
+import { trackWalletWork } from './wallet-work.mjs';
 
 const backupFile = 'account.backup.json';
 function live(session) {
@@ -67,10 +68,9 @@ async function operate({ directory, session, action, password, backup, syncConfi
   onStage('wallet-storage');
   await privateDirectory(directory);
   const slot = join(directory, session.ownerId);
-  const lock = join(directory, `${session.ownerId}.lock`);
-  // Fail closed on an existing lock, including a stale lock after process death.
-  await mkdir(lock, { mode: 0o700 });
+  // The authenticated parent holds the account lease until this process exits.
   let engineStarted = false, createdSlot = false, completed = false;
+  let background;
   const signal = AbortSignal.timeout(accountSyncDeadline);
   const usesNetwork = ['sync', 'shield-review', 'payment-check'].includes(action);
   const scansWallet = ['sync', 'payment-check'].includes(action);
@@ -115,6 +115,7 @@ async function operate({ directory, session, action, password, backup, syncConfi
     const wallet = initializing ? await createRailgunWallet(key, root.mnemonic.phrase, undefined, 0)
       : await loadWalletByID(key, id, false);
     if (wallet.id !== id) throw new Error('Recovered wallet identity mismatch');
+    if (scansWallet) background = trackWalletWork(sdk.walletForID(wallet.id));
     const syncResult = action === 'sync' ? await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage }) : null;
     const paymentResult = action === 'payment-check' ? await checkAccountPayment({ paymentRequest, sdk, wallet,
       prepared, checkSession, signal, expiresAt: session.expiresAt }) : null;
@@ -130,7 +131,12 @@ async function operate({ directory, session, action, password, backup, syncConfi
       else requestHistory = action === 'invoice-create' ? await store.append(invoiceResult.paymentRequest) : await store.read();
     }
     onStage('shutdown');
-    if (scansWallet) await sdk.unloadProvider(accountSyncNetwork);
+    if (scansWallet) {
+      sdk.pauseAllPollingProviders();
+      await background.drain(checkSession);
+    }
+    // Close the engine database before destroying its provider. Destroying the
+    // provider first rejects outstanding SDK requests during engine shutdown.
     await stopRailgunEngine(); engineStarted = false;
     checkSession();
     completed = true;
@@ -140,12 +146,18 @@ async function operate({ directory, session, action, password, backup, syncConfi
       ...(['create', 'backup'].includes(action) ? { encryptedBackup: encrypted } : {}) };
   } finally {
     try {
-      if (engineStarted && scansWallet) { try { await sdk.unloadProvider(accountSyncNetwork); } catch { /* May not have loaded. */ } }
+      if (engineStarted && background) {
+        sdk.pauseAllPollingProviders();
+        // Drain ongoing work even after session expiry; never return a result
+        // for that expired session. The parent's hard deadline still applies.
+        try { await background.drain(() => {}); } catch { /* Operation already rejected. */ }
+      }
       if (engineStarted) await stopRailgunEngine();
     }
+    // Network providers belong to this isolated process. Its imminent exit
+    // releases sockets/timers, without racing provider.destroy against SDK jobs.
     finally {
-      try { if (createdSlot && !completed) await rm(slot, { recursive: true, force: true }); }
-      finally { await rm(lock, { recursive: true }); }
+      if (createdSlot && !completed) await rm(slot, { recursive: true, force: true });
     }
     // Decrypted JS strings cannot be reliably erased. The worker must exit.
   }

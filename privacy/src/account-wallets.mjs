@@ -10,29 +10,35 @@ import { validatePrivateRequest } from '../../shared/private-request.mjs';
 import { shieldInput } from './account-shield.mjs';
 import { createShieldReviewCache } from './shield-review-cache.mjs';
 import { syncDiagnosticStages, syncFailureDiagnostic } from './sync-diagnostic.mjs';
+import { withAccountLock } from './account-lock.mjs';
 
 let activeWorkers = 0;
 function runWorker(message, onSyncDiagnostic) {
   // Bound expensive KDF/SDK processes even before a network rate limiter exists.
   if (activeWorkers >= 2) return Promise.reject(new Error('Account wallet operation failed'));
   activeWorkers += 1;
-  return new Promise((resolveResult, reject) => {
+  const launch = () => new Promise((resolveResult, reject) => {
     const child = fork(fileURLToPath(new URL('./account-wallet-worker.mjs', import.meta.url)), [], {
       // Forks deliberately discard inherited CLI flags. Carry the reviewed
       // address preference explicitly into isolated wallet network requests.
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'], execArgv: ['--dns-result-order=ipv4first'],
     });
     let result, stage = 'worker-start', reason = 'CHECK_FAILED', timedOut = false;
-    const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, ['sync', 'shield-review', 'shield-preflight', 'payment-check'].includes(message.action) ? 120000 : 30000);
-    child.once('error', () => { clearTimeout(timer); reject(new Error('Account wallet operation failed')); });
+    const budget = ['sync', 'payment-check'].includes(message.action) ? 320000
+      : ['shield-review', 'shield-preflight'].includes(message.action) ? 120000 : 30000;
+    const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, budget);
+    let workerError = false;
+    child.once('error', () => { workerError = true; });
     child.on('message', value => {
       if (message.action === 'sync' && syncDiagnosticStages.includes(value?.syncStage)) stage = value.syncStage;
       else if (message.action === 'sync' && value?.ok === false) reason = syncFailureDiagnostic(stage, value.syncFailureReason).reason;
       else result = value;
     });
-    child.once('exit', code => {
+    // close also fires on spawn failure. Do not release the account lease on an
+    // error event while an existing child might still be holding the database.
+    child.once('close', code => {
       clearTimeout(timer);
-      if (code === 0 && result?.ok && Date.now() < message.session.expiresAt) resolveResult(result.value);
+      if (!workerError && code === 0 && result?.ok && Date.now() < message.session.expiresAt) resolveResult(result.value);
       else {
         if (message.action === 'sync' && typeof onSyncDiagnostic === 'function') {
           try { onSyncDiagnostic(syncFailureDiagnostic(stage, timedOut ? 'TIMEOUT' : reason)); }
@@ -43,7 +49,10 @@ function runWorker(message, onSyncDiagnostic) {
     });
     // Passwords/backup data are neither process arguments nor log output.
     child.send(message, error => { if (error) child.kill('SIGKILL'); });
-  }).finally(() => { activeWorkers -= 1; });
+  });
+  return (message.action === 'shield-preflight' ? launch()
+    : withAccountLock(message.directory, message.session.ownerId, launch))
+    .finally(() => { activeWorkers -= 1; });
 }
 
 export async function createAccountWalletService({ directory, appId, verificationKey, syncConfig, onSyncDiagnostic }) {

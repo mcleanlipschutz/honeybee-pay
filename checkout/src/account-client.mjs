@@ -50,7 +50,7 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
         method: 'POST', credentials: 'omit', cache: 'no-store', redirect: 'error',
         headers: { 'Content-Type': 'application/json', 'X-Honeybee-Request': 'wallet-v1', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...fields, action }),
-        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(['sync', 'shield-review', 'shield-preflight', 'payment-check'].includes(action) ? 125000 : 35000)]) : AbortSignal.timeout(['sync', 'shield-review', 'shield-preflight', 'payment-check'].includes(action) ? 125000 : 35000),
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(['sync', 'payment-check'].includes(action) ? 325000 : ['shield-review', 'shield-preflight'].includes(action) ? 125000 : 35000)]) : AbortSignal.timeout(['sync', 'payment-check'].includes(action) ? 325000 : ['shield-review', 'shield-preflight'].includes(action) ? 125000 : 35000),
       });
       current();
       if (!response.headers.get('content-type')?.includes('application/json')) throw new Error();

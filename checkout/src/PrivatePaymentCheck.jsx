@@ -35,7 +35,7 @@ export function PrivatePaymentCheck({ request, wallet, checkPayment, disabled, i
   const fresh = check && now < check.expiresAt && !expired;
   return <div className="private-payment-check">
     <h4>Check private funds</h4>
-    <p>Compare this request with your spendable private test USDC. Checking can take up to two minutes and does not authorize payment.</p>
+    <p>Compare this request with your spendable private test USDC. The first check can take up to five minutes and does not authorize payment.</p>
     <form ref={formRef} onSubmit={submit}>
       <label htmlFor="payment-check-password">Recovery password</label>
       <input id="payment-check-password" name="password" type="password" autoComplete="current-password"

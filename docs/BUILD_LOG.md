@@ -970,3 +970,14 @@ request, so no public access grant, invitation, source publication or deployment
 was performed. That decision does not block preparing the complete submission
 package or the local IPv4 repair. The user still needs to authorize judge access,
 record/upload the video, review portal fields and submit before the deadline.
+
+
+## September 13 — private synchronization recovery
+
+The Windows account scan timed out and stranded an empty per-account lock. After verifying no Node processes remained, McLean removed only that empty lock, reopened the saved buyer wallet, and successfully checked its recovery password. The existing hosted testnet demo was subsequently made public with explicit approval; McLean confirmed homepage access in a private browser window and reopened the prior public 1 USDC receipt. None of those steps completed a private payment.
+
+The isolated account parent now owns each newly acquired storage lease and releases it after the child closes, including forced termination. Pre-existing locks are never reclaimed automatically, and nonempty or replaced locks remain for manual review. The first scan has a bounded five-minute budget, with a 320-second worker deadline and 325-second client deadline; RPC and response-size limits are unchanged.
+
+A live disposable-account reproduction traced the shutdown crash to Engine 9.6.0's asynchronous refreshPOIsForTXIDVersion, which could still be running when the database closed. The account worker now tracks its wallet's decryption and POI jobs, fails the operation on their errors, pauses polling, and drains pending work before closing the engine database. Network sockets belong to the isolated process and end with it. No user wallet or password was used by Codex.
+
+Validation: six lock/sync tests and two lifecycle tests passed. A fresh real Sepolia account scan then passed in 92 seconds, with UTXO and TXID histories complete and zero spendable test USDC, followed by successful recovery at 93 seconds. Reviewed finalized block: 0xb2732d, hash 0x37a6b11dd637c527a11d97fd6f58b986e6dd1d3348408f2087fced6f2c9ebdca. Windows confirmation remains pending. This fixes synchronization; private deposit submission, broadcaster integration and merchant settlement are still being completed.

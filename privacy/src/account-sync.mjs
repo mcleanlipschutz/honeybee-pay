@@ -14,7 +14,7 @@ import { checkPOIService } from './poi-preflight.mjs';
 
 export const accountSyncNetwork = 'Ethereum_Sepolia';
 export const accountSyncToken = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
-export const accountSyncDeadline = 90000;
+export const accountSyncDeadline = 300000;
 export function accountSyncConfig(config) {
   if (!config || typeof config !== 'object' || Array.isArray(config)
       || Object.keys(config).some(key => !['rpcURL', 'poiURL'].includes(key))) throw new Error('Private sync configuration unavailable');
