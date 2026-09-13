@@ -981,3 +981,94 @@ The isolated account parent now owns each newly acquired storage lease and relea
 A live disposable-account reproduction traced the shutdown crash to Engine 9.6.0's asynchronous refreshPOIsForTXIDVersion, which could still be running when the database closed. The account worker now tracks its wallet's decryption and POI jobs, fails the operation on their errors, pauses polling, and drains pending work before closing the engine database. Network sockets belong to the isolated process and end with it. No user wallet or password was used by Codex.
 
 Validation: six lock/sync tests and two lifecycle tests passed. A fresh real Sepolia account scan then passed in 92 seconds, with UTXO and TXID histories complete and zero spendable test USDC, followed by successful recovery at 93 seconds. Reviewed finalized block: 0xb2732d, hash 0x37a6b11dd637c527a11d97fd6f58b986e6dd1d3348408f2087fced6f2c9ebdca. Windows confirmation remains pending. This fixes synchronization; private deposit submission, broadcaster integration and merchant settlement are still being completed.
+
+## September 13, 2026 - Windows account scan and approval preflight confirmed
+
+McLean supplied the local application's successful account-history result,
+displayed at 5:28:34 AM on September 13: zero spendable private test USDC and
+the wallet locked again. This completes the user-side Windows scan checkpoint
+that was pending in the preceding entry. It is a balance snapshot, not evidence
+of a funded private wallet.
+
+The next live deposit review showed 2 test USDC from the public funding wallet,
+a 0.005 test-USDC protocol fee and 1.995 test USDC expected privately. The
+application then reported successful simulation of the exact 2-USDC approval,
+with a maximum network-fee quote of 0.00014077751886048 Sepolia ETH and displayed
+expiry of 6:01:00 AM. The supplied text did not specify a timezone. The fee is
+approval-only, time-limited and must be refreshed before use; a separate deposit
+simulation and fee check are still needed after allowance is available.
+
+Evidence is user-provided application output, not a new independent RPC query.
+No approval/deposit hash was supplied, and the user's build explicitly reported
+approval and deposit submission disabled. The 1.995 amount is expected credit,
+not received funds. Wallet addresses and recovery data are omitted from the
+new public report. See `privacy/reports/local-funding-checkpoint-2026-09-13.json`.
+
+Updated the test checklist to distinguish completed synchronization, deposit
+review and approval simulation from the remaining deposit simulation, signing,
+canonical receipt, spendability and recovery checks. The broader private-payment
+integration remains local work in progress; this checkpoint does not publish or
+enable its signing controls. No transaction, merge or hosted deployment was
+performed. KYC remains deferred.
+
+Validation for this checkpoint: report arithmetic, JSON structure, documentation
+links and scoped Git diff. No application test suite was rerun for these
+documentation changes. AI assistance: Codex recorded McLean's live test results
+and the remaining validation gates.
+
+## September 13, 2026 — local ZK payment integration
+
+Implemented the actual local RAILGUN private-payment path requested by McLean:
+fresh spendable-balance and broadcaster fee quotes, explicit buyer confirmation,
+real transfer/POI proving, contract proof verification, immutable encrypted
+pre-send records, broadcaster submission, and buyer/merchant receipt matching.
+The existing public deposit controller now has a fresh authenticated simulation
+gate and explicit separate approval/deposit wallet confirmations in the UI.
+No transaction was sent by Codex and no user secret was used.
+
+The new Waku broadcaster client is pinned to 9.1.1. Added integrity-pinned 01x03
+and POI_3x3 proving artifacts; both verification keys were independently derived
+from their pinned zkeys. A real synthetic 01x03 Groth16 proof and four tamper
+cases passed. Its key matched the reviewed finalized Sepolia deployment at
+0xb27368, hash 0xb21e8cb70fcf66f45cee8d17889dfd0ff1d23afd56cd624b7dbb0f48a5915f41.
+These synthetic notes do not establish a funded transfer or settlement.
+
+Separate source review identified and verified fixes for installing the prover
+and POI setup before wallet loading, recovering from an unrelated broadcaster
+acknowledgement, blocking replacement payments after an outer transaction
+revert, and skipping unsupported incoming transaction shapes without hiding
+other merchant receipts. An acknowledgement hash remains an unverified candidate
+until it matches the exact authorized calldata and canonical receipt. A delivered
+private proof has no onchain expiry: pending, unknown and reverted attempts
+continue to block replacements. The application has no cancellation UI.
+
+Validation: ten final private-payment/security tests passed with explicitly
+labeled SDK/RPC/broadcaster doubles. A preceding 39-test checkout run and 37-test
+focused private/API run passed; 17 affected checkout tests passed after the final
+review changes. Twelve deployment/account-lock tests passed. The production
+client/server build and private lockfile install dry run passed. Existing bundle
+size and peer-dependency warnings remain. The private production dependency audit
+reported five low and five moderate findings, with no high or critical findings.
+This source review and dependency report are not an independent security audit.
+
+After the final prover/POI changes, a real disposable unfunded account scan passed
+in 97 seconds and recovery at 98 seconds: both histories complete, zero spendable
+private test USDC, checked at 2026-09-13T10:02:23.177Z. Reviewed finalized block:
+0xb273fd, hash 0x5aa15e5470d10e83ec485c2692d161832fc335e49a6babb5dc0f00a0db98a855.
+The preceding live attempt timed out at the RPC deployment check and still
+recovered. No funded wallet, outgoing payment POI or merchant settlement was
+validated by these scans.
+
+Broadcaster discovery was unavailable from the development environment within
+the bounded 95-second preflight. The next Windows gate is that read-only check,
+before funding. ZK_FLOW.md gives the exact install/artifact/build sequence and
+separate live wallet confirmations. Full completion still requires a funded
+private send, outgoing POI, a matching merchant receipt, and recovery afterward.
+The encrypted payment journal is not part of existing wallet/history backups;
+the reviewed path supports one input and two or three outputs. The hosted public
+demo is unchanged. This work stays on the draft branch and does not merge main.
+
+See privacy/reports/zk-flow-validation.json for the evidence and remaining gates.
+AI assistance: Codex implemented and tested the flow, used a separate source
+reviewer as required by the ETHSkills shipping workflow, and prepared the Windows
+handoff under McLean's direction. KYC remains deferred.

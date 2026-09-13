@@ -5,6 +5,7 @@ import { shieldAbi, approvalAbi, shieldToken, shieldProxy } from '../src/shield-
 import { createShieldAttemptJournal, shieldAttemptScope, sealShieldIntent } from '../src/shield-attempts.mjs';
 import { createShieldSubmission, reconcileShieldSubmission } from '../src/shield-submission.mjs';
 import { checkShieldAttempt, shieldEventAbi, approvalEventAbi } from '../src/shield-receipt.mjs';
+import { createLiveShieldValidation } from '../src/shield-live-validation.mjs';
 
 const from = '0x1111111111111111111111111111111111111111';
 const txHash = '0x' + '44'.repeat(32), blockHash = '0x' + 'aa'.repeat(32);
@@ -106,6 +107,20 @@ test('production gate stops before any wallet request or journal claim', async (
   const f = fixture(), c = f.controller({ assertLiveValidation: undefined }), q = c.setQuote(f.quote());
   await assert.rejects(c.confirm(q.quoteId), /Live Sepolia validation/);
   assert.equal(f.providerCalls.length, 0); assert.equal(f.sends.length, 0); assert.deepEqual(await f.journal.list(), []);
+});
+
+test('live signing gate re-simulates exact terms and rejects fee increases, stage changes and account changes', async () => {
+  const f = fixture(), original = f.quote(); let checks = 0, current = true, fresh = original;
+  const gate = createLiveShieldValidation({ review: f.review, quote: original, now: f.now,
+    isCurrent: () => current, preflight: async () => { checks++; return { shieldReview: f.review, shieldPreflight: fresh }; } });
+  const controller = f.controller({ assertLiveValidation: gate }); controller.setQuote(original);
+  assert.equal((await controller.confirm(original.quoteId)).status, 'pending');
+  assert.equal(checks, 2); assert.equal(f.sends.length, 1);
+  const higher = { ...original, maxFeePerGasWei: '2200000000', maxNetworkFeeWei: '264000000000000' };
+  delete higher.quoteId; fresh = digest(higher, 'quoteId');
+  await assert.rejects(gate(), /terms or fees changed/);
+  fresh = f.quote('shield'); await assert.rejects(gate(), /terms or fees changed/);
+  fresh = original; current = false; await assert.rejects(gate(), /Account changed/);
 });
 
 test('wallet receives exact approval, nonce and fee limits only after the attempt is persisted', async () => {

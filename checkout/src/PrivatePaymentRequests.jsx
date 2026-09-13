@@ -3,6 +3,7 @@ import { formatUnits } from 'viem';
 import { createPaymentRequestReader, paymentRequestFile } from './private-request.mjs';
 import { validateHistoryBackup } from '../../shared/request-history-backup.mjs';
 import { PrivatePaymentCheck } from './PrivatePaymentCheck.jsx';
+import { PrivatePaymentForm } from './PrivatePaymentForm.jsx';
 
 function RequestDetails({ request, now }) {
   return <>
@@ -18,7 +19,7 @@ function RequestDetails({ request, now }) {
 
 // Parent mounts one instance per signed-in account. Decrypted requests remain
 // in page memory; merchant history is encrypted by the local account worker.
-export function PrivatePaymentRequests({ view, created, history, encryptedHistory, onCloseHistory, isCurrent, wallet, checkPayment, busy }) {
+export function PrivatePaymentRequests({ view, created, history, encryptedHistory, onCloseHistory, isCurrent, wallet, checkPayment, transact, busy }) {
   const [imported, setImported] = useState(null), [message, setMessage] = useState('');
   const [selectedId, setSelectedId] = useState(null), [visible, setVisible] = useState(10);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -108,7 +109,9 @@ export function PrivatePaymentRequests({ view, created, history, encryptedHistor
       <RequestDetails request={imported} now={now}/>
       <p>{now < imported.expiresAt ? 'Confirm the reference and terms with the merchant through a channel you trust. A request file does not verify their identity.' : 'Ask the merchant for a new request before proceeding.'}</p>
       <p className="request-state">Request only · No payment authorized.</p>
-      {checkPayment && wallet?.id && <PrivatePaymentCheck key={`${imported.digest}:${wallet.id}:${wallet.privateAddress}`}
+      {transact && wallet?.id && <PrivatePaymentForm key={`${imported.digest}:${wallet.id}:${wallet.privateAddress}`}
+        request={imported} wallet={wallet} transact={transact} disabled={busy} isCurrent={isCurrent}/>}
+      {!transact && checkPayment && wallet?.id && <PrivatePaymentCheck key={`${imported.digest}:${wallet.id}:${wallet.privateAddress}`}
         request={imported} wallet={wallet} checkPayment={checkPayment} disabled={busy} isCurrent={isCurrent}/>}
       {checkPayment && !wallet?.id && <p className="hint">To check private funds, first choose Wallet → Check my wallet, then reopen this request.</p>}
       <button type="button" className="text-button" disabled={busy} onClick={() => { operation.current++; reader.clear(); setImported(null); setMessage(''); }}>Clear request</button>

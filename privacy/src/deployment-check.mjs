@@ -9,9 +9,10 @@ export const implementationSlot = toBeHex(BigInt(id('eip1967.proxy.implementatio
 export const pausedSlot = toBeHex(BigInt(id('eip1967.proxy.paused')) - 1n, 32);
 const word = value => typeof value === 'string' && /^0x[0-9a-fA-F]{64}$/.test(value);
 
-export function expectedContractKey(vkey) {
+export function expectedContractKey(vkey, outputs = 2) {
+  if (![2, 3].includes(outputs)) throw new Error('Unreviewed circuit size');
   if (vkey.protocol !== 'groth16' || vkey.curve !== 'bn128'
-      || vkey.nPublic !== 5 || vkey.IC.length !== 6) throw new Error('Expected a 01x02 Groth16 verification key');
+      || vkey.nPublic !== 3 + outputs || vkey.IC.length !== 4 + outputs) throw new Error('Unexpected Groth16 verification key');
   const g1 = p => [BigInt(p[0]), BigInt(p[1])];
   // Solidity's pairing precompile uses the opposite Fq2 coordinate order.
   const g2 = p => [[BigInt(p[0][1]), BigInt(p[0][0])], [BigInt(p[1][1]), BigInt(p[1][0])]];
@@ -19,8 +20,9 @@ export function expectedContractKey(vkey) {
     g2(vkey.vk_delta_2), vkey.IC.map(g1)];
 }
 
-export async function inspectDeployment(network, rpc, pins, vkey, { blockTag: head = 'finalized' } = {}) {
+export async function inspectDeployment(network, rpc, pins, vkey, { blockTag: head = 'finalized', outputs = 2 } = {}) {
   if (!['finalized', 'latest'].includes(head)) throw new Error('Unsupported deployment head');
+  if (![2, 3].includes(outputs)) throw new Error('Unreviewed circuit size');
   const config = testNetwork(network);
   if (pins.network !== network || pins.chainID !== config.chain.id) throw new Error('No reviewed deployment for network');
   const contracts = pins.contracts;
@@ -53,17 +55,17 @@ export async function inspectDeployment(network, rpc, pins, vkey, { blockTag: he
   const [target] = relayInterface.decodeFunctionResult('railgun', relayResult);
   if (getAddress(target) !== getAddress(contracts.proxy.address)) throw new Error('Relay targets a different wallet contract');
   const encodedKey = await rpc('eth_call', [{ to: contracts.proxy.address,
-    data: walletInterface.encodeFunctionData('getVerificationKey', [1, 2]) }, blockTag]);
+    data: walletInterface.encodeFunctionData('getVerificationKey', [1, outputs]) }, blockTag]);
   const [actualKey] = walletInterface.decodeFunctionResult('getVerificationKey', encodedKey);
   const key = actualKey.toArray(true);
-  assert.deepEqual(key.slice(1), expectedContractKey(vkey), 'Onchain verification key does not match pinned circuit');
+  assert.deepEqual(key.slice(1), expectedContractKey(vkey, outputs), 'Onchain verification key does not match pinned circuit');
   const finalBlock = await rpc('eth_getBlockByNumber', [blockTag, false]);
   if (!finalBlock || finalBlock.hash !== block.hash) throw new Error('Block changed during deployment inspection');
   return { status: 'reviewed-deployment-and-circuit-matched', network, chainID: config.chain.id, head,
     blockNumber: block.number, blockHash: block.hash, proxy: contracts.proxy.address,
     implementation: contracts.implementation.address, relay: contracts.relay.address,
     runtimeCodeHashes: Object.fromEntries(Object.entries(contracts).map(([role, c]) => [role, c.runtimeCodeHash])),
-    proxyPaused: false, relayTargetMatches: true, circuit: '01x02', verificationKeyMatches: true,
+    proxyPaused: false, relayTargetMatches: true, circuit: `01x0${outputs}`, verificationKeyMatches: true,
     artifactsIPFSHash: key[0], paymentReady: false,
     note: 'Matches reviewed Sourcify runtime records and circuit at this block; not an audit, synchronization check, or payment settlement.' };
 }

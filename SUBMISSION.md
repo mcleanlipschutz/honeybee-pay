@@ -3,7 +3,7 @@
 Updated September 13, 2026. Review this against the portal's current fields and
 limits before submitting. This file is a draft; no submission has been sent.
 
-McLean reports eight hours remaining. Use [FINAL_HOURS.md](FINAL_HOURS.md) for the
+McLean's earlier eight-hour estimate is historical. Use [FINAL_HOURS.md](FINAL_HOURS.md) for the
 recording and submission sequence. The current source is on
 [`codex/privacy-segment-1a`](https://github.com/mcleanlipschutz/honeybee-pay/tree/codex/privacy-segment-1a).
 
@@ -24,8 +24,10 @@ merchant requests, private-funds checks, and deposit preparation and recovery
 tools. Browser tests have confirmed separate buyer and merchant accounts,
 matching recovered wallet addresses, and merchant request/history recovery.
 Real offline zero-knowledge proof and tamper-rejection checks pass with
-synthetic inputs. A complete private merchant payment and encrypted settlement
-receipts are still under integration. Public test payments and offline privacy
+synthetic inputs. The local code now integrates private fee quotes, explicit
+confirmation, actual proof generation/verification, broadcaster submission,
+encrypted attempt tracking and merchant receipt matching. Live broadcaster
+access and a funded end-to-end private payment remain unvalidated. Public test payments and offline privacy
 tests are presented separately so the demo does not overstate what is working.
 
 ## How it is made
@@ -88,10 +90,9 @@ Point judges to the actual draft branch if main has not been updated. Verify tha
 the source and hosted demo are accessible to them before submitting. The hosted
 demo remains the public-payment implementation through Segment 1O; later private
 work is local only. The existing hosted URL is
-https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site . Its current audience is
-restricted to the owner, confirmed September 13. It must be made accessible with
-McLean's explicit authorization and tested from a signed-out browser before it
-is offered as a judge-accessible demo. A video remains necessary evidence of the
+https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site . Its audience was changed to
+public with McLean's authorization on September 13, and he confirmed the homepage
+opens. A video remains necessary evidence of the
 local private-wallet features. Do not promise a private-payment button online.
 
 ## Details requiring the organizer portal

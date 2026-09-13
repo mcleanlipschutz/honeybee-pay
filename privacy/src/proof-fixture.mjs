@@ -4,7 +4,8 @@ import circom from '@railgun-community/circomlibjs';
 // Synthetic circuit inputs: no real wallet, chain, invoice, or spendable note.
 // Fixed small field values make the demonstration reproducible in structure;
 // a fresh disposable signing key prevents reusing the engine's proof cache.
-export function createProofFixture() {
+export function createProofFixture(outputs = 2) {
+  if (![2, 3].includes(outputs)) throw new Error('Unsupported fixture circuit');
   const { poseidon, eddsa } = circom;
   const key = randomBytes(32);
   try {
@@ -19,8 +20,8 @@ export function createProofFixture() {
     let merkleRoot = poseidon([notePublicKey, tokenAddress, valueIn[0]]);
     for (const sibling of pathElements[0]) merkleRoot = poseidon([merkleRoot, sibling]);
     const nullifiers = [poseidon([nullifyingKey, 0n])];
-    const npkOut = [111n, 222n];
-    const valueOut = [2000000n, 8000000n];
+    const npkOut = outputs === 2 ? [111n, 222n] : [111n, 222n, 444n];
+    const valueOut = outputs === 2 ? [2000000n, 8000000n] : [10000n, 2000000n, 7990000n];
     const commitmentsOut = npkOut.map((npk, i) => poseidon([npk, tokenAddress, valueOut[i]]));
     const boundParamsHash = 333n;
     const signed = eddsa.signPoseidon(key,

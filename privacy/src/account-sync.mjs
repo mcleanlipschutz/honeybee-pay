@@ -11,6 +11,7 @@ import { installRpcTransport } from './rpc-transport.mjs';
 import { installTxidTransport } from './txid-transport.mjs';
 import { installPOITransport } from './poi-transport.mjs';
 import { checkPOIService } from './poi-preflight.mjs';
+import { transferManifest } from './transfer-artifacts.mjs';
 
 export const accountSyncNetwork = 'Ethereum_Sepolia';
 export const accountSyncToken = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
@@ -40,7 +41,7 @@ export async function prepareAccountSync(config, checkSession, { blockTag = 'fin
       || BigInt(chainID) !== BigInt(testNetwork(accountSyncNetwork).chain.id)) throw new Error('RPC chain does not match configuration');
   installRpcTransport(rpcURL); installTxidTransport(); installPOITransport(poiURL);
   onStage('artifact-check');
-  const artifacts = await createPinnedArtifactStore(fileURLToPath(artifactDirectory), artifactManifest);
+  const artifacts = await createPinnedArtifactStore(fileURLToPath(artifactDirectory), transferManifest);
   const key = await artifacts.get(artifactPrefix + 'vkey.json');
   if (!key) throw new Error('Pinned verification key unavailable');
   const pins = JSON.parse(await readFile(new URL('../config/sepolia-deployment.json', import.meta.url), 'utf8'));

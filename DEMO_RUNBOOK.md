@@ -1,16 +1,17 @@
 # Honeybee Pay demo and trusted-computer handoff
 
-Prepared September 11, 2026. The public checkout works; private signing remains
-disabled. These steps do not enable it. Use test assets and separately controlled
-buyer and merchant accounts.
+Prepared September 11, updated September 13, 2026. For the new private-payment
+implementation, start with **[ZK_FLOW.md](ZK_FLOW.md)**. It supersedes the historical
+disabled-signing instructions below. Use test assets and separately controlled
+buyer and merchant accounts. Funded private settlement remains unvalidated.
 
 September 13 deadline update: start with [FINAL_HOURS.md](FINAL_HOURS.md) for the
 short recording/submission path. McLean's POI check succeeded with IPv4 preferred
 on the cellular hotspot. `wallet:web`, `poi:preflight` and isolated wallet workers
 now carry this preference without changing TLS verification or operation limits.
-Full account synchronization remains the next check. The hosted Site was
-confirmed owner-restricted; judge access needs an explicitly authorized audience
-change and signed-out verification.
+A disposable unfunded account scan and recovery subsequently passed. The hosted
+Site is now public with McLean's authorization and homepage confirmation; it
+continues to serve the public-payment build.
 
 ## Things McLean can do on the phone
 

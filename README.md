@@ -5,7 +5,8 @@ The [product direction](PRODUCT_DIRECTION.md) is an app or website where users
 create their profile and wallet and pay merchants from a shielded balance. KYC
 is deferred until after testing and a review of the time before submission; it
 may wait until after the contest. See the [first-test checklist](TEST_CHECKLIST.md).
-The current checkout still uses public test transfers.
+The hosted checkout uses public test transfers. The newer local private-payment
+flow is described in [ZK_FLOW.md](ZK_FLOW.md); funded end-to-end validation remains pending.
 
 ## The problem
 
@@ -23,7 +24,7 @@ Crypto is often treated as a trading asset, while everyday payments remain a lim
 
 ## Current status
 
-Updated September 13, 2026, through **Segment 1Z** and Windows follow-ups on
+Updated September 13, 2026, through the **private-payment integration** and Windows follow-ups on
 `codex/privacy-segment-1a`. The development work remains in
 [draft PR #1](https://github.com/mcleanlipschutz/honeybee-pay/pull/1).
 
@@ -35,14 +36,21 @@ published to the hosted demo.
 
 **Submission handoff:** see [FINAL_HOURS.md](FINAL_HOURS.md) for the short demo
 script and deadline checklist, and [SUBMISSION.md](SUBMISSION.md) for portal text.
-McLean reports eight hours remaining; the signed-in portal is authoritative for
-the exact deadline and video limit. The hosted Site is currently owner-restricted,
-so judges cannot yet use its URL as a generally accessible demo.
+The earlier eight-hour estimate is historical; use the organizer portal for the
+current deadline and video limit. The hosted Site was made public with McLean's
+authorization, and he confirmed that its homepage opens. It remains the public
+payment build; the private-wallet runtime has not been hosted.
 
 Windows now passed the POI availability check with IPv4 preferred after default
 and TLS-1.2-only attempts reset on the cellular hotspot. Normal private-runtime
-launchers and isolated wallet workers now carry that address preference. A full
-account history scan and private settlement remain unverified.
+launchers and isolated wallet workers now carry that address preference. A live
+disposable unfunded account scan and recovery passed after correcting worker
+shutdown and account leases. Funded private settlement remains unverified.
+
+**Current ZK handoff:** [ZK_FLOW.md](ZK_FLOW.md) contains the update commands,
+read-only broadcaster check, small deposit steps, private-payment confirmation
+and merchant receipt check. The code path is implemented; broadcaster discovery
+still times out from the development environment and must be checked on the laptop.
 
 ### Completed implementation and recorded validation
 
@@ -52,14 +60,23 @@ account history scan and private settlement remain unverified.
 | Public receipts and usage counter | Sent/received receipt history and downloads; server-verified shared counter with durable transaction uniqueness. | Receipt reader found the matching payment for both accounts; automated counter checks passed. Phone receipt downloads and counter behavior still need manual validation. |
 | ZK proof and demo-wallet synchronization | Real local RAILGUN proof, tamper rejection, persistent recovery, deployment identity checks and disposable-wallet history scans. | Proof uses synthetic notes. Read-only demo scans passed; this does not establish a funded or spendable account wallet. [1E](privacy/SEGMENT-1E.md), [1F](privacy/SEGMENT-1F.md), [1J](privacy/SEGMENT-1J.md). |
 | Account-bound private wallets | Authenticated local wallet creation/recovery, separate account roots, encrypted wallet backups and browser setup UI. | Real SDK/API isolation and recovery checks passed. McLean confirmed separate buyer/merchant browser backups and recovery, including matching wallet addresses. [1K](privacy/SEGMENT-1K.md), [1L](privacy/SEGMENT-1L.md). |
-| Private deposit preparation | Account history/balance integration, deposit review, fee simulation, bounded gas quotes, submission controller, attempt journal and canonical deposit verifier. | Controlled tests passed. Live account sync, funding and spendability remain unverified. Controller is not connected to the UI; signing stays disabled. [1P](privacy/SEGMENT-1P.md), [1Q](privacy/SEGMENT-1Q.md), [1R](privacy/SEGMENT-1R.md), [1S](privacy/SEGMENT-1S.md). |
+| Private deposit confirmation | Local UI connects reviewed amounts, fresh simulation, exact allowance/deposit wallet confirmation, attempt journal and canonical deposit verification. | Controlled signing/receipt checks passed; actual browser wallet confirmation and funded spendability remain pending. [Current steps](ZK_FLOW.md). |
 | Merchant payment requests | Account-derived private recipient, exact amount/network/expiry, request download/import and immutable buyer review. | SDK/API and request validation checks passed. Requests are unsigned and do not authenticate a merchant or authorize payment. [1T](privacy/SEGMENT-1T.md). |
 | Encrypted request history and backups | Saved requests, history reopening, separate encrypted history export and merge-only restore. | Restores preserve newer records, skip duplicates and reject conflicts. McLean reported merchant history recovery and request import with matching terms. Request history is not a payment receipt or settlement ledger. [1U](privacy/SEGMENT-1U.md), [1V](privacy/SEGMENT-1V.md). |
 | Buyer private-funds check | Imported request connected to an authenticated account scan; exact balance/shortfall and an expiring result in local checkout. | Controlled scans and client validation passed; actual workers reject unauthorized requests and wrong-chain preflight. Live funded checks and browser interactions remain pending. Fees are unchecked and payment is not authorized. [1W](privacy/SEGMENT-1W.md). |
 | Deposit activity and recovery | Local account-scoped attempt list and read-only reconciliation, including missing-hash recovery for a recorded attempt. | Controlled provider/storage tests passed. Status reads never submit a transaction. Actual browser and live deposit checks remain pending. [1X](privacy/SEGMENT-1X.md). |
+| Private merchant payment | Fee quote, explicit buyer confirmation, actual transfer/POI prover, onchain proof check, Waku broadcaster and encrypted attempt journal. | Real 01x03 synthetic proof and pinned deployed key passed; ten labeled integration/security tests pass. No funded private transfer yet. [Evidence and limits](ZK_FLOW.md). |
+| Private receipts | Original-nullifier recovery, exact calldata/events, outgoing POI refresh and merchant-decrypted request memo matching. | Controlled wrong-hash, lost-response, reverted-authorization and merchant-matching checks pass. Live sender/merchant recognition remains pending. |
 | Dependency security update | Same-major networking/parser pins; wallet and prover SDK versions preserved. | Fresh production audits: no high/critical findings; 5 low private-runtime and 23 moderate checkout findings remain. Offline wallet/proof compatibility passed. [1Y](privacy/SEGMENT-1Y.md). |
 
 ### Latest validation
+
+The current checkout has **39 passing tests** and builds successfully. The
+private-payment module has **10 passing integration/security tests with labeled
+doubles**, plus a passing real 01x03 synthetic proof/tamper check and a matching
+deployed verifier key. A 37-test private API/regression run also passed before
+the final independent-review fixes. See [ZK_FLOW.md](ZK_FLOW.md) for exact scope,
+remaining live gates and the trust review. Historical segment results follow.
 
 September 13: nine focused account-sync/POI tests, the offline rules demo and a
 fresh real synthetic-input proof/tamper check passed. The Windows IPv4-preferred
@@ -92,9 +109,9 @@ history. History backup alone cannot recover the wallet or funds.
 ### Remaining work before the complete private-payment test
 
 1. Complete the remaining browser checks for account changes and password clearing; basic separate-account sign-in, downloads and wallet/history recovery have been user-confirmed.
-2. Validate account synchronization, deposit review and gas simulation against live/forked Sepolia. Integrate the controller, verify browser wallet prompts and obtain explicit user approval before a small test deposit; confirm its canonical event, spendability and recovery.
-3. Connect reviewed merchant requests to proof generation, submission and settlement. Verify the exact received amount/recipient from merchant wallet state and handle pending or interrupted attempts without automatic resending.
-4. Reconcile each paid invoice once and provide encrypted private receipts to both parties.
+2. Verify laptop broadcaster access and actual browser wallet prompts, then explicitly confirm a small test deposit and check its canonical event and spendability.
+3. Exercise the implemented merchant-request, real-proof and broadcaster path against funded Sepolia; check the original transaction and outgoing POI completion.
+4. Verify the merchant's matching decrypted amount/request receipt, plus reload and wallet recovery after that actual transfer. Do not clear an unresolved payment journal.
 5. Verify public receipt downloads and the shared counter on mobile, including reloads and duplicate prevention.
 6. Run the full private flow and attack comparison, review dependency/logging blockers, collect evidence and prepare the submission demo.
 

@@ -25,8 +25,8 @@ export async function reconcileShieldSubmission({ journal, quoteId, hash, reques
   return { ...verification, quoteId };
 }
 
-// Not connected to the application UI. Production uses the closed gate above.
-// Tests inject an explicit gate and a fake wallet; there is no env/runtime switch.
+// Callers must supply the live re-simulation gate. The default remains closed
+// so importing this controller alone never enables a wallet prompt.
 export function createShieldSubmission({ review: source, expected, userId, getConnection, journal, request,
   assertLiveValidation = requireLiveShieldValidation, now = Date.now }) {
   const review = validateShieldReview(source, expected, now());

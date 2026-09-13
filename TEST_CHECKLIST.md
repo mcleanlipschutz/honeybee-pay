@@ -3,7 +3,38 @@
 Updated September 13, 2026. Checked items are implemented/validated as stated;
 they do not imply a live payment has settled.
 
-## Current checkpoint: Segment 1Z
+## Current private-payment integration
+
+Use [ZK_FLOW.md](ZK_FLOW.md) for the current Windows sequence. Earlier checkpoint
+details below are historical.
+
+- [x] Real 01x03 synthetic proof and tamper rejection; deployed Sepolia key matched.
+- [x] Private quote, explicit confirmation, proof verification, broadcaster path,
+  encrypted pre-send journal, candidate-hash recovery and merchant receipt matching implemented.
+- [x] Ten focused payment/security tests, 39 checkout tests and a 37-test private
+  API/regression run passed with the scope and timing recorded in ZK_FLOW.md.
+- [x] Independent source review fixes tested: POI startup, faulty ACK recovery,
+  still-live reverted authorization and unsupported incoming transaction isolation.
+- [ ] Broadcaster discovered from McLean's laptop; no test deposit before this check.
+- [ ] Actual approval and deposit wallet prompts, canonical deposit and spendable private balance.
+- [ ] Actual private proof broadcast, sender outgoing POI completion and matching merchant receipt.
+- [ ] Reload, original-attempt recovery and wallet recovery after the funded transfer.
+
+## Current checkpoint: Segment 1Z and Windows funding checks
+
+Latest user-reported live result, September 13: the buyer's local account scan
+completed and returned **0 spendable private test USDC**. The wallet locked again.
+A subsequent **2 test-USDC** deposit review showed a **0.005 test-USDC** protocol
+fee and **1.995 test USDC** expected privately. The exact **approval** transaction
+was simulated, with a quoted maximum network fee of **0.00014077751886048
+Sepolia ETH**. That fee covers approval only and expires; it is not a standing
+quote or the deposit's network fee. No approval/deposit hash was supplied and
+the user's build still reported submission disabled. See the
+[live funding checkpoint](privacy/reports/local-funding-checkpoint-2026-09-13.json).
+
+The next gate is the reviewed signing integration and separate deposit
+simulation/confirmation, followed by spendable-balance and recovery checks.
+The earlier connection failures below are retained as troubleshooting history.
 
 Windows follow-up: checkout installed, all 38 checkout tests passed, and both
 client/server builds completed on McLean's computer. The production checkout
@@ -48,7 +79,7 @@ The isolated connection check subsequently passed on Windows with IPv4 preferred
 Normal launchers and isolated wallet workers now use that preference. The user
 was on a cellular hotspot; an IPv6 TCP-port check also passed, which does not
 establish successful IPv6 HTTPS. The precise reset source is not proven.
-Successful account synchronization remains pending.
+The subsequent user-reported account scan succeeded, as recorded above.
 The local server now reports a sanitized fixed-label sync stage and reason in
 PowerShell; HTTP errors remain generic. Private signing
 remains disabled, the submission controller is not connected to the UI, and no
@@ -107,14 +138,15 @@ release.
 - [x] Local proof verification and tamper checks passed.
 - [x] Disposable demo wallets completed read-only Sepolia history synchronization.
 - [x] Connect synchronization to account-bound wallets (Segment 1P implementation and controlled tests).
-- [ ] Run a live account-bound scan and confirm the private balance snapshot on the local test machine.
+- [x] Run a live account-bound scan and confirm the private balance snapshot on the local test machine (September 13 user-reported Windows result: 0 spendable private test USDC).
 - [x] Fund the buyer’s public wallet with Sepolia test ETH and test USDC.
 - [x] Build account-bound test-USDC deposit review with exact unsigned approval and protocol fee (Segment 1Q; controlled tests).
 - [x] Verify prepared shield-note recovery in a fresh SDK database and rejection by another wallet.
-- [ ] Validate the deposit review against live/forked Sepolia state on the local test machine.
+- [x] Validate the deposit review against live Sepolia state on the local test machine (user-reported 2 test USDC gross, 0.005 fee, 1.995 expected private credit; no deposit submitted).
 - [x] Add fresh deployment/token/fee checks, exact-call simulation and bounded gas quotes (Segment 1R; controlled tests).
 - [x] Bind fee checks to the server's account-specific review and preview the next wallet-confirmation step.
-- [ ] Validate simulation and gas quotes against live/forked Sepolia state.
+- [x] Validate the exact approval simulation and gas quote against live Sepolia state (user-reported approval-only result; quote must be refreshed before use).
+- [ ] Validate the separate deposit simulation and gas quote against live/forked Sepolia state after allowance is available.
 - [x] Implement wallet submission controller with exact nonce/gas/fee requests and a closed default signing gate (Segment 1S; fake-wallet tests).
 - [x] Implement browser attempt journal and read-only approval/Shield verifier; controlled tests cover reloads, concurrent attempts, unknown outcomes and canonical event matching.
 - [x] Connect the account-scoped journal and read-only verifier to local Deposit activity; list historical attempts and recheck original hashes without signing (Segment 1X).

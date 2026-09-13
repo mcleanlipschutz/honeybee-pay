@@ -57,8 +57,8 @@ export async function startAccountServer({ directory, distDirectory, appId, veri
       if (req.url === '/api/runtime' && req.method === 'GET') {
         return json(res, 200, { mode: 'local-testnet', apiVersion: 1, chainId: 11155111, appId,
           identityVerification: 'deferred-for-testnet', accountSyncEnabled: !!syncConfig,
-          shieldReviewEnabled: !!syncConfig, shieldPreflightEnabled: !!syncConfig, shieldSubmissionEnabled: false,
-          privateRequestsEnabled: true, privatePaymentCheckEnabled: !!syncConfig });
+          shieldReviewEnabled: !!syncConfig, shieldPreflightEnabled: !!syncConfig, shieldSubmissionEnabled: !!syncConfig,
+          privateRequestsEnabled: true, privatePaymentCheckEnabled: !!syncConfig, privateTransferEnabled: !!syncConfig });
       }
       const historyRestore = req.url === '/api/account-history/restore';
       if (req.url === '/api/account-wallet' || historyRestore) {

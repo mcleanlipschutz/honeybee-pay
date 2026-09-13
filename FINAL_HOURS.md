@@ -1,9 +1,11 @@
 # Honeybee Pay: final-hours handoff
 
-Updated September 13, 2026. McLean reports eight hours until submission and is
-using a phone hotspot at work. This plan uses time from now, not an independently
-verified event deadline. Aim to submit within three hours and retain the rest
-as a buffer. The organizer portal controls field limits, video length and judging.
+Updated September 13, 2026. McLean earlier reported eight hours until submission
+while using a phone hotspot at work. That is a historical report, not a current
+countdown. The organizer portal controls the deadline, field limits, video length
+and judging. The active task is now completing ZK: follow **[ZK_FLOW.md](ZK_FLOW.md)**
+for the implemented local payment path and remaining funded test. This earlier
+recording plan does not establish that the live private test has passed.
 
 ## What to demonstrate
 
@@ -21,30 +23,19 @@ does not establish a completed wallet scan or spendable funds.
 | `npm.cmd run demo:rules` | Approved proposal accepted; changed recipient rejected by the adapter | Offline SDK doubles; not a live AI exploit or cryptographic proof |
 | `npm.cmd run proof:smoke` | Real proof generation/verification and rejected tampering | Synthetic inputs; no transaction or settlement |
 
-## Next twenty minutes
+## Current installation and live test
 
-1. In the original PowerShell window, stop the website with Ctrl+C if it is
-   running. Keep that window open so its recovery-directory setting survives.
-2. Run:
+Follow [ZK_FLOW.md](ZK_FLOW.md) in order. The current update requires a private
+dependency install, additional pinned proving artifacts, a broadcaster check,
+and a frontend build before reopening the local page. Earlier restart-only
+instructions are superseded. The broadcaster check must pass before depositing
+test assets; a funded private payment and merchant receipt remain unverified.
 
-   ```powershell
-   cd "C:\Users\McLean Lipschutz\honeybee-pay-windows\privacy"
-   git pull --ff-only
-   npm.cmd run wallet:web
-   ```
+The hosted public-payment demo is now public with McLean's authorization and
+homepage confirmation. Publication access does not publish the local wallet
+database or encrypted backups. Private features remain local.
 
-   The launcher and wallet subprocess now prefer IPv4. There is no dependency
-   reinstall or frontend rebuild for this update.
-3. Refresh the local page, sign in as buyer, choose Wallet → Sync private balance
-   and make one attempt. Record the actual result. Allow the bounded operation
-   to finish. A failure is not a zero balance. Avoid repeated scans during the
-   recording; reserve at most twenty minutes for this remaining network gate.
-4. The hosted demo is currently restricted to McLean's account. Ask Codex to
-   make the existing testnet demo public if judges should open it. After access
-   changes, verify the URL in a signed-out/private browser window. Publication
-   access does not publish the local wallet database or encrypted backups.
-
-   Hosted URL: https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site
+Hosted URL: https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site
 
 ## Recording preparation
 

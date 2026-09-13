@@ -18,6 +18,10 @@ import { preflightShield } from './shield-preflight.mjs';
 import { connectionErrorCode } from './rpc-transport.mjs';
 import { syncFailureDiagnostic } from './sync-diagnostic.mjs';
 import { trackWalletWork } from './wallet-work.mjs';
+import { operatePrivatePayment, preparePaymentRuntime } from './account-private-payment.mjs';
+import { checkMerchantReceipts } from './merchant-receipts.mjs';
+import { makeReadOnlyRpc } from './network-preflight.mjs';
+import { installSnarkProver } from './snark-prover.mjs';
 
 const backupFile = 'account.backup.json';
 function live(session) {
@@ -53,7 +57,7 @@ function readiness(walletStatus, wallet) {
     paymentReady: false, blockers: [...(walletStatus === 'not-created' ? ['private-wallet-not-created'] : []), 'private-payment-not-integrated', 'balance-not-verified'] };
 }
 
-async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, review, lifetimeSeconds, historyBackup, paymentRequest }, onStage = () => {}) {
+async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, review, lifetimeSeconds, historyBackup, paymentRequest, maxFeeUnits, quoteId, hash }, onStage = () => {}) {
   live(session);
   if (action === 'shield-preflight') {
     // This branch never opens a wallet directory or receives a recovery password.
@@ -71,9 +75,10 @@ async function operate({ directory, session, action, password, backup, syncConfi
   // The authenticated parent holds the account lease until this process exits.
   let engineStarted = false, createdSlot = false, completed = false;
   let background;
-  const signal = AbortSignal.timeout(accountSyncDeadline);
-  const usesNetwork = ['sync', 'shield-review', 'payment-check'].includes(action);
-  const scansWallet = ['sync', 'payment-check'].includes(action);
+  const paymentAction = ['payment-quote', 'payment-submit', 'payment-status', 'payment-history'].includes(action);
+  const signal = AbortSignal.timeout(action === 'payment-submit' ? 850000 : action === 'payment-quote' ? 600000 : accountSyncDeadline);
+  const usesNetwork = ['sync', 'shield-review', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'invoice-receipts'].includes(action);
+  const scansWallet = ['sync', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'invoice-receipts'].includes(action);
   const checkSession = () => { live(session); if (usesNetwork) signal.throwIfAborted(); };
   try {
     live(session);
@@ -100,7 +105,8 @@ async function operate({ directory, session, action, password, backup, syncConfi
       await mkdir(slot, { mode: 0o700 }); createdSlot = true;
       await writeBackup(join(slot, backupFile), encrypted);
     } else { await privateDirectory(join(slot, 'wallets')); }
-    const prepared = usesNetwork ? await prepareAccountSync(syncConfig, checkSession, { onStage }) : null;
+    let prepared = usesNetwork ? await prepareAccountSync(syncConfig, checkSession, { onStage }) : null;
+    if (paymentAction && usesNetwork) prepared = await preparePaymentRuntime(prepared, checkSession);
     checkSession();
     onStage('wallet-loading');
     const db = await createWalletDatabase(join(slot, 'wallets'));
@@ -110,6 +116,7 @@ async function operate({ directory, session, action, password, backup, syncConfi
     await startRailgunEngine('honeybeepay', db, false,
       prepared?.artifacts || new ArtifactStore(unavailable, unavailable, unavailable), false, false,
       prepared ? [prepared.poiURL] : undefined);
+    if (prepared) installSnarkProver(sdk);
     const key = sha256(concat([toUtf8Bytes('honeybee:account-database:v1'), root.privateKey])).slice(2);
     const id = RailgunWallet.generateID(root.mnemonic.phrase, 0);
     const wallet = initializing ? await createRailgunWallet(key, root.mnemonic.phrase, undefined, 0)
@@ -119,16 +126,23 @@ async function operate({ directory, session, action, password, backup, syncConfi
     const syncResult = action === 'sync' ? await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage }) : null;
     const paymentResult = action === 'payment-check' ? await checkAccountPayment({ paymentRequest, sdk, wallet,
       prepared, checkSession, signal, expiresAt: session.expiresAt }) : null;
+    const privatePaymentResult = paymentAction ? await operatePrivatePayment({ action, paymentRequest, maxFeeUnits, quoteId, hash,
+      sdk, wallet, key, privateKey: root.privateKey, directory: slot, session, prepared, checkSession, signal, onStage }) : null;
     const shieldResult = action === 'shield-review' ? await prepareShieldReview({ wallet, amount, publicAddress,
       prepared, checkSession, expiresAt: session.expiresAt }) : null;
     const invoiceResult = action === 'invoice-create' ? createAccountInvoice({ wallet, amount, lifetimeSeconds, checkSession }) : null;
-    let requestHistory, historyBackupResult;
-    if (['invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore'].includes(action)) {
+    let requestHistory, historyBackupResult, receivedResult;
+    if (['invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore', 'invoice-receipts'].includes(action)) {
       const store = createRequestHistoryStore({ directory: slot, privateKey: root.privateKey,
         ownerId: session.ownerId, recipient: wallet.railgunAddress, checkSession });
       if (action === 'invoice-history-export') historyBackupResult = await store.exportBackup();
       else if (action === 'invoice-history-restore') historyBackupResult = await store.restoreBackup(historyBackup);
       else requestHistory = action === 'invoice-create' ? await store.append(invoiceResult.paymentRequest) : await store.read();
+      if (action === 'invoice-receipts') {
+        await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage });
+        receivedResult = await checkMerchantReceipts({ sdk, wallet, requests: requestHistory.requests,
+          rpc: makeReadOnlyRpc(prepared.rpcURL), checkSession });
+      }
     }
     onStage('shutdown');
     if (scansWallet) {
@@ -140,7 +154,7 @@ async function operate({ directory, session, action, password, backup, syncConfi
     await stopRailgunEngine(); engineStarted = false;
     checkSession();
     completed = true;
-    return { ...readiness('locked', wallet), ...syncResult, ...shieldResult, ...invoiceResult, ...paymentResult,
+    return { ...readiness('locked', wallet), ...syncResult, ...shieldResult, ...invoiceResult, ...paymentResult, ...privatePaymentResult, ...receivedResult,
       ...(requestHistory ? { requestHistory } : {}), ...historyBackupResult,
       recovery: action === 'create' ? 'backup-created' : action === 'restore' ? 'restored' : 'backup-verified',
       ...(['create', 'backup'].includes(action) ? { encryptedBackup: encrypted } : {}) };
@@ -167,6 +181,12 @@ async function operate({ directory, session, action, password, backup, syncConfi
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href && process.send) {
   process.once('message', async message => {
     const onStage = stage => {
+      if (message.action?.startsWith('payment-') && process.connected) {
+        if (['history-scan', 'broadcaster', 'fee-estimate', 'proof-generation', 'proof-verification', 'broadcast'].includes(stage)) {
+          try { process.send({ paymentStage: stage }, () => {}); } catch {}
+        }
+        return;
+      }
       if (message.action !== 'sync' || !process.connected) return;
       try { process.send({ syncStage: syncFailureDiagnostic(stage).stage }, () => {}); }
       catch { /* Diagnostics cannot change the wallet operation. */ }

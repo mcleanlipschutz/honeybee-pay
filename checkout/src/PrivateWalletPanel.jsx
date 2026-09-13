@@ -7,9 +7,11 @@ import { PrivatePaymentRequests } from './PrivatePaymentRequests.jsx';
 import { privateRequestAmount } from './private-request.mjs';
 import { shieldConfirmationStep } from './shield-preflight.mjs';
 import { DepositActivity } from './DepositActivity.jsx';
+import { ShieldConfirmation } from './ShieldConfirmation.jsx';
+import { PrivatePaymentActivity } from './PrivatePaymentActivity.jsx';
 
 const actionNames = { create: 'Create private wallet', restore: 'Restore my wallet',
-  unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance', 'shield-review': 'Review test deposit', 'invoice-create': 'Create payment request', 'invoice-history': 'Open request history', 'invoice-history-export': 'Back up request history', 'invoice-history-restore': 'Restore request history' };
+  unlock: 'Check my wallet', backup: 'Prepare recovery download', 'verify-backup': 'Verify saved backup', sync: 'Sync private balance', 'shield-review': 'Review test deposit', 'invoice-create': 'Create payment request', 'invoice-history': 'Open request history', 'invoice-history-export': 'Back up request history', 'invoice-history-restore': 'Restore request history', 'invoice-receipts': 'Check received private payments' };
 const sections = [['wallet', 'Wallet'], ['pay', 'Pay a request'], ['request', 'Request payment'], ['recovery', 'Recovery']];
 const sectionCopy = {
   wallet: ['Your private wallet', 'Check your wallet or refresh its private test USDC balance.'],
@@ -47,7 +49,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
     if (!client || inFlight.current) return;
     inFlight.current = true; setBusy(true); setMessage('');
     const savedReview = action === 'shield-preflight' ? result?.shieldReview : null;
-    setResult(previous => previous ? { ...previous, shieldReview: savedReview, shieldPreflight: null, paymentRequest: null, requestHistory: null, encryptedRequestHistory: null } : previous);
+    setResult(previous => previous ? { ...previous, shieldReview: savedReview, shieldPreflight: null, paymentRequest: null, requestHistory: null, encryptedRequestHistory: null, receivedPrivatePayments: null } : previous);
     if (action === 'sync') {
       setResult(previous => previous ? { ...previous, synchronization: null, spendableBalance: null, spendableBalanceVerified: false } : previous);
       setMessage('Checking private wallet history and spendable test USDC. The first scan can take up to five minutes. Keep this page open.');
@@ -76,6 +78,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
       else if (action === 'invoice-history-export') setMessage('Encrypted history backup ready. Keep it with your wallet recovery backup.');
       else if (action === 'invoice-history-restore') setMessage(`${next.historyRestoration.added} requests restored; ${next.historyRestoration.alreadySaved} already saved. ${next.historyRestoration.total} requests in this account’s history.`);
       else if (action === 'invoice-history') setMessage('Request history opened. Payment status has not been checked; these are not receipts.');
+      else if (action === 'invoice-receipts') setMessage(`${next.receivedPrivatePayments.length} confirmed private payments matched saved requests. Your wallet is locked again.`);
       else if (action === 'restore') setMessage('Your private wallet was restored for this account.');
       else if (action === 'verify-backup') setMessage('Recovery copy verified. It opens the wallet saved for this account.');
       else if (action === 'unlock') setMessage('Wallet and recovery password checked. The wallet is now locked again.');
@@ -94,6 +97,12 @@ export function PrivateWalletPanel({ connection, runtime }) {
     if (!client || inFlight.current) throw new Error('Wait for the current wallet check to finish.');
     inFlight.current = true; setBusy(true);
     try { return await client.checkPayment(request, password, wallet, signal); }
+    finally { inFlight.current = false; if (alive.current) setBusy(false); }
+  };
+  const transact = async (action, fields, wallet, quote) => {
+    if (!client || inFlight.current) throw new Error('Wait for the current wallet operation to finish.');
+    inFlight.current = true; setBusy(true);
+    try { return await client.privatePayment(action, fields, wallet, quote); }
     finally { inFlight.current = false; if (alive.current) setBusy(false); }
   };
   const submit = async event => {
@@ -152,7 +161,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
   const chooseSection = next => { if (!inFlight.current) { chooseAction(null); setSection(next); } };
   const actions = !existing ? ['create', 'restore']
     : section === 'wallet' ? ['unlock', ...(runtime?.accountSyncEnabled ? ['sync'] : [])]
-    : section === 'request' ? ['invoice-create', 'invoice-history']
+    : section === 'request' ? ['invoice-create', 'invoice-history', ...(runtime?.privateTransferEnabled ? ['invoice-receipts'] : [])]
     : section === 'recovery' ? ['backup', 'verify-backup', ...(runtime?.privateRequestsEnabled ? ['invoice-history-export', 'invoice-history-restore'] : [])]
     : [];
   return <section className="checkout wallet-panel" aria-labelledby="wallet-heading">
@@ -210,7 +219,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
       {section === 'wallet' && result?.spendableBalanceVerified && result.spendableBalance && <div className="notice">
         <strong>{formatUnits(BigInt(result.spendableBalance.amountUnits), 6)} test USDC available privately</strong>
         <p>Checked {new Date(result.synchronization.checkedAt).toLocaleString()}. This is a snapshot of spendable private funds, separate from your public wallet balance.</p>
-        <p>{result.spendableBalance.amountUnits === '0' ? 'No spendable test USDC was found. Private funding is the next step.' : 'Private payment checkout is still being built.'}</p>
+        <p>{result.spendableBalance.amountUnits === '0' ? 'No spendable test USDC was found. Private funding is the next step.' : 'Open Pay a request to review a merchant payment and its broadcaster fee.'}</p>
       </div>}
       {review && <div className="notice" aria-label="Test deposit review">
         <strong>{reviewCurrent ? 'Review your test deposit' : 'This deposit review has expired or your funding wallet changed.'}</strong>
@@ -226,6 +235,11 @@ export function PrivateWalletPanel({ connection, runtime }) {
             <p>Fee check expires at {new Date(quote.expiresAt).toLocaleTimeString()}. The actual network fee may be lower.</p>
           </> : <p>{quote ? 'The network fee check expired.' : 'Network fee: not checked yet.'} Check it before proceeding to wallet confirmation.</p>}
           {runtime?.shieldPreflightEnabled && <button type="button" className="secondary" disabled={busy} onClick={() => perform('shield-preflight')}>{busy ? 'Checking…' : quoteCurrent ? 'Refresh network fee' : 'Check network fee'}</button>}
+          {runtime?.shieldSubmissionEnabled && quoteCurrent && <ShieldConfirmation key={quote.quoteId}
+            review={review} quote={quote} client={client} connection={connection} accountId={accountId} disabled={busy}
+            onBusyChange={value => { inFlight.current = value; setBusy(value); }}
+            needsNetworkSwitch={confirmationStep === 'switch-network'}
+            isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
           <details className="wallet-details"><summary>Funding wallet and destination</summary>
             <p>Public funding wallet</p><code>{review.publicAddress}</code>
             <button type="button" className="text-button" onClick={() => copyAddress(review.publicAddress)}>Copy funding address</button>
@@ -234,20 +248,35 @@ export function PrivateWalletPanel({ connection, runtime }) {
             <button type="button" className="text-button" onClick={() => copyAddress(review.privateAddress)}>Copy private address</button>
           </details>
           <p>A shield deposit exposes the public funding wallet, token, amount and timing. Funds become spendable privately only after confirmation and a successful wallet scan.</p>
-          <p>Approval and deposit submission are not enabled in this build. Wallet confirmation and live deposit verification come next.</p>
+          <p>Approval and deposit each require your wallet confirmation. Keep this page open and verify each original transaction before continuing.</p>
         </> : <p>Choose “Review test deposit” again to check fresh terms.</p>}
       </div>}
       {runtime?.privateRequestsEnabled && existing && ['pay', 'request', 'recovery'].includes(section) && <PrivatePaymentRequests key={`${accountId}:${section}`} view={section} created={result?.paymentRequest} history={result?.requestHistory} encryptedHistory={result?.encryptedRequestHistory}
-        wallet={result?.privateWallet} checkPayment={runtime?.privatePaymentCheckEnabled ? checkPayment : null} busy={busy}
+        wallet={result?.privateWallet} checkPayment={runtime?.privatePaymentCheckEnabled ? checkPayment : null}
+        transact={runtime?.privateTransferEnabled ? transact : null} busy={busy}
         onCloseHistory={() => setResult(previous => previous ? { ...previous, requestHistory: null, paymentRequest: null, encryptedRequestHistory: null } : previous)} isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
+      {section === 'request' && result?.receivedPrivatePayments && <div className="notice" role="status">
+        <h4>Received private payments</h4>
+        {result.receivedPrivatePayments.length === 0 && <p>No confirmed, POI-validated private payment matched a saved request. A recent payment may still need confirmation and wallet synchronization.</p>}
+        {result.receivedPrivatePayments.map(item => <div key={`${item.requestId}:${item.receipt.hash}`}>
+          <p><strong>Received {formatUnits(BigInt(item.amountUnits), 6)} test USDC privately</strong></p>
+          <p>Request: {item.requestId}</p>
+          <p>The receiving note was decrypted by this wallet, its request reference matched, and the Sepolia transaction was confirmed.</p>
+          <a href={`https://sepolia.etherscan.io/tx/${item.receipt.hash}`} target="_blank" rel="noopener noreferrer">View private transaction</a>
+          {item.receipt.requestExpiredAtSettlement && <p>Received after the request expired. Review acceptance with the buyer.</p>}
+        </div>)}
+      </div>}
       {download && section === 'recovery' && <div className="notice protected"><strong>Your encrypted recovery copy is ready.</strong><p>Save it, then choose “Verify saved backup” to check the downloaded file.</p><button className="secondary" onClick={saveBackup} disabled={busy}>Download encrypted backup</button></div>}
       {existing && section === 'wallet' && <details className="wallet-tools"><summary>Test deposit tools</summary>
-        <p>Prepare a test deposit review or check a saved attempt. Deposit submission is not enabled yet.</p>
+        <p>Review a small test deposit, confirm it in your wallet, or check a saved attempt.</p>
         {runtime?.shieldReviewEnabled && <button type="button" className="secondary" disabled={busy} onClick={() => chooseAction('shield-review')}>Review test deposit</button>}
         <DepositActivity key={accountId} connection={connection} accountId={accountId}/>
       </details>}
+      {runtime?.privateTransferEnabled && result?.privateWallet?.id && ['wallet', 'pay'].includes(section) && <PrivatePaymentActivity
+        key={accountId} wallet={result.privateWallet} transact={transact} disabled={busy}
+        isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
     </>}
-    <p className="wallet-test-note">Test wallets and test assets only. Private payment submission is still in development.</p>
+    <p className="wallet-test-note">Experimental local testnet build. Test wallets and test assets only.</p>
     <details className="wallet-tools"><summary>About this local demo</summary><p>This computer handles wallet keys and recovery passwords. Email sign-in alone cannot recover a wallet.</p><p>Identity verification is deferred. Signing in does not verify a merchant’s identity.</p></details>
   </section>;
 }

@@ -5,6 +5,7 @@ import { validateShieldReview } from './shield-review.mjs';
 import { validateShieldPreflight } from './shield-preflight.mjs';
 import { validatePrivatePaymentCheck, validateSpendableSnapshot } from '../../shared/private-payment-check.mjs';
 import { validatePrivateRecipient } from './private-request.mjs';
+import { validatePaymentSummary } from './private-payment.mjs';
 
 const messages = {
   'payment-check-failed': 'Private funds could not be checked. Check your recovery password, request expiry and local connection, then try again. No payment was authorized.',
@@ -36,6 +37,12 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
     try {
       const startedAt = Date.now();
       fields = { ...fields };
+      const transferAction = ['payment-quote', 'payment-submit', 'payment-status', 'payment-history'].includes(action);
+      if (transferAction) {
+        if (!expectedWallet?.id || expectedWallet.status !== 'locked') throw new Error();
+        expectedWallet = { ...expectedWallet };
+        if (action === 'payment-quote') fields.paymentRequest = validatePaymentRequest(fields.paymentRequest);
+      }
       if (action === 'payment-check') {
         fields.paymentRequest = validatePaymentRequest(fields.paymentRequest);
         if (!expectedWallet?.id || expectedWallet.status !== 'locked') throw new Error();
@@ -46,11 +53,14 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
       const token = await getAccessToken();
       current();
       if (!token || typeof token !== 'string') throw new AccountRequestError('sign-in-required');
+      const timeout = action === 'payment-submit' ? 905000 : action === 'payment-quote' ? 655000
+        : ['sync', 'payment-check', 'payment-status', 'invoice-receipts'].includes(action) ? 325000
+        : ['shield-review', 'shield-preflight'].includes(action) ? 125000 : 35000;
       const response = await fetchImpl(`${origin}${action === 'invoice-history-restore' ? '/api/account-history/restore' : '/api/account-wallet'}`, {
         method: 'POST', credentials: 'omit', cache: 'no-store', redirect: 'error',
         headers: { 'Content-Type': 'application/json', 'X-Honeybee-Request': 'wallet-v1', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...fields, action }),
-        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(['sync', 'payment-check'].includes(action) ? 325000 : ['shield-review', 'shield-preflight'].includes(action) ? 125000 : 35000)]) : AbortSignal.timeout(['sync', 'payment-check'].includes(action) ? 325000 : ['shield-review', 'shield-preflight'].includes(action) ? 125000 : 35000),
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeout)]) : AbortSignal.timeout(timeout),
       });
       current();
       if (!response.headers.get('content-type')?.includes('application/json')) throw new Error();
@@ -74,6 +84,20 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
         if (snapshot.checkedAt !== result.paymentCheck.checkedAt
             || snapshot.balanceUnits !== result.paymentCheck.balanceUnits) throw new Error();
       }
+      if (transferAction) {
+        if (result.privateWallet.id !== expectedWallet.id || result.privateWallet.privateAddress !== expectedWallet.privateAddress) throw new Error();
+        if (action === 'payment-history') {
+          if (!Array.isArray(result.privatePayments) || result.privatePayments.length > 16) throw new Error();
+          result.privatePayments = result.privatePayments.map(item => validatePaymentSummary(item, expectedWallet));
+        } else {
+          result.privatePayment = validatePaymentSummary(result.privatePayment, expectedWallet, { allowExpired: action !== 'payment-quote' });
+          const q = result.privatePayment.quote;
+          if (action === 'payment-quote' && (result.privatePayment.status !== 'quoted'
+              || JSON.stringify(q.request) !== JSON.stringify(fields.paymentRequest) || q.maxFeeUnits !== fields.maxFeeUnits)) throw new Error();
+          if (action !== 'payment-quote' && q.quoteId !== fields.quoteId) throw new Error();
+          if (expectedReview && JSON.stringify(q) !== JSON.stringify(expectedReview)) throw new Error();
+        }
+      }
       if (action === 'sync' && (result.privateWallet.status !== 'locked'
           || result.synchronization?.status !== 'history-scans-complete'
           || result.synchronization?.scans?.utxo !== 'Complete' || result.synchronization?.scans?.txid !== 'Complete'
@@ -82,10 +106,26 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
           || result.spendableBalance?.token !== '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
           || result.spendableBalance?.source !== 'sdk-spendable-snapshot'
           || !/^(0|[1-9][0-9]{0,77})$/.test(result.spendableBalance?.amountUnits))) throw new Error();
-      if (['invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore'].includes(action)) {
+      if (['invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore', 'invoice-receipts'].includes(action)) {
         if (result.privateWallet.status !== 'locked' || !result.privateWallet.id
             || result.networkLoaded !== false || result.spendableBalanceVerified !== false) throw new Error();
         result.requestHistory = validatePaymentRequestHistory(result.requestHistory, { recipient: result.privateWallet.privateAddress });
+      }
+      if (action === 'invoice-receipts') {
+        if (!Array.isArray(result.receivedPrivatePayments) || result.receivedPrivatePayments.length > 128
+            || !Number.isSafeInteger(result.receivedPaymentsCheckedAt) || result.receivedPaymentsCheckedAt < startedAt
+            || result.receivedPaymentsCheckedAt > Date.now() + 5000) throw new Error();
+        for (const item of result.receivedPrivatePayments) {
+          const request = result.requestHistory.requests.find(r => r.id === item.requestId && r.digest === item.requestDigest);
+          const receipt = item.receipt;
+          if (!request || item.recipient !== request.recipient || item.amountUnits !== request.amountUnits
+              || item.token !== request.token || item.memoMatched !== true || item.privateNoteDecrypted !== true || item.poiValidated !== true
+              || receipt?.status !== 'confirmed' || receipt.chainId !== 11155111
+              || !/^0x[a-f0-9]{64}$/.test(receipt.hash) || !/^0x[a-f0-9]{64}$/.test(receipt.blockHash)
+              || !/^0x[a-f0-9]+$/.test(receipt.blockNumber) || !Number.isSafeInteger(receipt.timestamp)
+              || !/^[0-9]{1,16}$/.test(receipt.confirmations) || BigInt(receipt.confirmations) < 2n
+              || receipt.requestExpiredAtSettlement !== (receipt.timestamp >= request.expiresAt)) throw new Error();
+        }
       }
       if (action === 'invoice-history-export') result.encryptedRequestHistory = validateHistoryBackup(result.encryptedRequestHistory);
       if (action === 'invoice-history-restore') {
@@ -117,7 +157,13 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
       }
       return result;
     } catch (error) {
+      if (['payment-quote', 'payment-submit', 'payment-status', 'payment-history'].includes(action)
+          && !['session-changed', 'sign-in-required'].includes(error.code)) {
+        throw new Error(action === 'payment-quote' ? 'A private payment quote could not be prepared. Check spendable funds, the fee limit, request expiry and broadcaster connection.'
+          : 'The private payment result could not be confirmed. Open saved private payments and check the original attempt before trying again.');
+      }
       if (action === 'payment-check' && !['session-changed', 'sign-in-required'].includes(error.code)) throw new AccountRequestError('payment-check-failed');
+      if (action === 'invoice-receipts' && !['session-changed', 'sign-in-required'].includes(error.code)) throw new Error('Received payments could not be verified. Check the recovery password and local connection, then retry this read-only check.');
       if (['invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore'].includes(action) && !['session-changed', 'sign-in-required'].includes(error.code)) throw new AccountRequestError(`${action}-failed`);
       if (action === 'shield-preflight' && !['session-changed', 'sign-in-required'].includes(error.code)) throw new AccountRequestError('preflight-failed');
       if (error instanceof AccountRequestError) throw error;
@@ -125,6 +171,7 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
     }
   };
   return { execute, preflight: (review, signal) => execute('shield-preflight', { reviewId: review.reviewId }, signal, review),
+    privatePayment: (action, fields, wallet, quote, signal) => execute(action, fields, signal, quote, wallet),
     checkPayment: (request, password, wallet, signal) => execute('payment-check', { paymentRequest: request, password }, signal, undefined, wallet) };
 }
 

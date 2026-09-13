@@ -11,6 +11,7 @@ import { shieldInput } from './account-shield.mjs';
 import { createShieldReviewCache } from './shield-review-cache.mjs';
 import { syncDiagnosticStages, syncFailureDiagnostic } from './sync-diagnostic.mjs';
 import { withAccountLock } from './account-lock.mjs';
+import { paymentFeeLimit } from './account-private-payment.mjs';
 
 let activeWorkers = 0;
 function runWorker(message, onSyncDiagnostic) {
@@ -24,13 +25,18 @@ function runWorker(message, onSyncDiagnostic) {
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'], execArgv: ['--dns-result-order=ipv4first'],
     });
     let result, stage = 'worker-start', reason = 'CHECK_FAILED', timedOut = false;
-    const budget = ['sync', 'payment-check'].includes(message.action) ? 320000
+    const budget = message.action === 'payment-submit' ? 900000 : message.action === 'payment-quote' ? 650000
+      : ['sync', 'payment-check', 'payment-status', 'invoice-receipts'].includes(message.action) ? 320000
       : ['shield-review', 'shield-preflight'].includes(message.action) ? 120000 : 30000;
     const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, budget);
     let workerError = false;
     child.once('error', () => { workerError = true; });
     child.on('message', value => {
-      if (message.action === 'sync' && syncDiagnosticStages.includes(value?.syncStage)) stage = value.syncStage;
+      if (message.action.startsWith('payment-') && ['history-scan', 'broadcaster', 'fee-estimate', 'proof-generation', 'proof-verification', 'broadcast'].includes(value?.paymentStage)) {
+        stage = value.paymentStage;
+        if (typeof onSyncDiagnostic === 'function') { try { onSyncDiagnostic({ stage, reason: 'IN_PROGRESS' }); } catch {} }
+      }
+      else if (message.action === 'sync' && syncDiagnosticStages.includes(value?.syncStage)) stage = value.syncStage;
       else if (message.action === 'sync' && value?.ok === false) reason = syncFailureDiagnostic(stage, value.syncFailureReason).reason;
       else result = value;
     });
@@ -67,17 +73,21 @@ export async function createAccountWalletService({ directory, appId, verificatio
     const session = await authenticate(request?.accessToken);
     try {
       if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error();
-      const { action, password, backup, amount, publicAddress, reviewId, lifetimeSeconds, historyBackup, paymentRequest } = request;
-      const usesNetwork = ['sync', 'shield-review', 'shield-preflight', 'payment-check'].includes(action);
+      const { action, password, backup, amount, publicAddress, reviewId, lifetimeSeconds, historyBackup, paymentRequest, maxFeeUnits, quoteId, hash } = request;
+      const paymentAction = ['payment-quote', 'payment-submit', 'payment-status', 'payment-history'].includes(action);
+      const usesNetwork = ['sync', 'shield-review', 'shield-preflight', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'invoice-receipts'].includes(action);
       const needsPassword = !['status', 'shield-preflight'].includes(action);
       const importsBackup = ['restore', 'verify-backup'].includes(action);
-      const allowed = ['action', 'accessToken', ...(needsPassword ? ['password'] : []), ...(importsBackup ? ['backup'] : []), ...(action === 'shield-review' ? ['amount', 'publicAddress'] : []), ...(action === 'shield-preflight' ? ['reviewId'] : []), ...(action === 'invoice-create' ? ['amount', 'lifetimeSeconds'] : []), ...(action === 'invoice-history-restore' ? ['historyBackup'] : []), ...(action === 'payment-check' ? ['paymentRequest'] : [])];
+      const allowed = ['action', 'accessToken', ...(needsPassword ? ['password'] : []), ...(importsBackup ? ['backup'] : []), ...(action === 'shield-review' ? ['amount', 'publicAddress'] : []), ...(action === 'shield-preflight' ? ['reviewId'] : []), ...(action === 'invoice-create' ? ['amount', 'lifetimeSeconds'] : []), ...(action === 'invoice-history-restore' ? ['historyBackup'] : []), ...(['payment-check', 'payment-quote'].includes(action) ? ['paymentRequest'] : []), ...(action === 'payment-quote' ? ['maxFeeUnits'] : []), ...(['payment-submit', 'payment-status'].includes(action) ? ['quoteId'] : []), ...(action === 'payment-status' ? ['hash'] : [])];
       if (Object.keys(request).some(key => !allowed.includes(key))
-          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync', 'shield-review', 'shield-preflight', 'invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore', 'payment-check'].includes(action)) throw new Error();
+          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync', 'shield-review', 'shield-preflight', 'invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'payment-history', 'invoice-receipts'].includes(action)) throw new Error();
       if (usesNetwork && !synchronization) throw new Error();
       if (action === 'shield-review') shieldInput(amount, publicAddress);
       if (action === 'invoice-create') invoiceInput(amount, lifetimeSeconds);
-      const checkedRequest = action === 'payment-check' ? validatePrivateRequest(paymentRequest, invoiceValidation()) : null;
+      const checkedRequest = ['payment-check', 'payment-quote'].includes(action) ? validatePrivateRequest(paymentRequest, invoiceValidation()) : null;
+      if (action === 'payment-quote') paymentFeeLimit(maxFeeUnits);
+      if (['payment-submit', 'payment-status'].includes(action) && !/^0x[a-f0-9]{64}$/.test(quoteId)) throw new Error();
+      if (action === 'payment-status' && hash !== undefined && !/^0x[a-fA-F0-9]{64}$/.test(hash)) throw new Error();
       const normalizedHistory = action === 'invoice-history-restore' ? validateHistoryBackup(historyBackup) : null;
       if (needsPassword) checkRecoveryPassword(password);
       if (importsBackup && (typeof backup !== 'string' || Buffer.byteLength(backup) > accountBackupLimit)) throw new Error();
@@ -87,7 +97,8 @@ export async function createAccountWalletService({ directory, appId, verificatio
       const result = await runWorker({ directory, session, action, password, backup,
         ...(action === 'shield-review' ? { amount, publicAddress } : {}),
         ...(action === 'invoice-create' ? { amount, lifetimeSeconds } : {}),
-        ...(action === 'payment-check' ? { paymentRequest: checkedRequest } : {}),
+        ...(['payment-check', 'payment-quote'].includes(action) ? { paymentRequest: checkedRequest } : {}),
+        ...(paymentAction ? { maxFeeUnits, quoteId, hash } : {}),
         ...(action === 'invoice-history-restore' ? { historyBackup: normalizedHistory } : {}),
         ...(usesNetwork ? { syncConfig: synchronization } : {}) }, onSyncDiagnostic);
       if (action === 'shield-review') shieldReviews.put(session, result.shieldReview);
