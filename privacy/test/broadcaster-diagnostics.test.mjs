@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createBroadcasterDiagnostics, sanitizeBroadcasterDiagnostics } from '../src/broadcaster-diagnostics.mjs';
 
-const chain = { type: 0, id: 11155111 }, token = 'test-token';
+const chain = { type: 0, id: 11155111 }, token = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 const secret = 'synthetic-private-string';
 function fixture() {
   const network = { connected: [], peers: [], started: false, topics: [], chainOffers: [], tokenOffers: [] };
@@ -65,6 +65,40 @@ test('SDK logs become fixed stage and rejection counters without exposing payloa
     maxStorePeers: -1, paymentReady: true, statusesObserved: ['Connected', secret, 'Connected'] });
   assert.equal(filtered.maxConnectedPeers, 0); assert.equal(filtered.maxStorePeers, 0);
   assert.deepEqual(filtered.statusesObserved, ['Connected']); assert.equal(filtered.paymentReady, undefined);
+  assert.ok(!JSON.stringify(filtered).includes(secret));
+});
+
+test('eligible fee-token contracts are normalized, bounded and retained after offers expire', async () => {
+  const { network, client } = fixture(), diagnostic = createBroadcasterDiagnostics(client, chain, token);
+  const alternative = '0x7b79995e5f793a07bc00c21412e50ecae098e7f9';
+  network.chainOffers = [
+    { tokenAddress: alternative, railgunAddress: secret, tokenFee: { raw: secret } },
+    { tokenAddress: '0x' + alternative.slice(2).toUpperCase() },
+    { tokenAddress: '0x' + '0'.repeat(40) }, { tokenAddress: secret }, null,
+  ];
+  let state = await diagnostic.sample();
+  assert.equal(state.requestedFeeToken, token.toLowerCase());
+  assert.deepEqual(state.observedFeeTokenAddresses, [alternative]);
+  assert.equal(state.feeTokenStatus, 'other-token-offers-only');
+  assert.equal(state.maxEligibleTestUSDCOffers, 0);
+  assert.equal(state.paymentReady, undefined);
+  assert.ok(!JSON.stringify(state).includes(secret));
+  network.chainOffers = [];
+  state = await diagnostic.sample();
+  assert.deepEqual(state.observedFeeTokenAddresses, [alternative]);
+  assert.equal(state.feeTokenStatus, 'other-token-offers-only');
+  network.tokenOffers = [{ tokenAddress: token }];
+  state = await diagnostic.sample();
+  assert.equal(state.feeTokenStatus, 'requested-token-offer-observed');
+
+  const many = Array.from({ length: 40 }, (_, i) => '0x' + (i + 1).toString(16).padStart(40, '0'));
+  const filtered = sanitizeBroadcasterDiagnostics({ requestedFeeToken: secret,
+    observedFeeTokenAddresses: [secret, { tokenAddress: alternative }, null, ...many, ...many],
+    feeTokenStatus: 'ready', paymentReady: true });
+  assert.equal(filtered.requestedFeeToken, null);
+  assert.deepEqual(filtered.observedFeeTokenAddresses, many.slice(0, 16));
+  assert.equal(filtered.feeTokenStatus, 'no-eligible-offers-observed');
+  assert.equal(filtered.paymentReady, undefined);
   assert.ok(!JSON.stringify(filtered).includes(secret));
 });
 

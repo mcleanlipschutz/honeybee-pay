@@ -1,5 +1,6 @@
-// Read-only diagnostics for the pinned Waku client. No peer addresses, messages,
-// fee payloads, account data or raw SDK errors are exported to the console.
+// Read-only diagnostics for the pinned Waku client. Only public fee-token
+// contract addresses are exported: no peer/account addresses, fee payloads,
+// account data or raw SDK errors. Observed offers are not payment authorization.
 const counts = [
   'maxDiscoveredPeers', 'maxConnectedPeers', 'maxFilterPeers', 'maxStorePeers',
   'maxLightPushV2Peers', 'maxLightPushV3Peers', 'maxConfiguredTopics',
@@ -12,6 +13,10 @@ const events = new Set(['unknown', 'creating-client', 'waiting-for-peers', 'peer
 const failures = new Set(['none', 'peer-start-failed', 'subscription-failed', 'fee-history-failed',
   'sdk-error', 'peer-store-unavailable']);
 const boundedCount = value => Number.isSafeInteger(value) && value >= 0 && value <= 10000 ? value : 0;
+const tokenAddress = value => typeof value === 'string' && /^0x[0-9a-fA-F]{40}$/.test(value)
+  && !/^0x0{40}$/.test(value) ? value.toLowerCase() : null;
+const tokenAddresses = value => Array.isArray(value)
+  ? [...new Set(value.slice(0, 10000).map(tokenAddress).filter(Boolean))].sort().slice(0, 16) : [];
 
 export function sanitizeBroadcasterDiagnostics(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -22,12 +27,16 @@ export function sanitizeBroadcasterDiagnostics(value) {
       ? [...new Set(value.statusesObserved.filter(status => statuses.has(status)))].slice(0, 5) : [],
     lastEvent: events.has(value.lastEvent) ? value.lastEvent : 'unknown',
     lastFailure: failures.has(value.lastFailure) ? value.lastFailure : 'none',
+    requestedFeeToken: tokenAddress(value.requestedFeeToken),
+    observedFeeTokenAddresses: tokenAddresses(value.observedFeeTokenAddresses),
+    feeTokenStatus: boundedCount(value.maxEligibleTestUSDCOffers) > 0 ? 'requested-token-offer-observed'
+      : boundedCount(value.maxEligibleSepoliaOffers) > 0 ? 'other-token-offers-only' : 'no-eligible-offers-observed',
     ...Object.fromEntries(counts.map(key => [key, boundedCount(value[key])])),
   };
 }
 
 export function createBroadcasterDiagnostics(client, chain, token, { sampleTimeoutMs = 1000 } = {}) {
-  const state = sanitizeBroadcasterDiagnostics({});
+  const state = sanitizeBroadcasterDiagnostics({ requestedFeeToken: token });
   let pending;
   const increment = key => { state[key] = Math.min(10000, state[key] + 1); };
   const peak = (key, value) => { state[key] = Math.max(state[key], boundedCount(value)); };
@@ -70,7 +79,14 @@ export function createBroadcasterDiagnostics(client, chain, token, { sampleTimeo
       peak('maxConnectedPeers', connected.length);
       state.clientStartedObserved ||= client.isStarted() === true;
       peak('maxConfiguredTopics', client.getContentTopics()?.length || 0);
-      peak('maxEligibleSepoliaOffers', client.findAllBroadcastersForChain(chain, false)?.length || 0);
+      const offers = client.findAllBroadcastersForChain(chain, false) || [];
+      peak('maxEligibleSepoliaOffers', offers.length);
+      // Read only SDK-filtered eligible offers, never unverified fee messages.
+      // Preserve a bounded union across samples so expiry cannot erase evidence.
+      state.observedFeeTokenAddresses = tokenAddresses([
+        ...state.observedFeeTokenAddresses,
+        ...offers.slice(0, 10000).map(offer => offer?.tokenAddress),
+      ]);
       peak('maxEligibleTestUSDCOffers', client.findBroadcastersForToken(chain, token, false)?.length || 0);
       if (!core?.libp2p?.peerStore?.all) return;
       const peers = await Promise.race([

@@ -9,9 +9,10 @@ The code now connects account wallets, real RAILGUN transfer/POI proving,
 explicit buyer confirmation, broadcaster submission, an encrypted attempt
 journal, and buyer/merchant receipt verification. **A funded end-to-end private
 payment has not yet been validated.** A real 01x03 synthetic proof and tamper
-checks pass; the deployed Sepolia verifier key matches. Broadcaster discovery
-timed out from the development environment. Check that connection on the laptop
-before depositing test assets. Do not describe an offline proof as settlement.
+checks pass; the deployed Sepolia verifier key matches. The latest Windows
+diagnostic connected to Waku and observed eligible Sepolia fee offers, but none
+accepted the configured Circle test-USDC fee token. Resolve that fee-asset
+mismatch before depositing test assets. Do not describe an offline proof as settlement.
 
 ## 1. Update and check the broadcaster
 
@@ -44,6 +45,16 @@ prompt returns; no extra command is required after 95 seconds. Share the complet
 final JSON, including its `diagnostic` object. Its peak counts distinguish
 discovered peers, authenticated peer connections, advertised Waku service
 protocols, configured topics and eligible Sepolia/test-USDC fee offers.
+`requestedFeeToken` identifies the configured token contract, and
+`observedFeeTokenAddresses` lists up to 16 unique public fee-token contracts from
+SDK-filtered eligible Sepolia offers. These are historical observations across
+the check; they do not guarantee a still-valid offer, verify a contract's identity,
+or change which token the application can pay. The list is sorted and contains
+no fee payloads or broadcaster/account addresses. `feeTokenStatus` summarizes
+whether the requested token, only other tokens, or no eligible offers were observed.
+When it says `other-token-offers-only`, share the final JSON so we can verify
+the offered contracts. Reinstalling Node or adding mainnet USDC cannot resolve
+that token mismatch. This build uses Sepolia test assets only.
 `clientStartedObserved` and configured topics do not prove a subscription is
 healthy; the SDK can report startup after a caught subscription error. Fixed
 SDK event/failure labels and fee rejection counters are included to distinguish
@@ -52,6 +63,11 @@ discovery. A raw TCP reachability result alone is not a Waku handshake or fee qu
 TLS, POI requirements and private submission are not bypassed on failure.
 `paymentReady:false` in this diagnostic is expected: discovery alone does not
 authorize spending or establish a funded wallet.
+
+If dependencies and transfer artifacts were already installed, the diagnostic
+update needs only `git pull --ff-only` followed by
+`npm.cmd run broadcaster:preflight` in the existing privacy PowerShell window.
+No reinstall or frontend build is needed for this diagnostic change.
 
 ## 2. Build and reopen the local page
 

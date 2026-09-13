@@ -15,15 +15,21 @@ details below are historical.
   API/regression run passed with the scope and timing recorded in ZK_FLOW.md.
 - [x] Independent source review fixes tested: POI startup, faulty ACK recovery,
   still-live reverted authorization and unsupported incoming transaction isolation.
-- [ ] Broadcaster discovered from McLean's laptop; no test deposit before this check.
+- [ ] Eligible broadcaster fee offer for the application's configured token;
+  no test deposit before this check.
 - [x] Windows dependency installation and all six added pinned proving artifacts
   completed, as reported by McLean. The subsequent broadcaster command returned
   without a result; this is not a passing connection check. The diagnostic now
   reports startup, early exit and its deadline independently of worker cleanup.
-- [x] McLean's clean Windows retry printed `discovery-failed`; TCP reachability
-  to an advertised Waku peer at `45.76.18.7:30304` passed. Full peer negotiation,
-  subscriptions and eligible test-USDC offers are still unverified. The diagnostic
-  now includes sanitized peer/protocol/fee counts and SDK stage labels.
+- [x] McLean's Windows diagnostic observed 6 connected peers, Filter/Store/LightPush
+  services, 16 fee messages, 11 fee updates and a peak of 10 eligible Sepolia
+  offers. These are offers, not a count of unique broadcasters. No eligible
+  Circle test-USDC fee offer was observed; the command remained unavailable.
+- [x] Twelve focused diagnostic tests passed, including bounded public fee-token
+  contracts, evidence retention after offer expiry/worker timeout and no false readiness.
+- [ ] Capture live offered fee-token contracts on Windows and verify a compatible
+  test asset. Supporting a separate fee token also requires explicit quote,
+  balance/deposit, proof-batch and receipt handling; the diagnostic does not enable it.
 - [ ] Actual approval and deposit wallet prompts, canonical deposit and spendable private balance.
 - [ ] Actual private proof broadcast, sender outgoing POI completion and matching merchant receipt.
 - [ ] Reload, original-attempt recovery and wallet recovery after the funded transfer.

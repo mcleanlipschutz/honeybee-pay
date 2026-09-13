@@ -1138,3 +1138,48 @@ fee-history failure. The SDK also reported that it had started despite no peer
 connection, confirming why that flag alone must not be treated as readiness.
 The final status remained unavailable, with exit code 1. The corresponding
 Windows peer/service/offer counters are the next required observation.
+
+## September 13, 2026 — identify the observed broadcaster fee assets
+
+McLean's Windows result at 240381e reached six connected peers, with Filter,
+Store and LightPush protocols advertised, 16 fee messages, 11 fee updates and
+a peak of ten eligible Sepolia offers. No eligible offer accepted the configured
+Circle Sepolia USDC contract, 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238.
+The final status remained unavailable at the parent deadline. This establishes
+that Waku communication and eligible fee messages reached Windows; it does not
+establish ten unique broadcasters or a compatible fee offer.
+
+The diagnostic now reports the requested fee-token contract and a sorted,
+deduplicated list of at most 16 public contract addresses from the pinned SDK's
+eligible Sepolia offers. It preserves observations after expiry and worker
+timeout, strips malformed/zero addresses and extra payload fields, and derives
+a fixed fee-token observation label from the counters. No peer or wallet
+addresses, raw messages, private files or secrets are logged. Observed alternatives
+cannot select a payment token or make a failed check ready.
+
+The upstream broadcaster example at ec49691533b4edc2dafefbd8cdb5f611290b2115
+configures Sepolia WETH, WETH_ALT, DAI and USDT labels, without Circle test USDC:
+https://github.com/Railgun-Community/ppoi-safe-broadcaster-example/blob/ec49691533b4edc2dafefbd8cdb5f611290b2115/src/server/config/config-tokens.ts
+This reference configuration is not evidence that a particular live provider
+accepts those contracts, nor verification of their code/identity. The WETH
+contract in that example also differs from the pinned shared-models default.
+The Windows contract list is therefore required before selecting a fee asset.
+Circle documents the separate Sepolia test-USDC contract and that testnet tokens
+have no financial value: https://developers.circle.com/stablecoins/usdc-contract-addresses
+The user's conditional offer of real USDC does not change this testnet scope.
+
+Source review of wallet 10.9.0 tx-generator and engine 9.6.0 transaction-batch
+confirms the SDK places the broadcaster fee first and groups outputs by token.
+A separate fee asset would need its own verified spendable balance, exact units,
+explicit quote and deposit path, plus multi-batch proof and receipt verification.
+The current application still requires same-token USDC payment and fee, and its
+verification gate accepts one proof batch. No token was silently substituted,
+no public-wallet broadcast fallback was enabled and no signing path changed.
+
+Validation: all 12 focused broadcaster diagnostic/preflight tests passed.
+Cases include mixed-case address deduplication, invalid/zero addresses, bounded
+output, expired-offer retention, parent IPC sanitization and alternative offers
+remaining unavailable at timeout. No wallet was opened or transaction sent.
+Live fee-token identification, compatible fee-path implementation and the funded
+private transfer/merchant receipt remain pending. This update needs only a Git
+pull and the existing preflight command on Windows; no reinstall or build.

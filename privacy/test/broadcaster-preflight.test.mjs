@@ -70,6 +70,23 @@ test('health counters survive a worker timeout without exposing extra fields or 
   assert.equal(lines.length, 2);
 });
 
+test('alternative fee-token evidence survives deadline but cannot make the requested token ready', async () => {
+  const child = fixture(), { lines, promise } = start(child, 25);
+  const token = '0x7b79995e5f793a07bc00c21412e50ecae098e7f9';
+  child.emit('message', { type, kind: 'diagnostic', diagnostic: {
+    maxEligibleSepoliaOffers: 10, maxEligibleTestUSDCOffers: 0,
+    observedFeeTokenAddresses: [token, 'synthetic-private-string'],
+    paymentReady: true, feeTokenStatus: 'ready',
+  } });
+  const result = await promise;
+  assert.equal(result.status, 'private-broadcaster-unavailable');
+  assert.equal(result.reason, 'deadline-exceeded');
+  assert.equal(result.paymentReady, false);
+  assert.equal(result.diagnostic.feeTokenStatus, 'other-token-offers-only');
+  assert.deepEqual(result.diagnostic.observedFeeTokenAddresses, [token]);
+  assert.ok(!JSON.stringify(lines).includes('synthetic-private-string'));
+});
+
 test('spawn errors, malformed messages and worker failures produce fixed sanitized output', async () => {
   const lines = [];
   const failure = await runBroadcasterPreflight({ output: value => lines.push(value),
