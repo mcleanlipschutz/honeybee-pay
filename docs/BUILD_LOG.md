@@ -1317,3 +1317,16 @@ also remains successful when the diagnostic observer throws. This pass does not
 claim the user's unknown quote failure is fixed; the next local result must
 identify its stage/code. No frontend or dependency change and no funded
 transaction, production deployment or main merge in this pass.
+
+
+## September 13, 2026 — Honeybee mascot logo
+
+Replaced the header H tile with McLean’s selected generated bumblebee mascot.
+The original transparent PNG is served as a local asset with fixed desktop/mobile
+dimensions; the existing accessible home-link name remains. Narrow headers can wrap
+the network badge rather than overlap the brand. This is a branding-only update.
+
+Validation: the checkout client and Worker production builds passed, and the
+selected PNG retains its alpha channel. No wallet, transaction, recovery, or
+private-payment behavior changed. The public Site receives the same scoped header
+change on its existing source, separately from the newer local privacy runtime.

@@ -108,7 +108,7 @@ function Checkout({ connection, runtime }) {
     try { buildTransfer(approval, changed, approval.sender); } catch { setBlocked(true); }
   };
   return <div className={`shell${localWalletSetup && view === 'wallet' ? ' local-wallet-shell' : ''}`}>
-    <header><a className="brand" href="/" aria-label="Honeybee Pay home"><span className="mark">h.</span>honeybee<span className="brand-light">pay</span></a><span className="network"><i/>Sepolia testnet</span></header>
+    <header><a className="brand" href="/" aria-label="Honeybee Pay home"><img className="mark" src="/honeybee-mascot.png" alt="" width="52" height="52" decoding="async"/>honeybee<span className="brand-light">pay</span></a><span className="network"><i/>Sepolia testnet</span></header>
     {!localWalletSetup && <PaymentCount/>}
     <nav className="view-switch" aria-label="Honeybee sections"><button aria-pressed={view === 'wallet'} disabled={busy || (!!hash && !receipt)} onClick={() => setView('wallet')}>Wallet setup</button><button aria-pressed={view === 'checkout'} onClick={() => setView('checkout')}>Public test checkout</button><button aria-pressed={view === 'receipts'} disabled={busy || (!!hash && !receipt)} onClick={() => setView('receipts')}>Receipts</button></nav>
     <main>
