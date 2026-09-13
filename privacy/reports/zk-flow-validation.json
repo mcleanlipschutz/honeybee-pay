@@ -1,0 +1,79 @@
+{
+  "date": "2026-09-13",
+  "status": "implemented-awaiting-funded-live-validation",
+  "network": "Ethereum_Sepolia",
+  "chainID": 11155111,
+  "privatePaymentSettled": false,
+  "transactionsSentByAgent": 0,
+  "userSecretsUsedByAgent": false,
+  "packages": {
+    "@railgun-community/wallet": "10.9.0",
+    "@railgun-community/engine": "9.6.0",
+    "@railgun-community/shared-models": "8.0.1",
+    "@railgun-community/waku-broadcaster-client-node": "9.1.1",
+    "snarkjs": "0.7.5",
+    "ethers": "6.14.3"
+  },
+  "proof": {
+    "circuit": "01x03",
+    "realGroth16ProofGeneratedAndVerified": true,
+    "syntheticInputs": true,
+    "networkLoadedDuringProofSmoke": false,
+    "tamperCasesRejected": ["output", "bound-approval", "recipient-witness", "value-witness"],
+    "transferAndPOIVerificationKeysDerivedFromPinnedZkeys": true,
+    "deployedTransferVerificationKeyMatched": true,
+    "deploymentHead": "finalized",
+    "deploymentBlockNumber": "0xb27368",
+    "deploymentBlockHash": "0xb21e8cb70fcf66f45cee8d17889dfd0ff1d23afd56cd624b7dbb0f48a5915f41"
+  },
+  "liveDisposableAccount": {
+    "funded": false,
+    "checkedAt": "2026-09-13T10:02:23.177Z",
+    "scanPassed": true,
+    "utxoHistoryComplete": true,
+    "txidHistoryComplete": true,
+    "walletScanned": true,
+    "spendablePrivateUSDCUnits": "0",
+    "scanSeconds": 97,
+    "recoveryPassedAtSeconds": 98,
+    "deploymentBlockNumber": "0xb273fd",
+    "deploymentBlockHash": "0x5aa15e5470d10e83ec485c2692d161832fc335e49a6babb5dc0f00a0db98a855",
+    "precedingAttempt": "RPC deployment-check timeout; wallet recovery still passed"
+  },
+  "tests": [
+    {"suite": "private-payment", "passed": 10, "scope": "SDK/RPC/broadcaster doubles; final reviewed code"},
+    {"suite": "checkout", "passed": 39, "scope": "before final review refinements"},
+    {"suite": "private-runtime-and-API-focused", "passed": 37, "scope": "before final review refinements; includes disposable wallet and HTTP checks"},
+    {"suite": "deployment-and-account-lock", "passed": 12, "scope": "focused regression"},
+    {"suite": "checkout-client-and-shield-submission", "passed": 17, "scope": "final reviewed code"}
+  ],
+  "productionCheckoutBuild": "passed",
+  "privateLockfileInstallDryRun": "passed",
+  "privateProductionDependencyAudit": {"low": 5, "moderate": 5, "high": 0, "critical": 0},
+  "independentSourceReview": {
+    "audit": false,
+    "verifiedFixes": [
+      "prover and POI configuration before wallet load and recovery scan",
+      "untrusted broadcaster acknowledgement cannot pin receipt recovery",
+      "reverted outer transaction does not revoke the private authorization",
+      "unsupported incoming transaction cannot hide another valid merchant receipt"
+    ]
+  },
+  "developmentBroadcasterDiscovery": "unavailable within bounded 95-second preflight",
+  "remainingLiveGates": [
+    "broadcaster discovery from the user's laptop",
+    "actual approval and deposit wallet confirmations and canonical receipts",
+    "spendable funded private balance",
+    "private proof broadcast and outgoing POI completion",
+    "matching merchant private receipt",
+    "reload and recovery after the funded private transfer"
+  ],
+  "limitations": [
+    "local Sepolia test assets only",
+    "one input and two or three outputs",
+    "payment journal not included in wallet or merchant-history backups",
+    "no cancellation UI for an unresolved private authorization",
+    "vendor-independent exit and unshield recovery not validated",
+    "hosted public checkout does not run the new local private flow"
+  ]
+}

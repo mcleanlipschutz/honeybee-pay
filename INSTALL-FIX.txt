@@ -1,0 +1,152 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @graphql-mesh/merger-bare@0.96.6
+npm warn Found: @graphql-mesh/types@0.91.15
+npm warn node_modules/@graphql-mesh/types
+npm warn   peer @graphql-mesh/types@"^0.91.12" from @graphql-mesh/cache-localforage@0.7.20
+npm warn   node_modules/@graphql-mesh/cache-localforage
+npm warn     @graphql-mesh/cache-localforage@"^0.7.20" from @railgun-community/wallet@10.9.0
+npm warn     node_modules/@railgun-community/wallet
+npm warn   7 more (@graphql-mesh/graphql, @graphql-mesh/http, ...)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer @graphql-mesh/types@"^0.96.6" from @graphql-mesh/merger-bare@0.96.6
+npm warn node_modules/@graphql-mesh/merger-bare
+npm warn   @graphql-mesh/merger-bare@"^0.96.0" from @railgun-community/wallet@10.9.0
+npm warn   node_modules/@railgun-community/wallet
+npm warn
+npm warn Conflicting peer dependency: @graphql-mesh/types@0.96.6
+npm warn node_modules/@graphql-mesh/types
+npm warn   peer @graphql-mesh/types@"^0.96.6" from @graphql-mesh/merger-bare@0.96.6
+npm warn   node_modules/@graphql-mesh/merger-bare
+npm warn     @graphql-mesh/merger-bare@"^0.96.0" from @railgun-community/wallet@10.9.0
+npm warn     node_modules/@railgun-community/wallet
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @graphql-mesh/merger-bare@0.96.6
+npm warn Found: @graphql-mesh/utils@0.43.23
+npm warn node_modules/@graphql-mesh/utils
+npm warn   peer @graphql-mesh/utils@"^0.43.20" from @graphql-mesh/cache-localforage@0.7.20
+npm warn   node_modules/@graphql-mesh/cache-localforage
+npm warn     @graphql-mesh/cache-localforage@"^0.7.20" from @railgun-community/wallet@10.9.0
+npm warn     node_modules/@railgun-community/wallet
+npm warn   6 more (@graphql-mesh/graphql, @graphql-mesh/http, ...)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer @graphql-mesh/utils@"^0.96.6" from @graphql-mesh/merger-bare@0.96.6
+npm warn node_modules/@graphql-mesh/merger-bare
+npm warn   @graphql-mesh/merger-bare@"^0.96.0" from @railgun-community/wallet@10.9.0
+npm warn   node_modules/@railgun-community/wallet
+npm warn
+npm warn Conflicting peer dependency: @graphql-mesh/utils@0.96.6
+npm warn node_modules/@graphql-mesh/utils
+npm warn   peer @graphql-mesh/utils@"^0.96.6" from @graphql-mesh/merger-bare@0.96.6
+npm warn   node_modules/@graphql-mesh/merger-bare
+npm warn     @graphql-mesh/merger-bare@"^0.96.0" from @railgun-community/wallet@10.9.0
+npm warn     node_modules/@railgun-community/wallet
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @graphql-mesh/merger-stitching@0.96.6
+npm warn Found: @graphql-mesh/types@0.91.15
+npm warn node_modules/@graphql-mesh/types
+npm warn   peer @graphql-mesh/types@"^0.91.12" from @graphql-mesh/cache-localforage@0.7.20
+npm warn   node_modules/@graphql-mesh/cache-localforage
+npm warn     @graphql-mesh/cache-localforage@"^0.7.20" from @railgun-community/wallet@10.9.0
+npm warn     node_modules/@railgun-community/wallet
+npm warn   7 more (@graphql-mesh/graphql, @graphql-mesh/http, ...)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer @graphql-mesh/types@"^0.96.6" from @graphql-mesh/merger-stitching@0.96.6
+npm warn node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/merger-stitching
+npm warn   @graphql-mesh/merger-stitching@"0.96.6" from @graphql-mesh/merger-bare@0.96.6
+npm warn   node_modules/@graphql-mesh/merger-bare
+npm warn
+npm warn Conflicting peer dependency: @graphql-mesh/types@0.96.6
+npm warn node_modules/@graphql-mesh/types
+npm warn   peer @graphql-mesh/types@"^0.96.6" from @graphql-mesh/merger-stitching@0.96.6
+npm warn   node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/merger-stitching
+npm warn     @graphql-mesh/merger-stitching@"0.96.6" from @graphql-mesh/merger-bare@0.96.6
+npm warn     node_modules/@graphql-mesh/merger-bare
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @graphql-mesh/merger-stitching@0.96.6
+npm warn Found: @graphql-mesh/utils@0.43.23
+npm warn node_modules/@graphql-mesh/utils
+npm warn   peer @graphql-mesh/utils@"^0.43.20" from @graphql-mesh/cache-localforage@0.7.20
+npm warn   node_modules/@graphql-mesh/cache-localforage
+npm warn     @graphql-mesh/cache-localforage@"^0.7.20" from @railgun-community/wallet@10.9.0
+npm warn     node_modules/@railgun-community/wallet
+npm warn   6 more (@graphql-mesh/graphql, @graphql-mesh/http, ...)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer @graphql-mesh/utils@"^0.96.6" from @graphql-mesh/merger-stitching@0.96.6
+npm warn node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/merger-stitching
+npm warn   @graphql-mesh/merger-stitching@"0.96.6" from @graphql-mesh/merger-bare@0.96.6
+npm warn   node_modules/@graphql-mesh/merger-bare
+npm warn
+npm warn Conflicting peer dependency: @graphql-mesh/utils@0.96.6
+npm warn node_modules/@graphql-mesh/utils
+npm warn   peer @graphql-mesh/utils@"^0.96.6" from @graphql-mesh/merger-stitching@0.96.6
+npm warn   node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/merger-stitching
+npm warn     @graphql-mesh/merger-stitching@"0.96.6" from @graphql-mesh/merger-bare@0.96.6
+npm warn     node_modules/@graphql-mesh/merger-bare
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @graphql-mesh/store@0.96.6
+npm warn Found: @graphql-mesh/types@0.91.15
+npm warn node_modules/@graphql-mesh/types
+npm warn   peer @graphql-mesh/types@"^0.91.12" from @graphql-mesh/cache-localforage@0.7.20
+npm warn   node_modules/@graphql-mesh/cache-localforage
+npm warn     @graphql-mesh/cache-localforage@"^0.7.20" from @railgun-community/wallet@10.9.0
+npm warn     node_modules/@railgun-community/wallet
+npm warn   7 more (@graphql-mesh/graphql, @graphql-mesh/http, ...)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer @graphql-mesh/types@"^0.96.6" from @graphql-mesh/store@0.96.6
+npm warn node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/store
+npm warn   peer @graphql-mesh/store@"^0.96.6" from @graphql-mesh/merger-stitching@0.96.6
+npm warn   node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/merger-stitching
+npm warn
+npm warn Conflicting peer dependency: @graphql-mesh/types@0.96.6
+npm warn node_modules/@graphql-mesh/types
+npm warn   peer @graphql-mesh/types@"^0.96.6" from @graphql-mesh/store@0.96.6
+npm warn   node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/store
+npm warn     peer @graphql-mesh/store@"^0.96.6" from @graphql-mesh/merger-stitching@0.96.6
+npm warn     node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/merger-stitching
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @graphql-mesh/store@0.96.6
+npm warn Found: @graphql-mesh/utils@0.43.23
+npm warn node_modules/@graphql-mesh/utils
+npm warn   peer @graphql-mesh/utils@"^0.43.20" from @graphql-mesh/cache-localforage@0.7.20
+npm warn   node_modules/@graphql-mesh/cache-localforage
+npm warn     @graphql-mesh/cache-localforage@"^0.7.20" from @railgun-community/wallet@10.9.0
+npm warn     node_modules/@railgun-community/wallet
+npm warn   6 more (@graphql-mesh/graphql, @graphql-mesh/http, ...)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer @graphql-mesh/utils@"^0.96.6" from @graphql-mesh/store@0.96.6
+npm warn node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/store
+npm warn   peer @graphql-mesh/store@"^0.96.6" from @graphql-mesh/merger-stitching@0.96.6
+npm warn   node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/merger-stitching
+npm warn
+npm warn Conflicting peer dependency: @graphql-mesh/utils@0.96.6
+npm warn node_modules/@graphql-mesh/utils
+npm warn   peer @graphql-mesh/utils@"^0.96.6" from @graphql-mesh/store@0.96.6
+npm warn   node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/store
+npm warn     peer @graphql-mesh/store@"^0.96.6" from @graphql-mesh/merger-stitching@0.96.6
+npm warn     node_modules/@graphql-mesh/merger-bare/node_modules/@graphql-mesh/merger-stitching
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated memdown@6.1.1: Superseded by memory-level (https://github.com/Level/community#faq)
+npm warn deprecated lodash.get@4.4.2: This package is deprecated. Use the optional chaining (?.) operator instead.
+npm warn deprecated levelup@5.1.1: Superseded by abstract-level (https://github.com/Level/community#faq)
+npm warn deprecated level-errors@3.0.1: Superseded by abstract-level (https://github.com/Level/community#faq)
+npm warn deprecated level-concat-iterator@3.1.0: Superseded by abstract-level (https://github.com/Level/community#faq)
+npm warn deprecated level-codec@10.0.0: Superseded by level-transcoder (https://github.com/Level/community#faq)
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated encoding-down@7.1.0: Superseded by abstract-level (https://github.com/Level/community#faq)
+npm warn deprecated deferred-leveldown@7.0.0: Superseded by abstract-level (https://github.com/Level/community#faq)
+npm warn deprecated abstract-leveldown@7.2.0: Superseded by abstract-level (https://github.com/Level/community#faq)
+
+added 642 packages in 22s
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice

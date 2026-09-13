@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-09-10T01:46:18.185427+00:00",
+  "paymentTests": {
+    "passed": 4,
+    "failed": 0
+  },
+  "productionBuildPassed": true,
+  "browserVerified": false,
+  "livePrivyFlowVerified": false,
+  "privateCheckoutIntegrated": false,
+  "privyAppIdRequired": true,
+  "initialDependencyAudit": {
+    "moderate": 25,
+    "high": 2,
+    "critical": 0,
+    "total": 27
+  },
+  "axiosOverride": "1.18.0",
+  "remainingWsUpdateAndFinalAudit": "Blocked by environment usage-limit rejection",
+  "fundsMoved": false,
+  "deployed": false
+}
