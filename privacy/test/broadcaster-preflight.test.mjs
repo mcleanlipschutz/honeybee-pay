@@ -55,6 +55,21 @@ test('deadline prints its own failure without depending on worker exit or close'
   assert.equal(lines.length, 2);
 });
 
+test('health counters survive a worker timeout without exposing extra fields or claiming discovery', async () => {
+  const child = fixture(), { lines, promise } = start(child, 25);
+  child.emit('message', { type, kind: 'diagnostic', diagnostic: {
+    sampled: true, maxDiscoveredPeers: 3, maxConnectedPeers: 1,
+    lastEvent: 'subscribing', lastFailure: 'subscription-failed',
+    secret: 'synthetic-private-path', paymentReady: true,
+  } });
+  const result = await promise;
+  assert.equal(result.reason, 'deadline-exceeded'); assert.equal(result.paymentReady, false);
+  assert.equal(result.diagnostic.maxConnectedPeers, 1);
+  assert.equal(result.diagnostic.lastFailure, 'subscription-failed');
+  assert.ok(!JSON.stringify(lines).includes('synthetic-private-path'));
+  assert.equal(lines.length, 2);
+});
+
 test('spawn errors, malformed messages and worker failures produce fixed sanitized output', async () => {
   const lines = [];
   const failure = await runBroadcasterPreflight({ output: value => lines.push(value),

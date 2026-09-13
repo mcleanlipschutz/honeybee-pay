@@ -4,15 +4,22 @@ import { testNetwork } from './network-preflight.mjs';
 import { accountSyncNetwork, accountSyncToken } from './account-sync.mjs';
 
 const chain = testNetwork(accountSyncNetwork).chain;
-export async function openPaymentBroadcaster(checkSession, expected) {
+export async function openPaymentBroadcaster(checkSession, expected, onDiagnostic) {
   let timer;
+  // Used only by the public preflight CLI. Diagnostic observers cannot change
+  // selection, authorization, network options or the result of this operation.
+  const report = (kind, value) => {
+    try { onDiagnostic?.(kind, value); } catch { /* Diagnostics are best effort. */ }
+  };
   const deadline = Date.now() + 90000;
   const check = () => { checkSession(); if (Date.now() >= deadline) throw new Error('Private payment broadcaster unavailable'); };
   try {
     // The pinned client verifies fee-message signatures and expiry. No developer
     // mode, sender public wallet, unsigned price feed, or arbitrary endpoint.
     await Promise.race([
-      WakuBroadcasterClient.start(chain, { enableHealthcheckLogs: false }, () => {}, { log() {}, error() {} }),
+      WakuBroadcasterClient.start(chain, { enableHealthcheckLogs: false },
+        (_, status) => report('status', status),
+        { log: value => report('log', value), error: error => report('error', error) }),
       new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Private payment broadcaster unavailable')), 90000); }),
     ]);
     clearTimeout(timer);

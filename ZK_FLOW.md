@@ -39,8 +39,16 @@ final result within about 95 seconds. It opens no wallet and sends no payment.
 Look for **`private-broadcaster-ready`**. If it instead says
 **`private-broadcaster-unavailable`**, report that result and stop before funding.
 The failure includes a fixed stage and reason; a silent or early worker exit
-cannot count as successful discovery. If PowerShell returns without a final
-result, run `Write-Output "Exit code: $LASTEXITCODE"` and share that output.
+cannot count as successful discovery. Leave PowerShell untouched until its
+prompt returns; no extra command is required after 95 seconds. Share the complete
+final JSON, including its `diagnostic` object. Its peak counts distinguish
+discovered peers, authenticated peer connections, advertised Waku service
+protocols, configured topics and eligible Sepolia/test-USDC fee offers.
+`clientStartedObserved` and configured topics do not prove a subscription is
+healthy; the SDK can report startup after a caught subscription error. Fixed
+SDK event/failure labels and fee rejection counters are included to distinguish
+that case. Counts and debug labels never authorize payment or bypass a failed
+discovery. A raw TCP reachability result alone is not a Waku handshake or fee quote.
 TLS, POI requirements and private submission are not bypassed on failure.
 `paymentReady:false` in this diagnostic is expected: discovery alone does not
 authorize spending or establish a funded wallet.

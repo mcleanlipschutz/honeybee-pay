@@ -1099,3 +1099,42 @@ broadcaster availability. The Windows result still needs confirmation.
 This diagnostic-only update needs
 no dependency reinstall or frontend rebuild. The funded private-payment gate
 remains open and the signing/proof/broadcaster selection logic is unchanged.
+
+## September 13, 2026 — distinguish Waku connection and fee discovery failures
+
+McLean's clean Windows retry produced the expected startup and final JSON:
+`private-broadcaster-unavailable`, stage `discovering-broadcaster`, reason
+`discovery-failed`. A separate Windows TCP probe to `45.76.18.7:30304` succeeded.
+That reaches an advertised peer's port but does not establish a libp2p/Waku
+handshake, service subscription or eligible Sepolia test-USDC broadcaster.
+The earlier cursor/output overlap is not the cause of the repeatable failure.
+
+Development diagnosis decoded three signed peer records from the configured
+RAILGUN DNS directory. Google and Cloudflare DNS-over-HTTPS both answered.
+The client stored three peers but connected to none; direct TCP probes returned
+ENETUNREACH in this environment. This cannot be used to attribute McLean's
+different Windows failure to his hotspot or to declare Sepolia fees unavailable.
+
+The existing read-only preflight now samples the same pinned client used by
+payment discovery. Its final JSON retains peak discovered/connected peer counts,
+advertised Filter/Store/LightPush protocol counts, configured topics, eligible
+Sepolia/test-USDC offer counts, fixed SDK events and fee rejection counters.
+SDK raw messages, peer identities, addresses and payloads are not printed.
+An optional guarded diagnostic observer leaves network options, signatures,
+POI requirements, expiry, broadcaster selection and payment authorization intact.
+Peer-store reads are bounded and polls do not overlap. Samples survive failure,
+worker cleanup and the parent deadline; none can turn a failed check into ready.
+
+Ten focused tests passed, including real subprocess IPC, bounded/stalled reads,
+sanitization, timeout retention and a throwing observer that cannot change
+selection or turn a startup error into success. No wallet or transaction was
+opened for these diagnostics. Full Windows discovery and the funded private
+payment/merchant receipt gate remain pending. This update requires only a Git
+pull and rerunning the diagnostic, without an install or frontend rebuild.
+
+The development run emitted the new final diagnostic successfully: three
+discovered peers, zero connected/protocol peers, zero eligible offers and a
+fee-history failure. The SDK also reported that it had started despite no peer
+connection, confirming why that flag alone must not be treated as readiness.
+The final status remained unavailable, with exit code 1. The corresponding
+Windows peer/service/offer counters are the next required observation.

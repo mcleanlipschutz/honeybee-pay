@@ -20,6 +20,10 @@ details below are historical.
   completed, as reported by McLean. The subsequent broadcaster command returned
   without a result; this is not a passing connection check. The diagnostic now
   reports startup, early exit and its deadline independently of worker cleanup.
+- [x] McLean's clean Windows retry printed `discovery-failed`; TCP reachability
+  to an advertised Waku peer at `45.76.18.7:30304` passed. Full peer negotiation,
+  subscriptions and eligible test-USDC offers are still unverified. The diagnostic
+  now includes sanitized peer/protocol/fee counts and SDK stage labels.
 - [ ] Actual approval and deposit wallet prompts, canonical deposit and spendable private balance.
 - [ ] Actual private proof broadcast, sender outgoing POI completion and matching merchant receipt.
 - [ ] Reload, original-attempt recovery and wallet recovery after the funded transfer.

@@ -2,6 +2,7 @@ import { fork } from 'node:child_process';
 import { writeSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createBroadcasterDiagnostics, sanitizeBroadcasterDiagnostics } from './broadcaster-diagnostics.mjs';
 
 const entry = fileURLToPath(import.meta.url);
 const workerFlag = '--broadcaster-preflight-worker';
@@ -24,7 +25,7 @@ export function runBroadcasterPreflight({
 } = {}) {
   output({ status: 'private-broadcaster-checking', ...base, timeoutSeconds: Math.ceil(timeoutMs / 1000) });
   return new Promise(resolveResult => {
-    let child, timer, finished = false, stage = 'starting-worker';
+    let child, timer, diagnostic, finished = false, stage = 'starting-worker';
     const unavailable = (reason, extra = {}) => ({ status: 'private-broadcaster-unavailable', ...base, stage, reason, ...extra });
     const finish = value => {
       if (finished) return;
@@ -32,9 +33,10 @@ export function runBroadcasterPreflight({
       clearTimeout(timer);
       // Write before shutdown. The isolated worker owns network sockets only;
       // terminating it cannot strand a wallet lease or interrupt a transaction.
-      output(value);
+      const result = diagnostic ? { ...value, diagnostic } : value;
+      output(result);
       try { child?.kill('SIGKILL'); } catch { /* Worker may have already exited. */ }
-      resolveResult(value);
+      resolveResult(result);
     };
     timer = setTimeout(() => finish(unavailable('deadline-exceeded')), timeoutMs);
     try {
@@ -44,6 +46,12 @@ export function runBroadcasterPreflight({
         if (value?.type !== messageType) return finish(unavailable('invalid-worker-result'));
         if (value.kind === 'phase' && phases.has(value.stage)) {
           stage = value.stage;
+          return;
+        }
+        if (value.kind === 'diagnostic') {
+          const next = sanitizeBroadcasterDiagnostics(value.diagnostic);
+          if (!next) return finish(unavailable('invalid-worker-result'));
+          diagnostic = next;
           return;
         }
         if (value.kind === 'result' && value.ready === true) {
@@ -74,18 +82,29 @@ async function runWorker() {
     if (!process.connected) return resolveSent();
     process.send({ type: messageType, ...value }, () => resolveSent());
   });
-  let stage = 'loading-client';
+  let stage = 'loading-client', diagnostic, interval;
   try {
     await send({ kind: 'phase', stage });
     const { openPaymentBroadcaster } = await import('./payment-broadcaster.mjs');
+    const { WakuBroadcasterClient } = await import('@railgun-community/waku-broadcaster-client-node');
+    const { accountSyncNetwork, accountSyncToken } = await import('./account-sync.mjs');
+    const { testNetwork } = await import('./network-preflight.mjs');
+    diagnostic = createBroadcasterDiagnostics(WakuBroadcasterClient, testNetwork(accountSyncNetwork).chain, accountSyncToken);
+    interval = setInterval(() => {
+      void diagnostic.sample().then(value => send({ kind: 'diagnostic', diagnostic: value })).catch(() => {});
+    }, 3000);
     stage = 'discovering-broadcaster';
     await send({ kind: 'phase', stage });
-    await openPaymentBroadcaster(() => {});
+    await openPaymentBroadcaster(() => {}, undefined, diagnostic.observe);
+    clearInterval(interval);
+    await send({ kind: 'diagnostic', diagnostic: await diagnostic.sample() });
     // Report before SDK shutdown, which can itself stall. This disposable
     // process releases its network sockets when it exits.
     await send({ kind: 'result', ready: true });
     process.exit(0);
   } catch {
+    clearInterval(interval);
+    if (diagnostic) await send({ kind: 'diagnostic', diagnostic: diagnostic.snapshot() });
     await send({ kind: 'result', ready: false,
       reason: stage === 'loading-client' ? 'client-load-failed' : 'discovery-failed' });
     process.exit(1);
