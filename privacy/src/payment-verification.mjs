@@ -26,7 +26,9 @@ export function decodePrivatePaymentBatch(transaction, expectedNullifiers, minGa
       || decoded[0].length !== (relayed ? 2 : 1)) throw new Error('Unexpected private proof batch');
   const transactions = decoded[0];
   const action = relayed ? decoded[1] : null;
-  if (relayed && (!action.requireSuccess || action.minGasLimit !== 0n || action.calls.length !== 0)) throw new Error('Unexpected private relay actions');
+  // Historical true and broadcaster-compatible false are both valid for an
+  // empty call list. The complete action remains bound into both proofs.
+  if (relayed && (action.minGasLimit !== 0n || action.calls.length !== 0)) throw new Error('Unexpected private relay actions');
   const adaptParams = relayed ? bindingHash(transactions, action) : zeroWord;
   for (const tx of transactions) {
     const b = tx.boundParams;
@@ -49,6 +51,26 @@ export function decodePrivatePayment(transaction, expectedNullifiers, minGas) {
   const transactions = decodePrivatePaymentBatch(transaction, expectedNullifiers, minGas);
   if (transactions.length !== 1) throw new Error('Only one reviewed private transfer is supported');
   return transactions[0];
+}
+
+export function paymentNeedsCompatibilityProof(populated) {
+  if (getAddress(populated.transaction.to) !== getAddress(paymentRelay)) return false;
+  return relayInterface.decodeFunctionData('relay', populated.transaction.data)[1].requireSuccess;
+}
+
+// Recovery must spend exactly BOTH original inputs, including their tree IDs.
+// Rebuilding with another available note would create a second payable attempt.
+export function validateCompatiblePayment(record) {
+  const old = record.populated, next = record.compatiblePopulated, minGas = record.quote.minGasPriceWei;
+  const original = decodePrivatePaymentBatch(old.transaction, old.nullifiers, minGas);
+  const compatible = decodePrivatePaymentBatch(next.transaction, next.nullifiers, minGas);
+  const inputs = txs => txs.map(tx => [tx.boundParams.treeNumber.toString(), ...tx.nullifiers.map(paymentHash)]);
+  if (!paymentNeedsCompatibilityProof(old) || paymentNeedsCompatibilityProof(next)
+      || original.length !== 2 || compatible.length !== 2
+      || JSON.stringify(inputs(original)) !== JSON.stringify(inputs(compatible))) {
+    throw new Error('Compatible proof does not spend the original notes');
+  }
+  return next;
 }
 
 // No balance overrides and no dummy-sender verification shortcut. This checks
@@ -77,8 +99,9 @@ export async function verifyPreparedPayment({ transaction, nullifiers, minGas, r
 }
 
 export async function verifyPrivatePaymentReceipt({ record, hash, rpc, checkSession }) {
-  const original = record.populated;
-  const expected = decodePrivatePaymentBatch(original.transaction, original.nullifiers, record.quote.minGasPriceWei);
+  const variants = [record.populated];
+  if (record.compatibleDeliveryAuthorized === true) variants.push(validateCompatiblePayment(record));
+  for (const v of variants) decodePrivatePaymentBatch(v.transaction, v.nullifiers, record.quote.minGasPriceWei);
   hash = paymentHash(hash);
   // A broadcaster ACK is untrusted. Fee replacements can have another hash
   // while preserving the exact approved proof/calldata. Bind to that immutable
@@ -89,9 +112,11 @@ export async function verifyPrivatePaymentReceipt({ record, hash, rpc, checkSess
   const receipt = await rpc('eth_getTransactionReceipt', [hash]);
   checkSession();
   if (!tx) return { status: 'unknown', hash: record.hash || null };
-  if (paymentHash(tx.hash) !== hash || getAddress(tx.to) !== getAddress(original.transaction.to)
-      || tx.input?.toLowerCase() !== original.transaction.data.toLowerCase()
+  const original = variants.find(v => tx.input?.toLowerCase() === v.transaction.data.toLowerCase()
+    && getAddress(tx.to) === getAddress(v.transaction.to));
+  if (!original || paymentHash(tx.hash) !== hash
       || BigInt(tx.value) !== 0n || (tx.chainId && BigInt(tx.chainId) !== 11155111n)) throw new Error('Transaction does not match the approved private payment');
+  const expected = decodePrivatePaymentBatch(original.transaction, original.nullifiers, record.quote.minGasPriceWei);
   if (!receipt?.blockNumber) return { status: 'pending', hash };
   if (paymentHash(receipt.transactionHash) !== hash || !word(receipt.blockHash)
       || tx.blockHash !== receipt.blockHash || tx.blockNumber !== receipt.blockNumber

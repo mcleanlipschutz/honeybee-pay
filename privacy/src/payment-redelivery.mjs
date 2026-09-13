@@ -4,19 +4,22 @@ import { validatePrivateRequest } from '../../shared/private-request.mjs';
 import { validateRedeliveryReview } from '../../shared/payment-redelivery-review.mjs';
 import { invoiceValidation } from './account-invoice.mjs';
 import { feeWETH } from '../../shared/test-assets.mjs';
-import { decodePrivatePaymentBatch, verifyPreparedPayment, paymentHash } from './payment-verification.mjs';
+import { decodePrivatePaymentBatch, verifyPreparedPayment, paymentHash,
+  paymentNeedsCompatibilityProof, validateCompatiblePayment } from './payment-verification.mjs';
 import { selectQuotedBroadcaster } from './payment-broadcaster.mjs';
 import { paymentFailureReason } from './payment-diagnostic.mjs';
 
 const hash = text => keccak256(toUtf8Bytes(text));
 const payloadDigest = record => hash(JSON.stringify({ quote: record.quote, gas: record.gas,
-  broadcaster: record.broadcaster, populated: record.populated }));
+  broadcaster: record.broadcaster, populated: record.populated, compatiblePopulated: record.compatiblePopulated }));
 
 // The caller holds the account filesystem lease for this entire operation.
-// Read-only status/history never enter this branch. No prover, signer, alternate
-// recipient, new gas terms or replacement transaction is accepted here.
+// Read-only status/history never enter this branch. A legacy relay payload may
+// get ONE compatible proof, checked against both original tree/nullifier pairs.
+// The original payload remains immutable and either authorization can settle.
 export async function operatePaymentRedelivery({ action, reviewId, record, data, store,
-  prepared, session, checkSession, openBroadcaster, report }) {
+  prepared, session, checkSession, openBroadcaster, prepareCompatible, report }) {
+  if (!['payment-redelivery-review', 'payment-redelivery-submit'].includes(action)) throw new Error('Original payment is not eligible for delivery retry');
   const quote = record.quote;
   const checkOriginal = () => {
     checkSession();
@@ -31,12 +34,16 @@ export async function operatePaymentRedelivery({ action, reviewId, record, data,
   };
   report('redelivery-review', 'IN_PROGRESS');
   checkOriginal();
+  const compatibleRequired = paymentNeedsCompatibilityProof(record.populated);
+  const deliveryKind = compatibleRequired ? 'compatible-proof' : 'original-payload';
+  const selectedPayload = () => compatibleRequired ? validateCompatiblePayment(record) : record.populated;
   let review;
   const check = () => {
     checkOriginal();
     if (review) {
       validateRedeliveryReview(review, { quote, hash });
-      if (review.payloadDigest !== payloadDigest(record)) throw new Error('Original delivery review expired or changed');
+      if (review.deliveryKind !== deliveryKind || review.payloadDigest !== payloadDigest(record)) throw new Error('Original delivery review expired or changed');
+      selectedPayload();
     }
   };
   if (action === 'payment-redelivery-submit') {
@@ -57,7 +64,7 @@ export async function operatePaymentRedelivery({ action, reviewId, record, data,
     check();
     if (!selectQuotedBroadcaster([broadcaster.selected], record.broadcaster)) throw new Error('Quoted broadcaster fee unavailable');
     report('proof-verification', 'IN_PROGRESS');
-    const verify = async () => {
+    const verify = async populated => {
       check();
       if (BigInt(await prepared.rpc('eth_chainId', [])) !== 11155111n) throw new Error('Wrong receipt network');
       const deployment = await prepared.inspect(2);
@@ -65,31 +72,47 @@ export async function operatePaymentRedelivery({ action, reviewId, record, data,
       if (feeBlock?.hash !== deployment.blockHash || BigInt(feeBlock.baseFeePerGas) >= BigInt(quote.minGasPriceWei)) {
         throw new Error('Original payment network fee is no longer sufficient');
       }
-      await verifyPreparedPayment({ ...record.populated, minGas: quote.minGasPriceWei,
+      await verifyPreparedPayment({ ...populated, minGas: quote.minGasPriceWei,
         rpc: prepared.rpc, deployment, checkSession: check });
       check();
       return deployment;
     };
-    await verify();
+    // Check original unspent inputs before any expensive recovery proof work.
+    await verify(record.populated);
+    if (action === 'payment-redelivery-review' && compatibleRequired && !record.compatiblePopulated) {
+      const generated = await prepareCompatible(check);
+      check();
+      // Never allow an SDK-selected different input, even if balances and the
+      // merchant amount happen to match. Do not persist an invalid alternative.
+      validateCompatiblePayment({ ...record, compatiblePopulated: generated });
+      await verify(generated);
+      record.compatiblePopulated = generated;
+      await store.write(data);
+      report('compatibility-check', 'ORIGINAL_NOTES_MATCHED');
+    }
+    await verify(selectedPayload());
     if (action === 'payment-redelivery-review') {
+      // Proving can outlive the offer observed when this worker started.
+      const current = broadcaster.currentOffer ? broadcaster.currentOffer() : broadcaster.selected;
+      if (!selectQuotedBroadcaster([current], record.broadcaster)) throw new Error('Quoted broadcaster fee unavailable');
       const createdAt = Date.now();
-      const body = { version: 1, purpose: 'original-private-payment-redelivery', quoteId: quote.quoteId,
+      const body = { version: 2, purpose: 'original-private-payment-recovery', deliveryKind, quoteId: quote.quoteId,
         payloadDigest: payloadDigest(record), nonce: '0x' + randomBytes(32).toString('hex'), createdAt,
-        expiresAt: Math.min(createdAt + 300000, quote.request.expiresAt * 1000, session.expiresAt, broadcaster.selected.tokenFee.expiration) };
+        expiresAt: Math.min(createdAt + 300000, quote.request.expiresAt * 1000, session.expiresAt, current.tokenFee.expiration) };
       review = validateRedeliveryReview({ ...body, reviewId: hash(JSON.stringify(body)) }, { quote, hash });
       record.deliveryReview = review; record.deliveryReviewUsed = false;
       await store.write(data);
       report('redelivery-review', 'ORIGINAL_DELIVERY_REVIEW_READY');
       return { deliveryReview: review };
     }
-    // Only the original serialized calldata, nullifiers and POIs enter the SDK.
-    // A new signed transport advertisement may have the same fee terms; its ID
-    // is not a new private proof, amount, recipient, or additional WETH fee.
-    const send = await broadcaster.create(structuredClone(record.populated), BigInt(quote.minGasPriceWei));
+    // Submit cannot generate or modify any proof. It sends precisely the
+    // payload named by the fresh review, preserving the old authorization too.
+    const send = await broadcaster.create(structuredClone(selectedPayload()), BigInt(quote.minGasPriceWei));
     // Transport creation can take time. Recheck the chain after it completes.
-    await verify();
+    await verify(selectedPayload());
     check();
     record.deliveryDiagnostic = 'ORIGINAL_DELIVERY_STARTED';
+    if (compatibleRequired) record.compatibleDeliveryAuthorized = true;
     await store.write(data);
     report('broadcast', 'ORIGINAL_DELIVERY_STARTED');
     try {

@@ -77,9 +77,9 @@ async function operate({ directory, session, action, password, backup, syncConfi
   let engineStarted = false, createdSlot = false, completed = false;
   let background;
   const paymentAction = ['payment-quote', 'payment-submit', 'payment-status', 'payment-history', 'payment-redelivery-review', 'payment-redelivery-submit'].includes(action);
-  const signal = AbortSignal.timeout(action === 'payment-submit' ? 850000 : action === 'payment-quote' ? 600000 : accountSyncDeadline);
+  const signal = AbortSignal.timeout(['payment-submit', 'payment-redelivery-review'].includes(action) ? 850000 : action === 'payment-quote' ? 600000 : accountSyncDeadline);
   const usesNetwork = ['sync', 'shield-review', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'payment-redelivery-review', 'payment-redelivery-submit', 'invoice-receipts'].includes(action);
-  const scansWallet = ['sync', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'invoice-receipts'].includes(action);
+  const scansWallet = ['payment-redelivery-review', 'sync', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'invoice-receipts'].includes(action);
   const checkSession = () => { live(session); if (usesNetwork) signal.throwIfAborted(); };
   try {
     live(session);

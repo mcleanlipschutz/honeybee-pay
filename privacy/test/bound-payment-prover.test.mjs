@@ -44,7 +44,7 @@ test('adapter drives the pinned iterative estimator, binds real-proof call argum
     assert.equal(from, generator.DUMMY_FROM_ADDRESS); assert.equal(publicSend, false); assert.equal(crossContract, true);
     assert.equal(transaction.to, paymentRelay);
     const [batch, action] = relayInterface.decodeFunctionData('relay', transaction.data);
-    assert.equal(action.calls.length, 0); assert.equal(action.requireSuccess, true);
+    assert.equal(action.calls.length, 0); assert.equal(action.requireSuccess, false);
     return batch[0].commitments.length === 1 ? 200000n : 300000n;
   });
   const pois = { syntheticProofsPerList: { feeAndMerchant: true } };

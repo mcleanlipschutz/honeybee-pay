@@ -27,7 +27,7 @@ function runWorker(message, onSyncDiagnostic) {
     });
     let result, stage = 'worker-start', reason = 'CHECK_FAILED', timedOut = false, reportedStage;
     const paymentOperation = message.action.startsWith('payment-');
-    const budget = message.action === 'payment-submit' ? 900000 : message.action === 'payment-quote' ? 650000
+    const budget = ['payment-submit', 'payment-redelivery-review'].includes(message.action) ? 900000 : message.action === 'payment-quote' ? 650000
       : ['sync', 'payment-check', 'payment-status', 'payment-redelivery-review', 'payment-redelivery-submit', 'invoice-receipts'].includes(message.action) ? 320000
       : ['shield-review', 'shield-preflight'].includes(message.action) ? 120000 : 30000;
     const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, budget);

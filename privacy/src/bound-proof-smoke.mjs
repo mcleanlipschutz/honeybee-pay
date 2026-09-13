@@ -33,7 +33,7 @@ try {
     new ArtifactStore(async p => read(p), async () => { throw Error('Offline writes disabled'); }, async p => { read(p); return true; }), false, false);
   const prover = getProver();
   prover.setSnarkJSGroth16({ fullProve: (inputs, wasm, zkey, logger) => groth16.fullProve(inputs, wasm, zkey, logger, undefined, { singleThread: true }), verify: groth16.verify });
-  const action = { random: '0x' + randomBytes(31).toString('hex'), requireSuccess: true, minGasLimit: 0n, calls: [] };
+  const action = { random: '0x' + randomBytes(31).toString('hex'), requireSuccess: false, minGasLimit: 0n, calls: [] };
   const options = [feeWETH, testUSDC].map((asset, i) => ({ nullifyingKey: BigInt(123 + i), tokenAddress: BigInt(asset.token) }));
   const txs = options.map((opts, i) => ({
     proof: { a: { x: 1n, y: 2n }, b: { x: [1n, 2n], y: [1n, 2n] }, c: { x: 1n, y: 2n } },
@@ -45,7 +45,7 @@ try {
     unshieldPreimage: { npk: zero, token: { tokenType: 0, tokenAddress: addressZero, tokenSubID: 0 }, value: 0 },
   }));
   const binding = bindingHash(txs, action);
-  assert.equal(binding, RelayAdaptHelper.getRelayAdaptParams(txs, action.random.slice(2), true, [], 0n));
+  assert.equal(binding, RelayAdaptHelper.getRelayAdaptParams(txs, action.random.slice(2), false, [], 0n));
   const vkey = JSON.parse(read('artifacts-v2.1/01x02/vkey.json'));
   for (let i = 0; i < txs.length; i++) {
     const tx = txs[i]; tx.boundParams.adaptParams = binding;
@@ -54,6 +54,10 @@ try {
     assert.equal(await prover.verifyRailgunProof(publicInputs, proof, { vkey }), true);
     tx.proof = Prover.formatProof(proof); tx.merkleRoot = word(publicInputs.merkleRoot);
     tx.commitments = publicInputs.commitmentsOut.map(word);
+    const oldPolicyBinding = bindingHash(txs, { ...action, requireSuccess: true });
+    assert.notEqual(oldPolicyBinding, binding);
+    assert.equal(await prover.verifyRailgunProof({ ...publicInputs,
+      boundParamsHash: hashBoundParamsV2({ ...tx.boundParams, adaptParams: oldPolicyBinding }) }, proof, { vkey }), false);
     const removedBinding = bindingHash([tx], action);
     assert.notEqual(removedBinding, binding);
     assert.equal(await prover.verifyRailgunProof({ ...publicInputs,
@@ -80,7 +84,7 @@ try {
     assert.equal((await rpc('eth_getBlockByNumber', [block.number, false])).hash, block.hash);
     liveVerifier = { blockNumber: block.number, blockHash: block.hash, bothProofsAccepted: true, removedProofBindingRejected: true };
   }
-  console.log(JSON.stringify({ status: 'bound-private-proof-check-passed', proofs: 2, circuit: '01x02',
+  console.log(JSON.stringify({ status: 'bound-private-proof-check-passed', proofs: 2, circuit: '01x02', requireSuccess: false, changedRelayPolicyRejected: true,
     bothProofsVerified: true, changedRelayBindingRejected: true, removedProofBindingRejected: true,
     reorderedProofBindingChanged: true, liveVerifier, syntheticInputs: true, poiProved: false, paymentSettled: false, paymentReady: false }));
   await stopRailgunEngine(); clearTimeout(timeout); process.exit(0);

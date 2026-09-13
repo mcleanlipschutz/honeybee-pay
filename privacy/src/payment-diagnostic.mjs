@@ -7,7 +7,29 @@ export const paymentDiagnosticStages = Object.freeze([...syncDiagnosticStages,
   'payment-runtime', 'payment-store', 'payment-validation', 'payment-balance',
   'broadcaster', 'fee-estimate', 'quote-validation', 'proof-generation',
   'proof-verification', 'broadcast', 'transaction-lookup', 'receipt-verification',
-  'nullifier-check', 'chain-event-search', 'payment-outcome', 'redelivery-review']);
+  'nullifier-check', 'chain-event-search', 'payment-outcome', 'redelivery-review', 'compatibility-check']);
+// The pinned Waku SDK wraps a broadcaster response in this exact outer error.
+// Inspect just its immediate cause; never emit or retain any response text.
+const broadcasterReasons = new Map([
+  ['Could not create valid transaction object.', 'BROADCAST_RELAY_REJECTED'],
+  ['Bad token fee.', 'BROADCAST_FEE_REJECTED'],
+  ['Gas Price was rejected as too low to guarantee inclusion into the next block.', 'BROADCAST_GAS_TOO_LOW'],
+  ['Gas price rejected as too low.', 'BROADCAST_GAS_TOO_LOW'],
+  ['Gas estimate error. Possible connection failure.', 'BROADCAST_GAS_ESTIMATE_FAILED'],
+  ['Gas estimate error. Possible connection failure. Please try again.', 'BROADCAST_GAS_ESTIMATE_FAILED'],
+  ['Transaction has already been sent.', 'BROADCAST_ALREADY_SENT'],
+  ['Broadcaster does not support this network.', 'BROADCAST_NETWORK_UNSUPPORTED'],
+  ['Missing required field.', 'BROADCAST_FIELD_MISSING'],
+  ['No Broadcaster Fee included in transaction.', 'BROADCAST_FEE_MISSING'],
+  ['Unknown Broadcaster error.', 'BROADCAST_UNKNOWN_ERROR'],
+  ['Network Gas Price has changed dramatically and the Broadcaster Fee was rejected.', 'BROADCAST_FEE_CHANGED'],
+  ['Failed to extract Broadcaster Fee from transaction. Please try again.', 'BROADCAST_FEE_EXTRACTION_FAILED'],
+  ['Broadcaster is out of gas, or currently does not have enough to process this transaction.', 'BROADCAST_OUT_OF_GAS'],
+  ['ALREADY SPENT: One of the notes contained in this transaction have already been spent!', 'BROADCAST_NOTE_SPENT'],
+  ['RPC Rejected Transction: Gas fee too low. Please select a higher gas price and resubmit.', 'BROADCAST_GAS_TOO_LOW'],
+  ['Could not validate Proof of Innocence - Broadcaster cannot process this transaction.', 'BROADCAST_POI_REJECTED'],
+  ['RPC response is missing.', 'BROADCAST_RPC_RESPONSE_MISSING'],
+]);
 const applicationReasons = new Map([
   ['Incomplete wallet scan', 'SCAN_INCOMPLETE'],
   ['Spendable balance unavailable', 'BALANCE_UNAVAILABLE'],
@@ -39,9 +61,10 @@ const applicationReasons = new Map([
   ['Original payment is not eligible for delivery retry', 'ORIGINAL_DELIVERY_INELIGIBLE'],
   ['Original payment network fee is no longer sufficient', 'ORIGINAL_DELIVERY_FEE_CHANGED'],
   ['Private note was already spent', 'ORIGINAL_NOTE_ALREADY_SPENT'],
+  ['Compatible proof does not spend the original notes', 'ORIGINAL_NOTES_CHANGED'],
   ['This test payment needs one spendable note per token and change in both tokens. Choose a smaller payment or fund separate test deposits.', 'UNSUPPORTED_NOTE_SHAPE'],
 ]);
-const allowedReasons = new Set([...applicationReasons.values(), 'IN_PROGRESS',
+const allowedReasons = new Set([...applicationReasons.values(), ...broadcasterReasons.values(), 'IN_PROGRESS', 'ORIGINAL_NOTES_MATCHED',
   'ORIGINAL_DELIVERY_REVIEW_READY', 'ORIGINAL_DELIVERY_STARTED',
   'DELIVERY_REASON_NOT_RECORDED', 'BROADCAST_ACK_RECEIVED', 'TRANSACTION_CANDIDATE_FOUND',
   'NO_TRANSACTION_CANDIDATE', 'RECEIPT_UNAVAILABLE', 'RECEIPT_REJECTED',
@@ -50,6 +73,10 @@ const allowedReasons = new Set([...applicationReasons.values(), 'IN_PROGRESS',
 
 export function paymentFailureReason(error) {
   try {
+    if (error?.message === 'Received response error from broadcaster.') {
+      try { return broadcasterReasons.get(error.cause?.message) || 'BROADCAST_RESPONSE_ERROR'; }
+      catch { return 'BROADCAST_RESPONSE_ERROR'; }
+    }
     if (applicationReasons.has(error?.message)) return applicationReasons.get(error.message);
     if (error?.name === 'TimeoutError') return 'TIMEOUT';
     if (error?.name === 'AbortError') return 'CANCELLED';

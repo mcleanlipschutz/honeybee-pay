@@ -1527,3 +1527,97 @@ uncertainty and explicit UI controls passed source review. The reviewer also
 ran the eight backend retry and four actual JSX-handler cases successfully.
 Browser interaction and live buyer/merchant settlement remain UNVERIFIED;
 SE2-specific widgets and new-contract deployment checks are not applicable.
+
+
+## September 13, 2026 — Broadcaster relay compatibility and original-note recovery
+
+The buyer explicitly retried the immutable original payload. Proof verification
+passed, but `BROADCAST_RESPONSE_ERROR` left the original payment unknown. The
+pinned Waku client nests response text in the cause of its wrapper error; prior
+logs retained only the wrapper's fixed code. New exact-match diagnostics classify
+known fee, gas, POI, duplicate-send, unsupported-network and relay rejections.
+Unexpected/secret-bearing response text stays a fixed generic label. Diagnostics
+never mark a payment failed or release an unknown authorization.
+
+Source evidence: the reference broadcaster repository
+[ppoi-safe-broadcaster-example](https://github.com/Railgun-Community/ppoi-safe-broadcaster-example/blob/ec49691533b4edc2dafefbd8cdb5f611290b2115/src/server/transactions/transaction-validator.ts)
+rejects the relay action when its requireSuccess flag is true. Honeybee had set
+true with an empty calls list. That is a concrete compatibility defect, although
+the actual operator version and discarded nested error are unknown; it is not
+proof that this is the only live rejection. Both proofs remain atomic in the
+relay's railgun.transact call when the flag is false and calls is empty. No new
+Solidity or deployments are included. The existing canonical decoder still
+requires no external calls, zero value, zero relay minGasLimit, pinned chain,
+relay binding and exact reviewed minimum gas.
+
+The bound prover and synthetic proof check now use false. Existing true-flag
+proofs cannot be edited without invalidating their bound parameters, and are
+preserved unchanged. An explicit recovery review can generate one compatible
+proof batch with original recipient, merchant amount, fee recipient/amount,
+memo and minimum gas. BOTH original ordered treeNumber/nullifier pairs must
+match the result. A different SDK-selected note fails before the alternative is
+persisted or delivered. Successfully prepared compatible bytes and POI are
+cached alongside the original; further reviews reuse them. Submission cannot
+regenerate. This introduces a second authorization over exactly the same two
+spending authorities, not a second independently payable set of inputs.
+
+Version-2 review consent binds recovery kind, original quote and both payloads,
+with a one-use nonce and at most five-minute expiry bounded by active request,
+session and fresh signed same-rate offer. Older exact-retry reviews fail closed.
+The UI explicitly discloses a new compatible proof, requires password re-entry
+and Confirm compatible payment recovery, and never sends from Enter or review.
+The account lease covers generation, both payloads, consumed consent and any
+late outcome. Compatible authorization is recorded before sending. Current
+original and compatible proofs, roots, both unspent inputs and gas/deployment
+are rechecked. Neither lost response nor a reverted outer transaction authorizes
+a replacement. Exact canonical receipts for either authorized payload can
+resolve the saved original payment; cached unsent alternatives cannot.
+
+The long proof-generation budget now covers recovery review; the worker tracks
+and drains SDK scan work before shutdown. Fee offers are refreshed after proving
+while preserving the original fee recipient, token and numeric rate. A changed
+rate, expired request or newly spent note still blocks delivery. The SDK may
+select different inputs or POI may fail, in which case recovery remains blocked.
+No cancellation, independent exit or funded settlement is promised.
+
+Validation: the corrected two synthetic 01x02 Groth16 proofs verified locally;
+changing the bound relay flag, relay address or complete-batch binding failed
+verification. Synthetic inputs have no spendable roots and no payment was sent.
+All 49 checkout tests and the production client/server build passed (existing
+large-chunk and viem node:worker_threads warnings). Focused backend integration,
+consent, broadcaster, diagnostics, chain/receipt and real-worker rejection tests
+are recorded with their final result below. Actual browser interaction remains
+unverified because the earlier local-browser access was blocked; no workaround
+was attempted. Buyer/merchant funded acceptance and settlement remain user-side
+checks. No user wallet keys/passwords were opened by the assistant.
+
+CROPS delta: this recovery retains the original operator/fee dependency and
+read-only independent chain lookup; it adds no fallback relay, public-wallet
+broadcast or claim of a censorship-resistant exit. Source, constraints and tests
+remain inspectable with unchanged dependencies/licenses. New proofs re-encrypt
+outputs but spend the same onchain nullifiers, so observers can link competing
+variants if both become public. The local encrypted journal preserves both;
+terminal diagnostics reveal fixed codes only. Fresh explicit consent and shared
+onchain input consumption constrain recovery; local compromise, provider/POI
+availability, protocol authority and unverified exit remain accepted testnet
+limitations. The user can decline recovery and retain read-only checks.
+
+
+Final targeted checks: 55 backend tests passed across focused runs, including
+real isolated-worker account/IPC rejection tests, plus 49 checkout tests. The
+production client/server build passed again after the final UI copy change.
+Independent review reproduced a reconciliation defect: a pending or reverted
+compatible ACK could hide original settlement when SDK discovery was unavailable.
+The fix prefers confirmed over pending/reverted outcomes, checks all candidates
+until confirmed, and runs bounded direct-chain fallback unless settlement is
+confirmed. A regression covers both pending and reverted ACKs masking a successful
+original variant. The reviewer confirmed the proposed ordering; its remaining
+review stopped at an agent usage limit, so no completed independent audit is
+claimed. Primary review and targeted regression checks completed.
+
+Deadline steering: McLean reported under 30 minutes remaining. Scope is frozen.
+FINAL_HOURS.md now prioritizes a saved portal draft, one optional original-note
+recovery attempt, and 15 minutes for recording/upload/submission. SUBMISSION.md
+and DEMO_SCRIPT.md describe the actual unknown funded outcome. The working public
+checkout is the submission foundation; private settlement remains experimental.
+No final portal submission or video recording was performed by the assistant.

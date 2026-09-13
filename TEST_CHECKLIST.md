@@ -288,7 +288,7 @@ nor a valid local proof establishes a settled private merchant payment.
 - [x] Laptop: original-payment check reported no transaction candidate and unspent notes; outcome remains unknown.
 - [ ] Obtain a verified original receipt and matching merchant receipt before claiming settlement.
 
-### Explicit original-delivery retry — September 13
+### Explicit original-delivery retry — September 13 (historical checkpoint)
 - [x] Read-only review requires an active original request, exact saved v2 payload, unknown status without a hash, and no other unresolved payment.
 - [x] Review preserves the expired original quote and separately binds new delivery consent to its immutable payload, with a nonce and at most five-minute expiry.
 - [x] Confirm consumes the review under the existing account lease before preflight; used/replaced/expired/cross-wallet reviews cannot deliver.
@@ -296,5 +296,19 @@ nor a valid local proof establishes a settled private merchant payment.
 - [x] Same signed broadcaster recipient/token/rate and current pinned deployment, proof/root/nullifier/gas checks are required; notes are rechecked after transport preparation.
 - [x] Interrupted response and late ACK preserve encrypted original outcome and sanitized diagnostics.
 - [x] Actual JSX handlers require password re-entry and explicit confirmation; Enter, double-click, cancellation, reload, account change and busy state do not implicitly send.
-- [ ] Laptop: pull, rebuild checkout, restart, inspect the new review and explicitly confirm original delivery.
+- [x] Laptop: original delivery review and explicit retry reached the broadcaster; response error left the payment unknown.
 - [ ] Verify original buyer receipt and merchant POI-validated receipt for the same request before claiming settlement.
+
+
+### Compatible relay recovery — September 13 (current checkpoint)
+- [x] Inspect pinned reference broadcaster policy: relay requireSuccess=true is rejected even with no external calls; false is required.
+- [x] New bound proof generation uses false; historical true payloads remain verifiable and immutable.
+- [x] Compatible review preserves original merchant/memo/fee/minimum-gas terms and requires BOTH original tree/nullifier pairs; changed inputs fail before persistence/delivery.
+- [x] Cache one compatible payload, retain original, consume fresh recovery-kind-bound version-2 consent before send, and reject prior version-1 consent.
+- [x] Recognize exact calldata and canonical events for either authorized version; unsent compatible reviews and mismatched old/new events cannot confirm.
+- [x] Recheck original/compatible proofs, unspent notes and current same-rate signed offer; interrupted delivery and late ACK preserve both authorizations.
+- [x] Nested broadcaster errors produce only allowlisted diagnostic codes; unknown remains unresolved regardless of error classification.
+- [x] Actual JSX tests distinguish compatible recovery, require password re-entry/explicit confirmation, and preserve double-click, expiry, account and cancellation guards.
+- [x] Two corrected synthetic Groth16 proofs verify locally; changing the bound relay flag, removing a proof or changing the relay invalidates verification.
+- [ ] Laptop: pull, rebuild, prepare compatible recovery, verify original 1 test USDC and 0.003478483953903483 WETH fee, then explicitly confirm.
+- [ ] Verify funded broadcaster acceptance, canonical buyer receipt and independently matched merchant POI-validated receipt. Local proof/tests do not establish settlement.

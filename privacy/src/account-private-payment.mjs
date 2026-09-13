@@ -86,8 +86,20 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
     const record = data.payments.find(p => p.quote.quoteId === quoteId);
     if (!record) throw new Error('Private payment attempt unavailable');
     validatePaymentQuote(record.quote, { wallet, allowExpired: true });
+    const prepareCompatible = async checkRecovery => {
+      const q = record.quote;
+      await scanAccountWallet({ sdk, wallet, prepared, checkSession: checkRecovery, signal, onStage, includeFeeBalance: true });
+      const recipients = [{ tokenAddress: accountSyncToken, amount: BigInt(q.request.amountUnits), recipientAddress: q.request.recipient }];
+      const fee = { tokenAddress: feeWETH.token, amount: BigInt(q.feeUnits), recipientAddress: q.broadcasterAddress };
+      onStage('proof-generation');
+      await paymentProver.generateTransferProof(version, accountSyncNetwork, wallet.id, key, false,
+        paymentMemo(q.request), recipients, [], fee, false, BigInt(q.minGasPriceWei), () => checkRecovery());
+      checkRecovery();
+      return serializable(await paymentProver.populateProvedTransfer(version, accountSyncNetwork, wallet.id, false,
+        paymentMemo(q.request), recipients, [], fee, false, BigInt(q.minGasPriceWei), gasDetails(record.gas)));
+    };
     const result = await operatePaymentRedelivery({ action, reviewId, record, data, store,
-      prepared, session, checkSession, openBroadcaster, report });
+      prepared, session, checkSession, openBroadcaster, prepareCompatible, report });
     return { privatePayment: summary(record), ...result };
   }
   if (action === 'payment-status') {
@@ -114,6 +126,7 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
     const candidates = [...new Set([...discovered, record.hash, hash, record.candidateHash].filter(Boolean).map(paymentHash))];
     report('transaction-lookup', candidates.length ? 'TRANSACTION_CANDIDATE_FOUND' : 'NO_TRANSACTION_CANDIDATE');
     let receipt;
+    const outcomePriority = { unknown: 0, reverted: 1, pending: 2, confirmed: 3 };
     const checkedCandidates = new Set();
     const inspectCandidates = async values => {
       for (const candidate of values) {
@@ -122,13 +135,16 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
         report('receipt-verification', 'IN_PROGRESS');
         try {
           const checked = await verifyPrivatePaymentReceipt({ record, hash: candidate, rpc: prepared.rpc, checkSession });
-          if (checked.status !== 'unknown') { receipt = checked; break; }
-          report('receipt-verification', 'RECEIPT_UNAVAILABLE');
+          if (outcomePriority[checked.status] > outcomePriority[receipt?.status || 'unknown']) receipt = checked;
+          if (receipt?.status === 'confirmed') break;
+          if (checked.status === 'unknown') report('receipt-verification', 'RECEIPT_UNAVAILABLE');
         } catch { checkSession(); report('receipt-verification', 'RECEIPT_REJECTED'); }
       }
     };
     await inspectCandidates(candidates);
-    if (!receipt) {
+    // A pending/reverted delivery cannot hide settlement of another authorized
+    // variant or outer fee replacement. Always prefer a canonical success.
+    if (receipt?.status !== 'confirmed') {
       try {
         const lookup = await inspectOriginalPaymentChain({ record, rpc: prepared.rpc, checkSession, onStage: report });
         await inspectCandidates(lookup.candidates);

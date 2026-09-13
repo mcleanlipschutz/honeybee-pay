@@ -35,7 +35,7 @@ const nodes = value => Array.isArray(value) ? value.flatMap(nodes)
 const text = value => Array.isArray(value) ? value.map(text).join('')
   : value && typeof value === 'object' ? text(value.children) : value == null || value === false ? '' : String(value);
 
-function fixture() {
+function fixture(deliveryKind = 'original-payload') {
   const frame = {slots:[],cursor:0}, calls = [];
   let current = true, hold;
   const fields = {password:{value:'test-only-recovery-password'}};
@@ -49,7 +49,7 @@ function fixture() {
       if (hold) await hold;
       if(action==='payment-history')return {privatePayments:[row]};
       if(action==='payment-redelivery-review'){
-        review={reviewId:'fixture-review',quoteId:quote.quoteId,expiresAt:Date.now()+300000};
+        review={deliveryKind,reviewId:'fixture-review',quoteId:quote.quoteId,expiresAt:Date.now()+300000};
         return {privatePayment:row,deliveryReview:review};
       }
       return {privatePayment:{...row,status:action==='payment-redelivery-submit'?'pending':'unknown',hash:action==='payment-redelivery-submit'?'0x'+'11'.repeat(32):null}};
@@ -65,7 +65,7 @@ function fixture() {
 }
 
 test('opening history and reviewing original delivery never submits; review shows exact saved costs', async()=>{
-  const f=fixture();await f.click('Open saved');await f.click('Review original');
+  const f=fixture();await f.click('Open saved');await f.click('Review payment');
   assert.deepEqual(f.calls.map(c=>c.action),['payment-history','payment-redelivery-review']);
   assert.equal(f.fields.password.value,'');
   assert.match(text(f.tree),/0\.003478483953903483 Sepolia WETH/);
@@ -75,7 +75,7 @@ test('opening history and reviewing original delivery never submits; review show
 });
 
 test('Enter and blank password cannot send, and double-click confirms the exact review only once', async()=>{
-  const f=fixture();await f.click('Open saved');await f.click('Review original');
+  const f=fixture();await f.click('Open saved');await f.click('Review payment');
   assert.equal(f.enter(),true);f.button('Confirm original').props.onClick();await turn();assert.equal(f.calls.length,2);
   f.fields.password.value='test-only-recovery-password';
   let release;f.hold(new Promise(resolve=>{release=resolve;}));
@@ -90,7 +90,7 @@ test('Enter and blank password cannot send, and double-click confirms the exact 
 
 test('expired review, cancellation, account changes and a busy wallet stop retry confirmation', async()=>{
   for(const mode of ['expired','cancel','logout','busy']){
-    const f=fixture();await f.click('Open saved');await f.click('Review original');
+    const f=fixture();await f.click('Open saved');await f.click('Review payment');
     f.fields.password.value='test-only-recovery-password';
     if(mode==='cancel'){f.button('Cancel delivery').props.onClick();f.render();assert.equal(f.button('Confirm original'),undefined);}
     else{
@@ -104,8 +104,21 @@ test('expired review, cancellation, account changes and a busy wallet stop retry
 });
 
 test('saved history reopens without consent, and an existing hash offers only a status check', async()=>{
-  const f=fixture();await f.click('Open saved');await f.click('Review original');
+  const f=fixture();await f.click('Open saved');await f.click('Review payment');
   await f.click('Open saved');assert.equal(f.button('Confirm original'),undefined);
-  f.row.hash='0x'+'22'.repeat(32);f.render();assert.equal(f.button('Review original'),undefined);
+  f.row.hash='0x'+'22'.repeat(32);f.render();assert.equal(f.button('Review payment'),undefined);
   assert.ok(f.button('Check original'));
+});
+
+
+test('compatible recovery clearly requires new consent and preserves the reviewed original amount and fee', async()=>{
+  const f=fixture('compatible-proof');await f.click('Open saved');await f.click('Review payment');
+  assert.match(text(f.tree),/new compatible proof using both original private input notes/);
+  assert.match(text(f.tree),/original attempt is preserved/);
+  assert.equal(f.button('Confirm original'),undefined);
+  assert.equal(f.calls.length,2);
+  await f.click('Confirm compatible');
+  assert.equal(f.calls.length,3);
+  assert.deepEqual(f.calls[2].input,{password:'test-only-recovery-password',quoteId:'fixture-quote',reviewId:'fixture-review'});
+  assert.equal(f.calls[2].expectedQuote,f.row.quote);
 });

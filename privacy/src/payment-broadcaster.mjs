@@ -55,6 +55,13 @@ export async function openPaymentBroadcaster(checkSession, expected, onDiagnosti
       if (selected && selected.tokenFee.expiration > Date.now() + 30000) {
         const agreed = structuredClone(selected);
         return { selected: structuredClone(selected),
+          currentOffer() {
+            checkSession();
+            const current = selectQuotedBroadcaster(
+              WakuBroadcasterClient.findBroadcastersForToken(chain, feeWETH.token, true), agreed);
+            if (!current) throw new Error('Quoted broadcaster fee unavailable');
+            return structuredClone(current);
+          },
           async create(populated, minGas) {
             checkSession();
             // Proving may span another advertisement update. Renew only its

@@ -26,8 +26,10 @@ to one RelayAdapt batch so the original fee proof cannot be submitted on its own
 Two actual Groth16 proofs using synthetic notes passed local verification and the
 deployed Sepolia verifier, including rejection of a modified batch binding. The
 Windows runtime has discovered a compatible broadcaster and verified the fee-token
-contract. A funded private payment and matching merchant receipt are still awaiting
-end-to-end validation. The hosted demo shows public transfers; the newer private
+contract. The funded Windows attempt generated proofs and passed local runtime Sepolia
+checks, but broadcaster delivery returned an error and settlement remains unknown.
+A compatible recovery using the same original inputs is implemented and tested;
+a confirmed private payment and matching merchant receipt remain unverified. The hosted demo shows public transfers; the newer private
 features run locally and are demonstrated separately.
 
 ## How it is made
@@ -56,7 +58,12 @@ USDC. The solution keeps the merchant token unchanged and uses verified Sepolia
 WETH for fees. That introduced a second private proof, requiring explicit batch
 binding and receipt checks to prevent a standalone fee submission. Short fee
 quotes also exposed unnecessary serial RPC delays and duplicate simulations;
-those were reduced while retaining expiry and transaction checks.
+those were reduced while retaining expiry and transaction checks. A further relay
+flag mismatch with the reference broadcaster required a compatible proof; recovery
+preserves the original authorization, enforces both original spending inputs and
+requires fresh explicit consent. Unknown delivery never silently creates a second
+payment. Receipt recovery searches for confirmed settlement even when another
+authorized delivery is pending or reverted.
 
 ## AI assistance and attribution
 

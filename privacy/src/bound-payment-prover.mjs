@@ -14,8 +14,10 @@ const generator = require(join(root, 'services/transactions/tx-generator.js'));
 const estimator = require(join(root, 'services/transactions/tx-gas-broadcaster-fee-estimator.js'));
 const serialize = value => JSON.stringify(value, (_, v) => typeof v === 'bigint' ? v.toString() : v);
 const destination = testNetwork('Ethereum_Sepolia').relayAdaptContract;
+// Reference broadcasters require requireSuccess=false. There are no external
+// calls here: railgun.transact still executes both bound proofs atomically.
 const transaction = (txs, random) => ({ to: destination, value: '0x0',
-  data: relayInterface.encodeFunctionData('relay', [txs, RelayAdaptHelper.getActionData(random, true, [], 0n)]) });
+  data: relayInterface.encodeFunctionData('relay', [txs, RelayAdaptHelper.getActionData(random, false, [], 0n)]) });
 const reviewedShape = txs => {
   if (txs.length !== 2 || txs.some(tx => tx.nullifiers.length !== 1 || tx.commitments.length !== 2)) {
     throw new Error('This test payment needs one spendable note per token and change in both tokens. Choose a smaller payment or fund separate test deposits.');
@@ -46,11 +48,11 @@ export function createBoundPaymentProver() {
         false, memo, recipients, [], fee, false, minGas);
       reviewedShape(dummy);
       const random = randomBytes(31).toString('hex');
-      const parameters = RelayAdaptHelper.getRelayAdaptParams(dummy, random, true, [], 0n);
+      const parameters = RelayAdaptHelper.getRelayAdaptParams(dummy, random, false, [], 0n);
       const result = await generator.generateProofTransactions(ProofType.Transfer, network, id, version, key,
         false, memo, recipients, [], fee, false, { contract: destination, parameters }, false, minGas, progress);
       reviewedShape(result.provedTransactions);
-      if (RelayAdaptHelper.getRelayAdaptParams(result.provedTransactions, random, true, [], 0n) !== parameters) throw new Error('Private inputs changed while proving');
+      if (RelayAdaptHelper.getRelayAdaptParams(result.provedTransactions, random, false, [], 0n) !== parameters) throw new Error('Private inputs changed while proving');
       saved = { terms: serialize([version, network, id, false, memo, recipients, [], fee, false, minGas]),
         populated: { transaction: transaction(result.provedTransactions, random),
           nullifiers: generator.nullifiersForTransactions(result.provedTransactions),

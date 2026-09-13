@@ -64,6 +64,10 @@ test('reconnection and pre-send renewal use current same-rate SDK offers without
     connection.selected.railgunAddress = 'edited';
     connection.selected.tokenFee.feePerUnitGas = '999';
     offers = [offer('latest-id')];
+    const refreshed = connection.currentOffer();
+    assert.equal(refreshed.tokenFee.feesID, 'latest-id');
+    refreshed.tokenFee.feePerUnitGas = '1';
+    assert.equal(connection.currentOffer().tokenFee.feePerUnitGas, original.tokenFee.feePerUnitGas);
     const populated = { transaction: { to: testNetwork('Ethereum_Sepolia').relayAdaptContract, data: '0x1234' },
       nullifiers: ['fixture-nullifier'], preTransactionPOIsPerTxidLeafPerList: { fixture: true } };
     await connection.create(populated, 123n);
@@ -74,6 +78,7 @@ test('reconnection and pre-send renewal use current same-rate SDK offers without
     assert.equal(creates[0][8], true); assert.deepEqual(creates[0][9], populated.preTransactionPOIsPerTxidLeafPerList);
     assert.deepEqual(expected, original); assert.ok(checks >= 2);
     offers[0].tokenFee.feePerUnitGas = '1000000000000000001';
+    assert.throws(() => connection.currentOffer(), /Quoted broadcaster fee unavailable/);
     await assert.rejects(connection.create(populated, 123n), /Quoted broadcaster fee unavailable/);
     offers = [];
     await assert.rejects(connection.create(populated, 123n), /Quoted broadcaster fee unavailable/);

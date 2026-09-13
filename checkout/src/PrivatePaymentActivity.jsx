@@ -10,7 +10,7 @@ export function PrivatePaymentActivity({ wallet, transact, disabled, isCurrent }
     if (pending.current || disabled || !alive.current || !isCurrent()) return;
     if (!form.current?.reportValidity()) return;
     if (action === 'payment-redelivery-submit' && (!review || review.quoteId !== original?.quote.quoteId
-        || review.expiresAt <= Date.now() || original.status !== 'unknown' || original.hash)) {
+        || review.expiresAt <= Date.now() || original.status !== 'unknown' || original.hash || !['original-payload', 'compatible-proof'].includes(review.deliveryKind))) {
       setReview(null); setMessage('The delivery review expired or changed. Review the original delivery again.'); return;
     }
     const values = new FormData(form.current);
@@ -20,14 +20,14 @@ export function PrivatePaymentActivity({ wallet, transact, disabled, isCurrent }
     const fields = { password, ...(selected ? { quoteId: selected } : {}),
       ...(candidate ? { hash: candidate } : {}), ...(action === 'payment-redelivery-submit' ? { reviewId: review.reviewId } : {}) };
     form.current.reset(); pending.current = true; setBusy(true); setReview(null);
-    setMessage(action === 'payment-redelivery-submit' ? 'Retrying delivery of the original payment. Keep this page and the local server open.'
-      : action === 'payment-redelivery-review' ? 'Checking the original payment and broadcaster fee. This review does not send a payment.' : 'Checking saved payment information…');
+    setMessage(action === 'payment-redelivery-submit' ? 'Sending the reviewed payment recovery. Keep this page and the local server open.'
+      : action === 'payment-redelivery-review' ? 'Checking the original payment and preparing a compatible proof if needed. This may take several minutes. Keep this page and the local server open. This review does not send a payment.' : 'Checking saved payment information…');
     try {
       const result = await transact(action, fields, wallet, original?.quote);
       if (alive.current && isCurrent()) {
         setRows(previous => original ? previous.map(p => p.quote.quoteId === selected ? result.privatePayment : p) : result.privatePayments);
         setReview(result.deliveryReview || null);
-        setMessage(result.deliveryReview ? 'Delivery review ready. Re-enter your recovery password and click Confirm original delivery retry to authorize.'
+        setMessage(result.deliveryReview ? 'Recovery review ready. Re-enter your recovery password and use the confirmation button to authorize.'
           : action === 'payment-redelivery-submit' ? 'Delivery attempt saved. Check original payment for its current result.' : '');
       }
     } catch (error) { if (alive.current && isCurrent()) setMessage(error.message); }
@@ -36,7 +36,7 @@ export function PrivatePaymentActivity({ wallet, transact, disabled, isCurrent }
   const submit = event => { event.preventDefault(); };
   const enter = event => {
     if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
-      event.preventDefault(); setMessage('Choose the action button. A delivery retry requires its explicit confirmation button.');
+      event.preventDefault(); setMessage('Choose the action button. Payment recovery requires its explicit confirmation button.');
     }
   };
   return <details className="wallet-tools"><summary>Saved private payments</summary>
@@ -52,18 +52,18 @@ export function PrivatePaymentActivity({ wallet, transact, disabled, isCurrent }
         {row.status === 'unknown' && !row.hash && <><label htmlFor={`hash-${row.quote.quoteId}`}>Original transaction hash, if available</label><input id={`hash-${row.quote.quoteId}`} name={`hash-${row.quote.quoteId}`} type="text" pattern="0x[0-9a-fA-F]{64}" maxLength={66} disabled={busy || disabled}/></>}
         {row.status !== 'quoted' && <button className="secondary" type="button" onClick={() => run('payment-status', row)} disabled={busy || disabled}>Check original payment</button>}
         {row.status === 'unknown' && !row.hash && row.quote.version === 2 && <>
-          <p>If delivery was interrupted, review a retry of this same saved payment. Its merchant amount and broadcaster fee stay the same. Do not create a replacement request or payment.</p>
+          <p>If delivery failed or was interrupted, review recovery of this saved payment. Its merchant amount and broadcaster fee stay the same. Do not create a replacement request or payment.</p>
           {review?.quoteId === row.quote.quoteId ? <>
-            <h4>Review original delivery retry</h4>
+            <h4>{review.deliveryKind === 'compatible-proof' ? 'Review compatible payment recovery' : 'Review original delivery retry'}</h4>
             <p>Ethereum Sepolia testnet</p>
             <p>Merchant: <strong>{formatUnits(BigInt(row.quote.request.amountUnits), 6)} test USDC</strong></p>
             <details><summary>Original receiving address</summary><p style={{ overflowWrap: 'anywhere' }}>{row.quote.request.recipient}</p></details>
             <p>Broadcaster fee: <strong>{formatUnits(BigInt(row.quote.feeUnits), 18)} Sepolia WETH</strong></p>
-            <p>This sends the saved payment again for delivery. The same private notes authorize the merchant amount and fee once. Its status may remain unknown until settlement is verified.</p>
+            <p>{review.deliveryKind === 'compatible-proof' ? 'This sends a new compatible proof using both original private input notes, the same receiving address, merchant amount and broadcaster fee. The original attempt is preserved. Either version can settle; spending the same notes prevents both versions from paying separately.' : 'This sends the saved payment again for delivery. The same private notes authorize the merchant amount and fee once.'} Its status may remain unknown until settlement is verified.</p>
             <p>Delivery review expires at {new Date(review.expiresAt).toLocaleTimeString()}.</p>
-            <button type="button" onClick={() => run('payment-redelivery-submit', row)} disabled={busy || disabled}>Confirm original delivery retry · {formatUnits(BigInt(row.quote.request.amountUnits), 6)} test USDC + {formatUnits(BigInt(row.quote.feeUnits), 18)} Sepolia WETH fee</button>
+            <button type="button" onClick={() => run('payment-redelivery-submit', row)} disabled={busy || disabled}>{review.deliveryKind === 'compatible-proof' ? 'Confirm compatible payment recovery' : 'Confirm original delivery retry'} · {formatUnits(BigInt(row.quote.request.amountUnits), 6)} test USDC + {formatUnits(BigInt(row.quote.feeUnits), 18)} Sepolia WETH fee</button>
             <button className="secondary" type="button" onClick={() => { setReview(null); form.current?.reset(); }} disabled={busy || disabled}>Cancel delivery review</button>
-          </> : <button className="secondary" type="button" onClick={() => run('payment-redelivery-review', row)} disabled={busy || disabled}>Review original delivery retry</button>}
+          </> : <button className="secondary" type="button" onClick={() => run('payment-redelivery-review', row)} disabled={busy || disabled}>Review payment recovery</button>}
         </>}
         {row.status === 'reverted' && <p>The Ethereum transaction reverted, but the private authorization may still execute. New private payments remain blocked; keep checking the original attempt.</p>}
         {row.receipt?.requestExpiredAtSettlement && <p>Settled after the request expired; confirm acceptance with the merchant.</p>}

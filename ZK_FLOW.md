@@ -18,37 +18,50 @@ live Sepolia verifier; that does not establish spendable roots, POI or settlemen
 
 ## Current laptop checkpoint
 
-**Latest original-delivery update:** The buyer's latest read-only check reported
-`DELIVERY_REASON_NOT_RECORDED`, `NO_TRANSACTION_CANDIDATE`,
-`NOTES_UNSPENT_AT_CHECK`, and `UNKNOWN`. The original delivery exception was
-not recorded. No settlement was observed at the checked block; these results
-do not establish that the original payment can never execute. Merchant receipt
-matching also remains unconfirmed. Preserve the original request and journal.
+**Latest compatibility update:** The buyer explicitly retried the saved delivery.
+The local proof checks passed, but delivery returned `BROADCAST_RESPONSE_ERROR`
+and the payment remained `UNKNOWN`. No verified buyer or merchant receipt is
+available. Preserve the original request, wallet and encrypted payment journal.
 
-Saved private payments now offers **Review original delivery retry** for a
-version-2 unknown attempt without any saved candidate hash. This checks the
-current pinned Sepolia deployment, original proofs/roots/unspent notes, original
-gas terms, active merchant request and the same signed broadcaster fee terms.
-It does not generate a new transfer proof or send a payment. The review binds
-the complete original stored payload and quote and expires within five minutes,
-the request, session, and current signed offer deadlines.
+A source check found a concrete integration mismatch: Honeybee generated relay
+`requireSuccess=true`, but the [reference broadcaster validator](https://github.com/Railgun-Community/ppoi-safe-broadcaster-example/blob/ec49691533b4edc2dafefbd8cdb5f611290b2115/src/server/transactions/transaction-validator.ts)
+rejects that flag even when the relay call list is empty. The actual operator's
+nested rejection message was not retained, so this is a verified compatibility
+bug, not proof of the precise live rejection cause. New diagnostics classify
+known nested errors using fixed codes without printing raw SDK response text.
 
-The buyer must re-enter the password and click **Confirm original delivery
-retry** to authorize delivery of that same saved payment. Consent is consumed
-under the account lease before delivery preflight, so duplicate HTTP requests
-cannot reuse it. Original proofs, nullifiers, ciphertexts, receiving address,
-USDC amount, WETH fee, minimum gas price and POIs remain identical. Both proofs
-remain bound through the relay. The deployed contract's nullifier check rejects
-second execution of the same private spend. A fresh Waku envelope/transport fee
-advertisement ID is permitted only for the same broadcaster, WETH token and
-numeric fee rate. No sender public-wallet transaction is introduced.
+New proofs use `requireSuccess=false` with an empty call list. This flag controls
+external multicall failure handling; both bound RAILGUN proofs still execute
+atomically inside `railgun.transact`. Flipping the old saved flag would invalidate
+its proof. The original payload therefore remains unchanged.
 
-Request expiry, changed gas/fee terms, spent notes, a known hash, changed record,
-used/expired review, wrong account or failed preflight stop retry delivery.
-A lost retry response retains unknown and a sanitized reason; new payments
-remain blocked. Read-only **Check original payment** and history never send.
-A retry ACK is untrusted until exact original calldata and canonical events
-verify. Do not create a replacement request or discard the unknown attempt.
+**Review payment recovery** may prepare one compatible proof batch using the
+same original merchant address, USDC amount, WETH fee recipient/amount, memo and
+minimum gas price. The backend requires both ordered original input
+`(treeNumber, nullifier)` pairs to match exactly. If the SDK selects any different
+input, recovery stops without saving or delivering that alternative. It never
+creates a replacement merchant request. A successfully prepared compatible
+payload is retained alongside the original and reused for subsequent reviews.
+Review generates no payment delivery and does not authorize submission.
+
+The compatible review clearly discloses the new proof and requires password
+re-entry plus **Confirm compatible payment recovery**. Version-2 consent binds
+the original quote, both saved payloads, recovery kind and a nonce; it expires
+within five minutes and the active request, account session and fresh signed
+same-rate broadcaster offer. Older version-1 reviews cannot authorize this path.
+Confirm consumes consent under the account lease, never generates another
+proof, rechecks deployment/proofs/roots/both unspent notes/gas and persists the
+compatible authorization before sending. The original authorization is preserved.
+Either version can settle, but the same original notes cannot fund both versions.
+
+Read-only **Check original payment** recognizes exact calldata and canonical
+receipt events for either authorized variant; a cached, unconfirmed review alone
+does not authorize recognition of the compatible variant. Unknown, pending or
+reverted attempts continue to block new payments. Known hashes, spent notes,
+expired requests/reviews, changed account or fee terms and failed checks stop
+recovery. No automatic send or sender public-wallet fallback is introduced.
+For already compatible saved payloads, explicit recovery redelivers those exact
+saved bytes without generating a proof.
 
 This update requires rebuilding checkout. Stop the server in the original
 PowerShell window with Ctrl+C (Y if asked), then run each command separately:
@@ -62,14 +75,18 @@ cd ..\privacy
 npm.cmd run wallet:web
 ```
 
-Hard refresh the local page with Ctrl+F5. Sign in as the buyer, open **Saved
-private payments**, and select **Review original delivery retry** on the original
-unknown request. Enter the recovery password for each action. Verify the
-original merchant amount and WETH fee on the review before clicking its
-confirmation. Keep the page and server open, then use **Check original payment**.
-If preflight cannot prepare the review, preserve the attempt and collect the
-fixed terminal diagnostic. Do not increase the fee by creating another payment.
-The funded retry and matching merchant receipt remain unvalidated.
+Hard refresh with Ctrl+F5. As the buyer, open **Saved private payments**, enter
+the recovery password and choose **Review payment recovery** for the original
+unknown request. Preparation can take several minutes. Check that the review
+still shows **1 test USDC** and **0.003478483953903483 Sepolia WETH**, then re-enter
+the password and use **Confirm compatible payment recovery** if those original
+terms are correct. Keep the page and server open. Check the original payment
+for settlement, then independently check the merchant's received payments.
+If preparation or delivery fails, preserve the record and collect the fixed
+terminal code. Do not create a replacement request or increase the fee through
+another payment. Funded broadcaster acceptance and matching receipts remain
+unvalidated. The corrected two-proof construction passed real synthetic local
+Groth16 verification; that does not prove spendability, POI or live settlement.
 
 ### Read-only recovery already checked on the laptop
 

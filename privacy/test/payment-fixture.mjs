@@ -50,7 +50,7 @@ export async function paymentFixture(t) {
         unshieldPreimage: { npk: word('00'), token: { tokenType: 0, tokenAddress: '0x' + '00'.repeat(20), tokenSubID: 0 }, value: 0 } };
       const second = structuredClone(struct); second.nullifiers = [word('99')]; second.commitments = [word('aa'), word('bb')];
       second.boundParams.treeNumber = 1;
-      const structs = [struct, second], action = { random: '0x' + '01'.repeat(31), requireSuccess: true, minGasLimit: 0n, calls: [] };
+      const structs = [struct, second], action = { random: '0x' + '01'.repeat(31), requireSuccess: state.legacyRelay === true, minGasLimit: 0n, calls: [] };
       for (const tx of structs) tx.boundParams.adaptParams = bindingHash(structs, action);
       state.changeProof(struct); state.struct = struct; state.structs = structs;
       state.populated = { transaction: { to: paymentRelay, value: 0n, data: relayInterface.encodeFunctionData('relay', [structs, action]) },
