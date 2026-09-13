@@ -134,7 +134,11 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
   if (feeBalance <= 0n) throw new Error('Deposit Sepolia WETH for the private broadcaster fee first');
   checkSession();
   onStage('broadcaster');
-  const broadcaster = await openBroadcaster(checkSession, record?.broadcaster);
+  const checkBroadcaster = () => {
+    checkSession();
+    if (record) validatePaymentQuote(record.quote, { wallet });
+  };
+  const broadcaster = await openBroadcaster(checkBroadcaster, record?.broadcaster);
   try {
     if (action === 'payment-quote') {
       const selected = broadcaster.selected;

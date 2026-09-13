@@ -18,6 +18,7 @@ const applicationReasons = new Map([
   ['Insufficient spendable private Sepolia WETH for the fee', 'INSUFFICIENT_PRIVATE_WETH'],
   ['Broadcaster fee exceeds your limit', 'FEE_LIMIT_EXCEEDED'],
   ['Private payment broadcaster unavailable', 'BROADCASTER_UNAVAILABLE'],
+  ['Quoted broadcaster fee unavailable', 'BROADCASTER_QUOTE_UNAVAILABLE'],
   ['Invalid broadcaster fee', 'BROADCASTER_FEE_INVALID'],
   ['Broadcaster fee expired', 'BROADCASTER_FEE_EXPIRED'],
   ['Network fee exceeds the test limit', 'NETWORK_FEE_LIMIT'],

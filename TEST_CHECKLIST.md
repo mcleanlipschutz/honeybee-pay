@@ -265,3 +265,14 @@ nor a valid local proof establishes a settled private merchant payment.
 - [ ] Make one new approved test payment and confirm the total increases once after finality.
 - [ ] Sign out / reload on another device and confirm the same aggregate.
 - [ ] Production launch: external access review, throughput/reconciliation, abuse controls and security review.
+
+
+### Broadcaster reconnection after a successful quote — September 13
+- [x] Refreshed signed-offer search results can rotate IDs at the same recipient, token and rate.
+- [x] Different recipient/token/rate, malformed offers and stale expirations are rejected.
+- [x] The latest matching ID is selected again before encrypted submission, retaining proof calldata and gas terms.
+- [x] Original quote expiry stops reconnection before proving; the stored quote stays Not submitted.
+- [x] Confirmation fixtures preserve exact quote/fee and persist the unknown attempt before one send; replacement remains blocked.
+- [x] Startup keeps its 90-second deadline and diagnostics remain sanitized.
+- [ ] Windows: fresh quote reconnects, generates/verifies funded proofs, then reports original payment status.
+- [ ] Merchant independently verifies receipt for the same request and original transaction.

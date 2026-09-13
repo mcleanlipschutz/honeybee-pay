@@ -18,25 +18,44 @@ live Sepolia verifier; that does not establish spendable roots, POI or settlemen
 
 ## Current laptop checkpoint
 
-McLean subsequently confirmed the WETH wrapping, approval and shield deposit.
-The buyer's completed private scan displayed **0.0049875 Sepolia WETH spendable
-for fees** and **0 test USDC** at that checkpoint. The wrap hash was
-`0x52c718cb96b81cef8be3c976c2f49f0d0f4d26f8a25af4d84e9c927fe733444f`.
-Later USDC funding was reported, but the latest private USDC balance has not been
-provided. A 1-test-USDC merchant quote failed; six old `history-scan: IN_PROGRESS`
-lines do not identify the failure or prove a completed scan. These are user-reported
-browser/terminal observations, not a new independent chain check. No private
-merchant payment is confirmed.
+McLean confirmed the WETH wrap, approval and shield deposit, and a completed
+private scan showed **0.0049875 Sepolia WETH spendable for fees**. The subsequent
+2-test-USDC shield deposit was reported confirmed. A quote for **1 test USDC**
+then passed scanning and fee estimation with a **0.003241516569835368 Sepolia
+WETH** fee, below the buyer-selected **0.004 WETH** maximum. The earlier 0.001
+maximum had correctly rejected that fee.
 
-The payment-diagnostic update reports each allowed scan stage and a final fixed
-failure code to the server terminal, or `COMPLETED` when the server operation
-succeeds. It reports no passwords, addresses, balances, proof data, URLs or raw
-exception messages. This backend-only update needs `git pull --ff-only` and a
-normal `wallet:web` restart; no dependency install, artifacts or frontend build.
-Retry only **Check total and fee** after the server restarts, then copy the final
-`[Private wallet]` lines. Do not type those output labels into PowerShell. This is
-a quote-only retry; the payment still requires separate explicit confirmation.
-Unknown SDK failures remain `SDK_ERROR`; the code does not pretend to know more.
+Confirmation stopped at `broadcaster: BROADCASTER_UNAVAILABLE`, before proof
+generation or broadcasting. Saved private payments displayed **Not submitted**
+for request `hb_045147920a16e5625d87b834467557f6`. The later `shutdown: COMPLETED`
+was the saved-history lookup, not settlement. These are user-reported terminal
+and browser observations. No private merchant payment is confirmed.
+
+A reconnect defect was reproduced against a rotating-offer fixture: the pinned
+SDK replaces the latest cached fee advertisement for each broadcaster instance,
+but Honeybee previously required the original `feesID` to reappear. The fix can
+use a fresh SDK-verified offer ID only for the **same private fee recipient, WETH
+token and numeric fee rate**. It rechecks those terms when preparing the encrypted
+submission. The merchant amount, exact quoted fee, gas terms, original quote
+expiry, account session and before-send journal checks remain unchanged. A new
+rate requires a new user-reviewed quote; no replacement payment is auto-sent.
+This fixes a reproduced cause consistent with the laptop failure, not a verified
+live settlement. Fresh network availability is still required.
+
+This update changes only the local backend. Stop `wallet:web` with Ctrl+C in its
+original PowerShell window, answer Y if asked, run `git pull --ff-only`, then
+`npm.cmd run wallet:web`. No install, frontend build or artifact download is
+needed. Reopen the same merchant request, set the maximum fee to **0.004 WETH**,
+and get a new quote. Review its current fee before confirming once. For any
+pending/unknown/reverted entry, check its original attempt instead of issuing a
+new payment. Keep the server and page open throughout proving and submission.
+
+Terminal diagnostics report fixed stage/reason labels without passwords,
+addresses, balances, proof material, URLs or raw errors. Copy these printed lines;
+do not type them as commands. `BROADCASTER_QUOTE_UNAVAILABLE` means the matching
+fresh fee offer was unavailable before submission; `QUOTE_INVALID_OR_EXPIRED`
+means the original consent window ended. A `COMPLETED` server operation alone
+never proves that the private payment settled.
 
 For the fee-delay update, use the exact pull/build/restart sequence in
 [FINAL_HOURS.md](FINAL_HOURS.md); no reinstall or artifact download is needed.

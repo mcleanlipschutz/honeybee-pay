@@ -1330,3 +1330,35 @@ Validation: the checkout client and Worker production builds passed, and the
 selected PNG retains its alpha channel. No wallet, transaction, recovery, or
 private-payment behavior changed. The public Site receives the same scoped header
 change on its existing source, separately from the newer local privacy runtime.
+
+
+## September 13, 2026 — Reconnect a quoted broadcaster after offer rotation
+
+The laptop prepared a 1-test-USDC quote with a 0.003241516569835368-WETH fee
+under the buyer's 0.004-WETH limit. Confirmation then stopped at broadcaster
+discovery, before proof generation or submission; saved history says Not
+submitted. The subsequent completed operation was a history lookup.
+
+Pinned SDK inspection showed that its fee cache replaces an instance's previous
+advertisement. Honeybee required that old feesID to be rediscovered after starting
+a fresh worker. A deterministic rotating-offer fixture reproduces this mismatch.
+The adapter now accepts a fresh SDK-verified ID only at the same private fee
+recipient, WETH token and numeric rate, including when refreshing the transport
+ID just before encrypted submission. It does not switch providers or modify the
+reviewed fee, payment amount, gas terms or original quote expiry. Quote validity
+is checked during reconnection and before creating the encrypted submission.
+The fixed BROADCASTER_QUOTE_UNAVAILABLE diagnostic exposes no raw offer data.
+
+All 26 focused tests passed: offer rotation, changed/expired/malformed terms,
+immutable returned metadata, 90-second startup timeout, quote expiry before
+proving, encrypted-journal persistence before sending, no duplicate submission,
+existing private-payment/receipt checks, diagnostic redaction and CLI preflight.
+These use explicit SDK/RPC/proof/transport doubles, not live funded proofs. The
+actual Windows reconnect and merchant settlement remain to be demonstrated.
+No frontend build, dependency/artifact change, main merge or hosted-site update
+is required. A normal backend restart after pulling loads this fix.
+
+Primary references checked: the installed pinned broadcaster SDK fee cache,
+signed-message handler and selection code, plus the official RAILGUN guides:
+https://docs.railgun.org/developer-guide/wallet/broadcasters and
+https://docs.railgun.org/developer-guide/wallet/transactions/ux-private-transactions .
