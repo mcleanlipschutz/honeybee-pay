@@ -18,37 +18,68 @@ live Sepolia verifier; that does not establish spendable roots, POI or settlemen
 
 ## Current laptop checkpoint
 
-**Latest recovery update:** The buyer's supplied log reached proof generation,
-proof verification and the broadcast stage; its stored outcome is `unknown`
-without a transaction hash. The merchant's read-only check found zero confirmed,
-POI-validated payments matching saved requests. Neither observation establishes
-that the payment cannot execute later. Preserve the original attempt.
+**Latest original-delivery update:** The buyer's latest read-only check reported
+`DELIVERY_REASON_NOT_RECORDED`, `NO_TRANSACTION_CANDIDATE`,
+`NOTES_UNSPENT_AT_CHECK`, and `UNKNOWN`. The original delivery exception was
+not recorded. No settlement was observed at the checked block; these results
+do not establish that the original payment can never execute. Merchant receipt
+matching also remains unconfirmed. Preserve the original request and journal.
 
-Check original payment now falls back to direct Sepolia reads when no SDK or
-saved candidate hash verifies. It checks the original notes at one block,
-rechecks that block's hash, and searches protocol Nullified events when notes
-are spent. The search covers at most 4096 recent blocks in eight 512-block
-queries, with log/candidate limits and a 45-second lookup budget checked around
-each bounded RPC call. A found hash still needs the existing exact-calldata,
-canonical-receipt and complete-proof-event checks. No proof is regenerated or
-sent. Unspent notes and absent recent events keep the payment unknown and do
-not unlock a replacement. These observations do not cover pending transactions
-or guarantee nonexecution in future blocks.
+Saved private payments now offers **Review original delivery retry** for a
+version-2 unknown attempt without any saved candidate hash. This checks the
+current pinned Sepolia deployment, original proofs/roots/unspent notes, original
+gas terms, active merchant request and the same signed broadcaster fee terms.
+It does not generate a new transfer proof or send a payment. The review binds
+the complete original stored payload and quote and expires within five minutes,
+the request, session, and current signed offer deadlines.
 
-This recovery update is backend-only: stop wallet:web in the original PowerShell
-window (Ctrl+C, Y if asked), run `git pull --ff-only` from the privacy directory,
-then `npm.cmd run wallet:web`. No checkout rebuild or dependency install is
-required if the prior explicit-confirmation UI update is already installed.
-Sign in as the buyer, reopen Saved private payments with the recovery password,
-leave the optional original hash blank, re-enter the password and click Check
-original payment once. Copy the new terminal diagnostics and resulting status.
+The buyer must re-enter the password and click **Confirm original delivery
+retry** to authorize delivery of that same saved payment. Consent is consumed
+under the account lease before delivery preflight, so duplicate HTTP requests
+cannot reuse it. Original proofs, nullifiers, ciphertexts, receiving address,
+USDC amount, WETH fee, minimum gas price and POIs remain identical. Both proofs
+remain bound through the relay. The deployed contract's nullifier check rejects
+second execution of the same private spend. A fresh Waku envelope/transport fee
+advertisement ID is permitted only for the same broadcaster, WETH token and
+numeric fee rate. No sender public-wallet transaction is introduced.
 
-Diagnostics distinguish `NOTES_UNSPENT_AT_CHECK`, `NOTES_SPENT_AT_CHECK`,
-`NOTES_PARTLY_SPENT`, `CHAIN_MATCH_FOUND`, `CHAIN_MATCH_NOT_FOUND_IN_WINDOW`
-and the verified payment outcome. New submissions save a fixed broadcaster
-outcome code in the encrypted journal. The older attempt reports
-`DELIVERY_REASON_NOT_RECORDED`; its swallowed exception cannot be reconstructed.
-No addresses, nullifiers, passwords, raw exceptions or endpoint URLs are logged.
+Request expiry, changed gas/fee terms, spent notes, a known hash, changed record,
+used/expired review, wrong account or failed preflight stop retry delivery.
+A lost retry response retains unknown and a sanitized reason; new payments
+remain blocked. Read-only **Check original payment** and history never send.
+A retry ACK is untrusted until exact original calldata and canonical events
+verify. Do not create a replacement request or discard the unknown attempt.
+
+This update requires rebuilding checkout. Stop the server in the original
+PowerShell window with Ctrl+C (Y if asked), then run each command separately:
+
+```powershell
+cd "C:\Users\McLean Lipschutz\honeybee-pay-windows\privacy"
+git pull --ff-only
+cd ..\checkout
+npm.cmd run build
+cd ..\privacy
+npm.cmd run wallet:web
+```
+
+Hard refresh the local page with Ctrl+F5. Sign in as the buyer, open **Saved
+private payments**, and select **Review original delivery retry** on the original
+unknown request. Enter the recovery password for each action. Verify the
+original merchant amount and WETH fee on the review before clicking its
+confirmation. Keep the page and server open, then use **Check original payment**.
+If preflight cannot prepare the review, preserve the attempt and collect the
+fixed terminal diagnostic. Do not increase the fee by creating another payment.
+The funded retry and matching merchant receipt remain unvalidated.
+
+### Read-only recovery already checked on the laptop
+
+The direct-chain fallback checks the original notes at one block, rechecks its
+hash, and searches protocol Nullified events when notes are spent. The search
+covers at most 4096 recent blocks in eight 512-block queries, with log/candidate
+limits and a 45-second lookup budget around bounded RPC calls. Every discovered
+hash still needs exact-calldata, canonical-receipt and complete-proof-event
+verification. Unspent notes and absent recent events retain unknown. These reads
+do not cover pending transactions or guarantee future nonexecution.
 
 ### Earlier confirmation UI checkpoint
 

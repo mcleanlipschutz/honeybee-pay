@@ -7,6 +7,7 @@ import { validatePrivatePaymentCheck, validateSpendableSnapshot } from '../../sh
 import { validatePrivateRecipient } from './private-request.mjs';
 import { feeWETH } from '../../shared/test-assets.mjs';
 import { validatePaymentSummary } from './private-payment.mjs';
+import { validateRedeliveryReview } from '../../shared/payment-redelivery-review.mjs';
 
 const messages = {
   'payment-check-failed': 'Private funds could not be checked. Check your recovery password, request expiry and local connection, then try again. No payment was authorized.',
@@ -38,7 +39,7 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
     try {
       const startedAt = Date.now();
       fields = { ...fields };
-      const transferAction = ['payment-quote', 'payment-submit', 'payment-status', 'payment-history'].includes(action);
+      const transferAction = ['payment-quote', 'payment-submit', 'payment-status', 'payment-history', 'payment-redelivery-review', 'payment-redelivery-submit'].includes(action);
       if (transferAction) {
         if (!expectedWallet?.id || expectedWallet.status !== 'locked') throw new Error();
         expectedWallet = { ...expectedWallet };
@@ -55,7 +56,7 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
       current();
       if (!token || typeof token !== 'string') throw new AccountRequestError('sign-in-required');
       const timeout = action === 'payment-submit' ? 905000 : action === 'payment-quote' ? 655000
-        : ['sync', 'payment-check', 'payment-status', 'invoice-receipts'].includes(action) ? 325000
+        : ['sync', 'payment-check', 'payment-status', 'payment-redelivery-review', 'payment-redelivery-submit', 'invoice-receipts'].includes(action) ? 325000
         : ['shield-review', 'shield-preflight'].includes(action) ? 125000 : 35000;
       const response = await fetchImpl(`${origin}${action === 'invoice-history-restore' ? '/api/account-history/restore' : '/api/account-wallet'}`, {
         method: 'POST', credentials: 'omit', cache: 'no-store', redirect: 'error',
@@ -97,6 +98,12 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
               || JSON.stringify(q.request) !== JSON.stringify(fields.paymentRequest) || q.maxFeeUnits !== fields.maxFeeUnits)) throw new Error();
           if (action !== 'payment-quote' && q.quoteId !== fields.quoteId) throw new Error();
           if (expectedReview && JSON.stringify(q) !== JSON.stringify(expectedReview)) throw new Error();
+          if (action === 'payment-redelivery-review') {
+            if (result.privatePayment.status !== 'unknown' || result.privatePayment.hash || !expectedReview) throw new Error();
+            result.deliveryReview = validateRedeliveryReview(result.deliveryReview, {
+              quote: q, hash: text => keccak256(stringToHex(text)), earliest: startedAt,
+            });
+          }
         }
       }
       if (action === 'sync' && (result.privateWallet.status !== 'locked'
@@ -164,9 +171,10 @@ export function createAccountWalletClient({ origin, getAccessToken, isCurrent = 
       }
       return result;
     } catch (error) {
-      if (['payment-quote', 'payment-submit', 'payment-status', 'payment-history'].includes(action)
+      if (['payment-quote', 'payment-submit', 'payment-status', 'payment-history', 'payment-redelivery-review', 'payment-redelivery-submit'].includes(action)
           && !['session-changed', 'sign-in-required'].includes(error.code)) {
         throw new Error(action === 'payment-quote' ? 'A private payment quote could not be prepared. Check spendable funds, the fee limit, request expiry and broadcaster connection.'
+          : action === 'payment-redelivery-review' ? 'The original delivery retry could not be prepared. The request must still be active, the original notes unspent, and the same broadcaster fee available. Check the local server diagnostic. No delivery was retried.'
           : 'The private payment result could not be confirmed. Open saved private payments and check the original attempt before trying again.');
       }
       if (action === 'payment-check' && !['session-changed', 'sign-in-required'].includes(error.code)) throw new AccountRequestError('payment-check-failed');

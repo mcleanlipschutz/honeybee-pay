@@ -7,7 +7,7 @@ export const paymentDiagnosticStages = Object.freeze([...syncDiagnosticStages,
   'payment-runtime', 'payment-store', 'payment-validation', 'payment-balance',
   'broadcaster', 'fee-estimate', 'quote-validation', 'proof-generation',
   'proof-verification', 'broadcast', 'transaction-lookup', 'receipt-verification',
-  'nullifier-check', 'chain-event-search', 'payment-outcome']);
+  'nullifier-check', 'chain-event-search', 'payment-outcome', 'redelivery-review']);
 const applicationReasons = new Map([
   ['Incomplete wallet scan', 'SCAN_INCOMPLETE'],
   ['Spendable balance unavailable', 'BALANCE_UNAVAILABLE'],
@@ -35,9 +35,14 @@ const applicationReasons = new Map([
   ['Received response error from broadcaster.', 'BROADCAST_RESPONSE_ERROR'],
   ['Invalid private transaction hash', 'BROADCAST_ACK_INVALID'],
   ['Recovery lookup budget exceeded', 'RECOVERY_LOOKUP_TIMEOUT'],
+  ['Original delivery review expired or changed', 'ORIGINAL_DELIVERY_REVIEW_INVALID'],
+  ['Original payment is not eligible for delivery retry', 'ORIGINAL_DELIVERY_INELIGIBLE'],
+  ['Original payment network fee is no longer sufficient', 'ORIGINAL_DELIVERY_FEE_CHANGED'],
+  ['Private note was already spent', 'ORIGINAL_NOTE_ALREADY_SPENT'],
   ['This test payment needs one spendable note per token and change in both tokens. Choose a smaller payment or fund separate test deposits.', 'UNSUPPORTED_NOTE_SHAPE'],
 ]);
 const allowedReasons = new Set([...applicationReasons.values(), 'IN_PROGRESS',
+  'ORIGINAL_DELIVERY_REVIEW_READY', 'ORIGINAL_DELIVERY_STARTED',
   'DELIVERY_REASON_NOT_RECORDED', 'BROADCAST_ACK_RECEIVED', 'TRANSACTION_CANDIDATE_FOUND',
   'NO_TRANSACTION_CANDIDATE', 'RECEIPT_UNAVAILABLE', 'RECEIPT_REJECTED',
   'NOTES_SPENT_AT_CHECK', 'NOTES_PARTLY_SPENT', 'NOTES_UNSPENT_AT_CHECK',

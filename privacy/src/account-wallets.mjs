@@ -28,7 +28,7 @@ function runWorker(message, onSyncDiagnostic) {
     let result, stage = 'worker-start', reason = 'CHECK_FAILED', timedOut = false, reportedStage;
     const paymentOperation = message.action.startsWith('payment-');
     const budget = message.action === 'payment-submit' ? 900000 : message.action === 'payment-quote' ? 650000
-      : ['sync', 'payment-check', 'payment-status', 'invoice-receipts'].includes(message.action) ? 320000
+      : ['sync', 'payment-check', 'payment-status', 'payment-redelivery-review', 'payment-redelivery-submit', 'invoice-receipts'].includes(message.action) ? 320000
       : ['shield-review', 'shield-preflight'].includes(message.action) ? 120000 : 30000;
     const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, budget);
     let workerError = false;
@@ -86,19 +86,20 @@ export async function createAccountWalletService({ directory, appId, verificatio
     try {
       if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error();
       const { action, password, backup, amount, publicAddress, assetId, reviewId, lifetimeSeconds, historyBackup, paymentRequest, maxFeeUnits, quoteId, hash } = request;
-      const paymentAction = ['payment-quote', 'payment-submit', 'payment-status', 'payment-history'].includes(action);
-      const usesNetwork = ['sync', 'shield-review', 'shield-preflight', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'invoice-receipts'].includes(action);
+      const paymentAction = ['payment-quote', 'payment-submit', 'payment-status', 'payment-history', 'payment-redelivery-review', 'payment-redelivery-submit'].includes(action);
+      const usesNetwork = ['sync', 'shield-review', 'shield-preflight', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'payment-redelivery-review', 'payment-redelivery-submit', 'invoice-receipts'].includes(action);
       const needsPassword = !['status', 'shield-preflight'].includes(action);
       const importsBackup = ['restore', 'verify-backup'].includes(action);
-      const allowed = ['action', 'accessToken', ...(needsPassword ? ['password'] : []), ...(importsBackup ? ['backup'] : []), ...(action === 'shield-review' ? ['amount', 'publicAddress', 'assetId'] : []), ...(action === 'shield-preflight' ? ['reviewId'] : []), ...(action === 'invoice-create' ? ['amount', 'lifetimeSeconds'] : []), ...(action === 'invoice-history-restore' ? ['historyBackup'] : []), ...(['payment-check', 'payment-quote'].includes(action) ? ['paymentRequest'] : []), ...(action === 'payment-quote' ? ['maxFeeUnits'] : []), ...(['payment-submit', 'payment-status'].includes(action) ? ['quoteId'] : []), ...(action === 'payment-status' ? ['hash'] : [])];
+      const allowed = ['action', 'accessToken', ...(needsPassword ? ['password'] : []), ...(importsBackup ? ['backup'] : []), ...(action === 'shield-review' ? ['amount', 'publicAddress', 'assetId'] : []), ...(['shield-preflight', 'payment-redelivery-submit'].includes(action) ? ['reviewId'] : []), ...(action === 'invoice-create' ? ['amount', 'lifetimeSeconds'] : []), ...(action === 'invoice-history-restore' ? ['historyBackup'] : []), ...(['payment-check', 'payment-quote'].includes(action) ? ['paymentRequest'] : []), ...(action === 'payment-quote' ? ['maxFeeUnits'] : []), ...(['payment-submit', 'payment-status', 'payment-redelivery-review', 'payment-redelivery-submit'].includes(action) ? ['quoteId'] : []), ...(action === 'payment-status' ? ['hash'] : [])];
       if (Object.keys(request).some(key => !allowed.includes(key))
-          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync', 'shield-review', 'shield-preflight', 'invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'payment-history', 'invoice-receipts'].includes(action)) throw new Error();
+          || !['status', 'create', 'unlock', 'backup', 'restore', 'verify-backup', 'sync', 'shield-review', 'shield-preflight', 'invoice-create', 'invoice-history', 'invoice-history-export', 'invoice-history-restore', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'payment-history', 'payment-redelivery-review', 'payment-redelivery-submit', 'invoice-receipts'].includes(action)) throw new Error();
       if (usesNetwork && !synchronization) throw new Error();
       if (action === 'shield-review') shieldInput(amount, publicAddress, assetId);
       if (action === 'invoice-create') invoiceInput(amount, lifetimeSeconds);
       const checkedRequest = ['payment-check', 'payment-quote'].includes(action) ? validatePrivateRequest(paymentRequest, invoiceValidation()) : null;
       if (action === 'payment-quote') paymentFeeLimit(maxFeeUnits);
-      if (['payment-submit', 'payment-status'].includes(action) && !/^0x[a-f0-9]{64}$/.test(quoteId)) throw new Error();
+      if (['payment-submit', 'payment-status', 'payment-redelivery-review', 'payment-redelivery-submit'].includes(action) && !/^0x[a-f0-9]{64}$/.test(quoteId)) throw new Error();
+      if (action === 'payment-redelivery-submit' && !/^0x[a-f0-9]{64}$/.test(reviewId)) throw new Error();
       if (action === 'payment-status' && hash !== undefined && !/^0x[a-fA-F0-9]{64}$/.test(hash)) throw new Error();
       const normalizedHistory = action === 'invoice-history-restore' ? validateHistoryBackup(historyBackup) : null;
       if (needsPassword) checkRecoveryPassword(password);
@@ -110,7 +111,7 @@ export async function createAccountWalletService({ directory, appId, verificatio
         ...(action === 'shield-review' ? { amount, publicAddress, assetId } : {}),
         ...(action === 'invoice-create' ? { amount, lifetimeSeconds } : {}),
         ...(['payment-check', 'payment-quote'].includes(action) ? { paymentRequest: checkedRequest } : {}),
-        ...(paymentAction ? { maxFeeUnits, quoteId, hash } : {}),
+        ...(paymentAction ? { maxFeeUnits, quoteId, hash, reviewId } : {}),
         ...(action === 'invoice-history-restore' ? { historyBackup: normalizedHistory } : {}),
         ...(usesNetwork ? { syncConfig: synchronization } : {}) }, onSyncDiagnostic);
       if (action === 'shield-review') shieldReviews.put(session, result.shieldReview);

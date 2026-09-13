@@ -1428,3 +1428,102 @@ contract deployment or funded transaction was performed in this pass.
 Primary references: the installed pinned SDK's original-nullifier lookup and
 broadcaster response handling, plus the official Ethereum JSON-RPC definitions:
 https://ethereum.org/developers/docs/apis/json-rpc/ .
+
+## September 13, 2026 — Explicit retry of the saved original private delivery
+
+The laptop recovery check returned DELIVERY_REASON_NOT_RECORDED,
+NO_TRANSACTION_CANDIDATE, NOTES_UNSPENT_AT_CHECK and UNKNOWN. No transaction
+candidate or settlement was observed; pending execution remains possible. The
+historical broadcast exception cannot be reconstructed and the merchant still
+has no confirmed matching POI-validated receipt. No replacement is authorized.
+
+Implemented separate payment-redelivery-review and payment-redelivery-submit
+actions for the original v2 unknown record without any candidate hash. Review
+performs current deployment/verifier, proof/root/nullifier, active-request,
+original gas-term and same signed broadcaster recipient/token/rate checks. It
+creates no payment proof and sends nothing. The encrypted review binds the full
+original quote, gas data, broadcaster and populated transaction/POIs, uses a
+random nonce, and expires within five minutes and the request/session/current
+signed offer deadlines. It does not change the original expired quote.
+
+The explicit submit consumes the review under the existing per-account filesystem
+lease before preflight. Only the exact original stored payload goes to the
+broadcaster SDK; proof/nullifier/calldata/ciphertexts/POIs, USDC amount, WETH fee,
+minimum gas and recipients remain fixed. Current chain checks run again after
+transport encryption. A fresh signed Waku offer ID/envelope may be used with
+identical fee terms. No public-wallet sender or new transaction proof is added.
+Unknown remains durable after interruption; a late ACK is encrypted even after
+session expiry, and is still untrusted until original receipt verification.
+
+Reviewed cached verified source for the pinned Sepolia implementation and relay:
+RailgunLogic.accumulateAndNullifyTransaction requires each original tree/nullifier
+to be unspent and marks it spent; RailgunSmartWallet.transact performs that check
+for the batch before adding outputs. RelayAdapt binds both original proofs and
+calls that batch. Therefore duplicate delivery cannot execute those private
+spends twice under the pinned implementation. Runtime deployment checks remain
+mandatory. This is source review plus existing runtime verification logic, not
+a new funded onchain replay experiment or a production security certification.
+
+The Saved private payments form now dispatches explicit actions. Review clears
+the recovery password and asks for it again; its confirmation displays the
+original merchant amount, recipient, fee, network and expiry. Enter does not
+submit. Double-clicks, used/replaced/expired reviews, cancellation, reloaded
+history, account changes and busy state do not implicitly deliver. Existing
+read-only history/status remain separate and never send. A matching merchant
+receipt remains a separate read-only verification step.
+
+Validation: 41 focused backend tests passed, including eight new retry cases,
+existing payment/receipt/chain-discovery/broadcaster/diagnostic regressions, and
+real isolated-worker API/IPC checks rejecting injected fields and wrong chain.
+All 48 checkout tests passed, including four new tests exercising actual JSX
+handlers with explicit hook/form doubles. The client/server production build
+passed with the existing chunk-size and viem node:worker_threads warnings.
+SDK/proof/chain/transport fixtures are explicit doubles. No user wallet was
+opened, proof delivered, contract deployed or funds sent by the assistant.
+Actual browser interaction remains unverified: earlier local browser access was
+blocked and was not retried through another path. Live Windows retry and final
+buyer/merchant receipt verification remain user-side gates.
+
+### CROPS review — original-delivery recovery
+
+Chosen default: local, explicitly confirmed redelivery of the same encrypted
+original authorization through the original broadcaster at identical fee terms.
+This preserves the reviewed privacy route and avoids a second spend authorization.
+
+- Censorship resistance: the original broadcaster can withhold delivery; Privy,
+  configured RPC/POI and protocol pause/upgrade authorities remain dependencies.
+  Reconnection helps interrupted delivery, but cannot change a fee recipient
+  already bound into the proof. Read-only chain lookup is independent of the
+  broadcaster response. If delivery remains unavailable, preserve the journal;
+  an independent exit/cancellation path is still unverified, not promised.
+- Open: application actions, validators, tests, pinned ABIs and build instructions
+  are inspectable in the development repository. Hosted authentication/POI
+  operations are not reproduced by this repo. Local source/build steps permit
+  inspecting this recovery implementation without a hosted Honeybee frontend.
+- Free: no new dependencies or license changes. MIT application code does not
+  resolve upstream GPL or UNLICENSED contract-source limitations already recorded
+  in ZK_FLOW.md. Verified source does not imply permission to fork every component.
+- Privacy: the runtime handles decrypted account keys/passwords; RPC and Waku/POI
+  providers can observe traffic metadata. The same encrypted payment outputs
+  are retained, journal/review remain encrypted at rest, and only static reason
+  codes reach the terminal. Transaction hashes remain public. Users can decline
+  the review or keep using read-only checks; no public-wallet fallback is added.
+- Security: fresh consent, bounded expiry, immutable payload digest, one-use
+  consumption, account lock, pinned code checks and exact original nullifiers
+  constrain retries. Session/POI/broadcaster availability may still prevent
+  delivery. Nullifier enforcement, not a local unspent snapshot, prevents double
+  execution. Local compromise and protocol admin authority remain risks; existing
+  encrypted recovery is preserved, but independent unshield/exit is unverified.
+
+Accepted compromises: controlled Sepolia test assets only, unchanged dependency
+and operator trust, no guaranteed cancellation/exit, and no funded settlement
+claim. No main merge or hosted-site update is included.
+
+
+Independent ETHSkills-requested review found no substantive functional/security
+issue in this scoped change. API/account/lease boundaries, one-use expiring
+consent, immutable saved payload, current chain/proof/nullifier checks, durable
+uncertainty and explicit UI controls passed source review. The reviewer also
+ran the eight backend retry and four actual JSX-handler cases successfully.
+Browser interaction and live buyer/merchant settlement remain UNVERIFIED;
+SE2-specific widgets and new-contract deployment checks are not applicable.

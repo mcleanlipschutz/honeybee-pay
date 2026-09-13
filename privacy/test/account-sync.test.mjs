@@ -160,6 +160,18 @@ test('real account workers reject unauthorized sync before network access and pr
   assert.deepEqual(diagnostics.at(-1), { stage: 'shutdown', reason: 'COMPLETED' },
     'a throwing terminal observer cannot turn successful read-only history into a failure');
   assert.equal(calls, 4, 'saved history does not need a network scan or broadcast');
+  const retry = { action: 'payment-redelivery-submit', accessToken: token, password,
+    quoteId: '0x' + 'ab'.repeat(32), reviewId: '0x' + 'cd'.repeat(32) };
+  for (const extra of [{ reviewId: undefined }, { reviewId: 'bad' }, { quoteId: 'bad' },
+    { accessToken: 'forged' }, { password: '' }, { transaction: {} }, { populated: {} },
+    { feeUnits: '1' }, { paymentRequest }, { rpcURL: 'https://other.test' },
+    { action: 'payment-redelivery-review' }]) {
+    await assert.rejects(service.execute({ ...retry, ...extra }));
+  }
+  assert.equal(calls, 4, 'retry rejects missing consent and injected payment terms before starting a worker');
+  await assert.rejects(service.execute(retry));
+  assert.equal(calls, 5, 'valid retry fields reach the real worker and stop at wrong-chain preflight');
+  assert.deepEqual(diagnostics.at(-1), { stage: 'rpc-connection', reason: 'SDK_ERROR' });
   const diagnosticCount = diagnostics.length;
   checkpoint('payment checks completed');
   const owner = (await (await createAccountAuthenticator(auth))(token)).ownerId;

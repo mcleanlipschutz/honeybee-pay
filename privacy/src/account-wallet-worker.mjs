@@ -58,7 +58,7 @@ function readiness(walletStatus, wallet) {
     paymentReady: false, blockers: [...(walletStatus === 'not-created' ? ['private-wallet-not-created'] : []), 'private-payment-not-integrated', 'balance-not-verified'] };
 }
 
-async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, assetId, review, lifetimeSeconds, historyBackup, paymentRequest, maxFeeUnits, quoteId, hash }, onStage = () => {}) {
+async function operate({ directory, session, action, password, backup, syncConfig, amount, publicAddress, assetId, review, lifetimeSeconds, historyBackup, paymentRequest, maxFeeUnits, quoteId, hash, reviewId }, onStage = () => {}) {
   live(session);
   if (action === 'shield-preflight') {
     // This branch never opens a wallet directory or receives a recovery password.
@@ -76,9 +76,9 @@ async function operate({ directory, session, action, password, backup, syncConfi
   // The authenticated parent holds the account lease until this process exits.
   let engineStarted = false, createdSlot = false, completed = false;
   let background;
-  const paymentAction = ['payment-quote', 'payment-submit', 'payment-status', 'payment-history'].includes(action);
+  const paymentAction = ['payment-quote', 'payment-submit', 'payment-status', 'payment-history', 'payment-redelivery-review', 'payment-redelivery-submit'].includes(action);
   const signal = AbortSignal.timeout(action === 'payment-submit' ? 850000 : action === 'payment-quote' ? 600000 : accountSyncDeadline);
-  const usesNetwork = ['sync', 'shield-review', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'invoice-receipts'].includes(action);
+  const usesNetwork = ['sync', 'shield-review', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'payment-redelivery-review', 'payment-redelivery-submit', 'invoice-receipts'].includes(action);
   const scansWallet = ['sync', 'payment-check', 'payment-quote', 'payment-submit', 'payment-status', 'invoice-receipts'].includes(action);
   const checkSession = () => { live(session); if (usesNetwork) signal.throwIfAborted(); };
   try {
@@ -130,7 +130,7 @@ async function operate({ directory, session, action, password, backup, syncConfi
     const syncResult = action === 'sync' ? await scanAccountWallet({ sdk, wallet, prepared, checkSession, signal, onStage, includeFeeBalance: true }) : null;
     const paymentResult = action === 'payment-check' ? await checkAccountPayment({ paymentRequest, sdk, wallet,
       prepared, checkSession, signal, expiresAt: session.expiresAt }) : null;
-    const privatePaymentResult = paymentAction ? await operatePrivatePayment({ action, paymentRequest, maxFeeUnits, quoteId, hash,
+    const privatePaymentResult = paymentAction ? await operatePrivatePayment({ action, paymentRequest, maxFeeUnits, quoteId, hash, reviewId,
       sdk, wallet, key, privateKey: root.privateKey, directory: slot, session, prepared, checkSession, signal, onStage }) : null;
     const shieldResult = action === 'shield-review' ? await prepareShieldReview({ wallet, amount, publicAddress, assetId,
       prepared, checkSession, expiresAt: session.expiresAt }) : null;

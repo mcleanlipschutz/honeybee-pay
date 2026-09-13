@@ -279,11 +279,22 @@ nor a valid local proof establishes a settled private merchant payment.
 
 ### Read-only unknown-payment recovery — September 13
 - [x] Missing SDK hash can recover from protocol events and exact original receipt verification.
-- [x] Unspent notes remain unknown and block replacement; no recovery action proves or sends.
+- [x] Unspent notes remain unknown and block replacement; read-only status/history never prove or send.
 - [x] Spent-note lookup is bounded to 4096 recent blocks and eight 512-block log queries.
 - [x] Altered calldata, incomplete events, removed/foreign logs and reorgs cannot confirm payment.
 - [x] Wrong chain, lookup failure, deadline and logout preserve the original proof and unresolved state.
 - [x] Only fixed diagnostic codes cross the worker boundary; new delivery codes persist encrypted.
 - [x] Read-only event RPC is allowed; transaction-sending methods remain rejected.
-- [ ] Laptop: apply backend update and run Check original payment on the existing unknown attempt.
+- [x] Laptop: original-payment check reported no transaction candidate and unspent notes; outcome remains unknown.
 - [ ] Obtain a verified original receipt and matching merchant receipt before claiming settlement.
+
+### Explicit original-delivery retry — September 13
+- [x] Read-only review requires an active original request, exact saved v2 payload, unknown status without a hash, and no other unresolved payment.
+- [x] Review preserves the expired original quote and separately binds new delivery consent to its immutable payload, with a nonce and at most five-minute expiry.
+- [x] Confirm consumes the review under the existing account lease before preflight; used/replaced/expired/cross-wallet reviews cannot deliver.
+- [x] Exact original proofs/nullifiers/POIs, USDC amount and WETH fee are reused; no new payment proof is generated.
+- [x] Same signed broadcaster recipient/token/rate and current pinned deployment, proof/root/nullifier/gas checks are required; notes are rechecked after transport preparation.
+- [x] Interrupted response and late ACK preserve encrypted original outcome and sanitized diagnostics.
+- [x] Actual JSX handlers require password re-entry and explicit confirmation; Enter, double-click, cancellation, reload, account change and busy state do not implicitly send.
+- [ ] Laptop: pull, rebuild checkout, restart, inspect the new review and explicitly confirm original delivery.
+- [ ] Verify original buyer receipt and merchant POI-validated receipt for the same request before claiming settlement.

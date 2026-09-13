@@ -16,6 +16,7 @@ import { verifyFeeToken } from './fee-token.mjs';
 import { createBoundPaymentProver } from './bound-payment-prover.mjs';
 import { inspectOriginalPaymentChain } from './payment-chain-recovery.mjs';
 import { paymentFailureDiagnostic, paymentFailureReason } from './payment-diagnostic.mjs';
+import { operatePaymentRedelivery } from './payment-redelivery.mjs';
 
 const version = TXIDVersion.V2_PoseidonMerkle;
 const digest = value => keccak256(toUtf8Bytes(JSON.stringify(value)));
@@ -72,7 +73,7 @@ export async function preparePaymentRuntime(prepared, checkSession) {
   return { ...prepared, artifacts, rpc, inspect };
 }
 
-export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnits, quoteId, hash,
+export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnits, quoteId, hash, reviewId,
   sdk, wallet, key, privateKey, directory, session, prepared, checkSession, signal, onStage = () => {},
   openBroadcaster = openPaymentBroadcaster, paymentProver = createBoundPaymentProver() }) {
   const store = createPaymentStore({ directory, privateKey, ownerId: session.ownerId, checkSession });
@@ -81,6 +82,14 @@ export async function operatePrivatePayment({ action, paymentRequest, maxFeeUnit
   const report = (stage, reason) => { try { const d = paymentFailureDiagnostic(stage, reason); onStage(d.stage, d.reason); } catch {} };
   checkSession();
   if (action === 'payment-history') return { privatePayments: data.payments.map(summary) };
+  if (['payment-redelivery-review', 'payment-redelivery-submit'].includes(action)) {
+    const record = data.payments.find(p => p.quote.quoteId === quoteId);
+    if (!record) throw new Error('Private payment attempt unavailable');
+    validatePaymentQuote(record.quote, { wallet, allowExpired: true });
+    const result = await operatePaymentRedelivery({ action, reviewId, record, data, store,
+      prepared, session, checkSession, openBroadcaster, report });
+    return { privatePayment: summary(record), ...result };
+  }
   if (action === 'payment-status') {
     const record = data.payments.find(p => p.quote.quoteId === quoteId);
     if (!record) throw new Error('Private payment attempt unavailable');
