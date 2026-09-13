@@ -1362,3 +1362,33 @@ Primary references checked: the installed pinned broadcaster SDK fee cache,
 signed-message handler and selection code, plus the official RAILGUN guides:
 https://docs.railgun.org/developer-guide/wallet/broadcasters and
 https://docs.railgun.org/developer-guide/wallet/transactions/ux-private-transactions .
+
+
+## September 13, 2026 — Separate quote and confirmation controls
+
+The next laptop log showed a history read followed by three successful quotes,
+not a proof-generation or broadcast stage. It does not identify the clicked
+control. Source inspection found that implicit Enter could activate the first
+submit button (Get a new quote), and each quote cleared the password without
+an explicit next-step message.
+
+Quote, confirmation and original-status buttons now invoke separate actions
+without relying on SubmitEvent.submitter. Enter in a field after a quote only
+shows instructions. Payment authorization still requires the explicit Confirm
+control. Native form validity, original expiry and fee-limit checks, account
+and busy guards remain enforced. Each action clears the password while keeping
+the fee limit; a successful quote asks the user to re-enter the password.
+
+Validation: all 40 existing checkout tests plus four actual JSX-handler tests
+passed. The new tests use explicit hook/form doubles, covering quote-only
+dispatch, Enter without replacing/authorizing a quote, exact confirmation ID,
+duplicate clicks, blank password, changed fee, expiry, logout, busy state and
+original-status dispatch. Client and server production builds passed with the
+existing chunk-size and node:worker_threads warnings. These are not browser or
+funded-payment tests. The cloud browser could not open the isolated local form
+fixture (ERR_BLOCKED_BY_CLIENT); no alternate access path was attempted.
+
+ZK_FLOW.md records the required pull/build/restart commands. No backend,
+dependency, contract, real-money transaction, main merge or hosted-site update
+is included. The next laptop action must demonstrate proof generation and
+eventual original-payment/merchant receipt verification.

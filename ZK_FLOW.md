@@ -18,6 +18,37 @@ live Sepolia verifier; that does not establish spendable roots, POI or settlemen
 
 ## Current laptop checkpoint
 
+**Latest UI update:** The next supplied terminal log contained a saved-history
+read followed by three successful quote operations (`fee-estimate` and
+`quote-validation`), with no `proof-generation` or `broadcast`. It does not
+establish which UI control was used. The form previously made the quote button
+the first submit control, so implicit Enter could obtain another quote. Quote,
+confirm and status now have separate explicit handlers. Enter in a password
+field with a reviewed quote only displays instructions; it neither quotes again
+nor authorizes payment. Quotes clearly ask for the recovery password again.
+The password is cleared between operations while the selected fee limit stays.
+
+This UI update **requires rebuilding checkout**. In the existing PowerShell
+window, stop the server with Ctrl+C (Y if asked), then run each command separately:
+
+```powershell
+cd "C:\Users\McLean Lipschutz\honeybee-pay-windows\privacy"
+git pull --ff-only
+cd ..\checkout
+npm.cmd run build
+cd ..\privacy
+npm.cmd run wallet:web
+```
+
+Reload the local page with Ctrl+F5. Open saved history again before deciding
+whether an attempt is unsubmitted. For an unsubmitted request, obtain a fresh
+quote, re-enter the recovery password in the payment form, and click Confirm
+private payment once. Keep the page and server open. Pending/unknown/reverted
+attempts require the original-payment check. Actual Windows confirmation and
+funded merchant receipt validation remain pending.
+
+### Earlier broadcaster checkpoint
+
 McLean confirmed the WETH wrap, approval and shield deposit, and a completed
 private scan showed **0.0049875 Sepolia WETH spendable for fees**. The subsequent
 2-test-USDC shield deposit was reported confirmed. A quote for **1 test USDC**
@@ -42,7 +73,7 @@ rate requires a new user-reviewed quote; no replacement payment is auto-sent.
 This fixes a reproduced cause consistent with the laptop failure, not a verified
 live settlement. Fresh network availability is still required.
 
-This update changes only the local backend. Stop `wallet:web` with Ctrl+C in its
+The earlier broadcaster fix changes only the local backend. Stop `wallet:web` with Ctrl+C in its
 original PowerShell window, answer Y if asked, run `git pull --ff-only`, then
 `npm.cmd run wallet:web`. No install, frontend build or artifact download is
 needed. Reopen the same merchant request, set the maximum fee to **0.004 WETH**,
