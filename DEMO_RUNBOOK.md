@@ -13,6 +13,16 @@ A disposable unfunded account scan and recovery subsequently passed. The hosted
 Site is now public with McLean's authorization and homepage confirmation; it
 continues to serve the public-payment build.
 
+## Current recording package
+
+Use [DEMO_SCRIPT.md](DEMO_SCRIPT.md) for the ready-to-read narration and judging
+answers, [SUBMISSION.md](SUBMISSION.md) for current portal text, and
+[FINAL_HOURS.md](FINAL_HOURS.md) for the laptop update and remaining confirmations.
+The older presentation below is retained for history. The laptop has passed the
+WETH token and compatible-broadcaster checks; funded private settlement is pending.
+The official prize page was rechecked September 13; exact signed-in portal limits
+still require McLean.
+
 ## Things McLean can do on the phone
 
 1. Paste CHECK_IN_2.md into the check-in form, review it and submit it yourself.

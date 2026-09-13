@@ -1,106 +1,108 @@
-# Honeybee Pay submission draft
+# Honeybee Pay submission text
 
-Updated September 13, 2026. Review this against the portal's current fields and
-limits before submitting. This file is a draft; no submission has been sent.
-
-McLean's earlier eight-hour estimate is historical. Use [FINAL_HOURS.md](FINAL_HOURS.md) for the
-recording and submission sequence. The current source is on
-[`codex/privacy-segment-1a`](https://github.com/mcleanlipschutz/honeybee-pay/tree/codex/privacy-segment-1a).
+Updated September 13, 2026. Ready to copy into the matching portal fields, subject
+to its field limits. No form has been submitted. This version accurately describes
+the evidence available before the first funded private payment. If that payment
+passes, update the status using its actual buyer and merchant evidence.
 
 ## Short description
 
-Simple USDC payments with buyer-approved rules and a developing ZK privacy layer.
+Email-based stablecoin checkout with clear payment approvals and a local ZK payment prototype.
 
 ## Project description
 
-Honeybee Pay explores a simpler way for everyday users and merchants to exchange
-stablecoins while keeping control over what they approve. The working public
-prototype uses email login and embedded wallets to send test USDC on Ethereum
-Sepolia. It checks the buyer's approved recipient, amount, token and network,
-then verifies the matching payment event before issuing a public receipt.
+Honeybee Pay makes stablecoin payments easier to review and harder to redirect.
+A buyer signs in by email, uses an embedded Ethereum wallet, reviews the recipient
+and amount, and receives a retrievable receipt after Honeybee verifies the matching
+transfer. The public testnet checkout has completed a 1-test-USDC payment on
+Ethereum Sepolia.
 
-The private-payment work adds account-bound RAILGUN wallets, encrypted recovery,
-merchant requests, private-funds checks, and deposit preparation and recovery
-tools. Browser tests have confirmed separate buyer and merchant accounts,
-matching recovered wallet addresses, and merchant request/history recovery.
-Real offline zero-knowledge proof and tamper-rejection checks pass with
-synthetic inputs. The local code now integrates private fee quotes, explicit
-confirmation, actual proof generation/verification, broadcaster submission,
-encrypted attempt tracking and merchant receipt matching. Live broadcaster
-access and a funded end-to-end private payment remain unvalidated. Public test payments and offline privacy
-tests are presented separately so the demo does not overstate what is working.
+The local privacy prototype adds separate buyer and merchant RAILGUN wallets,
+encrypted recovery, merchant payment requests, shield-deposit tools and private
+payment confirmation. Merchant payments remain in Circle test USDC; broadcaster
+fees use separately funded Sepolia WETH. The proof adapter binds both transfers
+to one RelayAdapt batch so the original fee proof cannot be submitted on its own.
+
+Two actual Groth16 proofs using synthetic notes passed local verification and the
+deployed Sepolia verifier, including rejection of a modified batch binding. The
+Windows runtime has discovered a compatible broadcaster and verified the fee-token
+contract. A funded private payment and matching merchant receipt are still awaiting
+end-to-end validation. The hosted demo shows public transfers; the newer private
+features run locally and are demonstrated separately.
 
 ## How it is made
 
-The checkout uses React, Privy email authentication and embedded Ethereum wallets,
-with viem for public token transactions and receipt verification. A hosted Worker
-verifies public payment evidence before recording a shared test-payment count.
+React provides the checkout. Privy supplies email authentication, embedded Ethereum
+wallets and user-confirmed public wallet actions. viem prepares public transactions
+and verifies receipts. A hosted Worker checks public payment evidence before
+recording shared test activity.
 
-The private runtime runs on a trusted local computer. Verified account tokens
-select isolated RAILGUN wallet workers. Password-protected wallet backups and
-encrypted request history support recovery. RAILGUN's wallet/engine SDKs and
-snarkjs provide the existing privacy and proving machinery; Honeybee does not
-claim to have invented those protocols. Application checks bind reviewed payment
-terms, reject changed proposals and keep uncertain deposit outcomes from being
-automatically resent. New network readers cap decoded response sizes.
+The local Node runtime verifies Privy account tokens and isolates account-bound
+RAILGUN wallet workers. Password-protected backups preserve wallet recovery;
+encrypted request history can be restored separately. RAILGUN wallet/engine SDKs
+and snarkjs supply the privacy protocol and proving machinery. Honeybee adds
+reviewed payment terms, exact approvals, bounded fee consent, proof-batch binding,
+before-send attempt storage and original-transaction reconciliation.
 
-The original Solidity approval-recording exercise is separate from this checkout.
-It neither transfers tokens nor enforces the current private-payment flow.
-Honeybee's application checks are not an independently enforced onchain firewall.
+The original Solidity approval-recording exercise is separate from the checkout.
+It neither moves tokens nor enforces this payment flow. Honeybee's approval checks
+are application controls, not an independently enforced onchain firewall.
 
-## AI use and ownership
+## Challenges
 
-McLean originated the payment/privacy/fraud-prevention direction and set the
-product requirements. Codex assisted with implementation, tests, documentation
-and dependency review, with work recorded in Git history and the build log.
-The current security decision is deterministic code. The demo does not claim a
-live AI agent, real prompt-injection exploit, autonomous payment approval or
-independent security certification. McLean should be able to explain the
-tradeoffs and demonstrate the evidence himself.
+The Windows hotspot initially reset POI connections; preferring IPv4 restored the
+service check. Broadcasters advertised Sepolia fees but none accepted Circle test
+USDC. The solution keeps the merchant token unchanged and uses verified Sepolia
+WETH for fees. That introduced a second private proof, requiring explicit batch
+binding and receipt checks to prevent a standalone fee submission. Short fee
+quotes also exposed unnecessary serial RPC delays and duplicate simulations;
+those were reduced while retaining expiry and transaction checks.
 
-## Prize targets
+## AI assistance and attribution
 
-These are targets, not organizer-confirmed eligibility. Multiple selections do
-not make an unbuilt integration qualify.
+McLean directed the product, requirements and tradeoffs. Codex assisted with code,
+tests, documentation and dependency review. Git history and the build log record
+the work. Honeybee integrates RAILGUN, Privy and other existing libraries; it does
+not claim to have invented their protocols. Payment authorization is deterministic
+code. The demonstration does not claim a live AI exploit, autonomous approval or
+an independent security audit.
 
-| Target | Current fit | Work still needed for a credible submission |
-| --- | --- | --- |
-| Privy: Best financial flow | Strongest demonstrated fit: embedded wallet and recorded public USDC transfer. | Show the working flow and explain the UX improvement; provide demo/source access. |
-| Privy: Best B2B financial product | Possible additional target for merchant operations. | Demonstrate a Privy control such as a policy, signer, quorum or intent. Honeybee's own checks are not that control. |
-| Arc | Potential future stablecoin integration. | Build a meaningful Arc integration. Sepolia USDC by itself is insufficient. |
-| Chainlink: Best Confidential Workflow | Future option, currently unbuilt. | A functional CRE confidential workflow is required; the word privacy is not enough. |
-| The Graph | Current RAILGUN history service is not a demonstrated Graph sponsor integration. | Build and show the qualifying live Graph data/tooling integration. |
+## Privy: Best financial flow explanation
 
-Source checked September 11: [official sponsor requirements](https://ethglobal.com/events/ethonline2026/prizes).
-If the portal lists sponsors, select Privy once; its two prizes are under that
-sponsor. Do not represent optional future integrations as completed features.
+Privy is central to Honeybee's working public checkout: email sign-in creates or
+reopens an embedded Ethereum wallet, and a Privy wallet action confirms the reviewed
+Sepolia test-USDC transfer. Users can revisit a receipt without manually setting up
+a separate wallet extension. The local private prototype uses that public wallet
+for explicit test-funding confirmations and verified account identity for the
+local wallet service. The private RAILGUN wallet has its own encrypted recovery;
+email sign-in alone does not recover it.
 
-## Submission package
+## Prize selection
 
-- Repository: https://github.com/mcleanlipschutz/honeybee-pay
-- Current implementation: https://github.com/mcleanlipschutz/honeybee-pay/tree/codex/privacy-segment-1a
-- Reviewed development: https://github.com/mcleanlipschutz/honeybee-pay/pull/1
-- Current status and tests: README.md and privacy/reports/segment-1z-validation.json
-- Presentation steps: DEMO_RUNBOOK.md
-- Deadline checklist and narration: FINAL_HOURS.md
-- Security boundaries and residual risks: SECURITY_REVIEW.md
-- Check-in text: CHECK_IN_2.md
+The strongest supported target is **Privy — Best financial flow**: demonstrate the
+functional Privy wallet transfer, source and UX. The B2B prize additionally requires
+a Privy control such as policies, signers, key quorums or intents; Honeybee's own
+checks do not satisfy that requirement. Do not claim B2B eligibility on that basis.
+Arc, Chainlink CRE and The Graph integrations have not been demonstrated. Multiple
+prize selection is allowed by the user's form, but it does not replace eligibility.
+Requirements rechecked September 13 against the [official prize page](https://ethglobal.com/events/ethonline2026/prizes).
 
-Point judges to the actual draft branch if main has not been updated. Verify that
-the source and hosted demo are accessible to them before submitting. The hosted
-demo remains the public-payment implementation through Segment 1O; later private
-work is local only. The existing hosted URL is
-https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site . Its audience was changed to
-public with McLean's authorization on September 13, and he confirmed the homepage
-opens. A video remains necessary evidence of the
-local private-wallet features. Do not promise a private-payment button online.
+## Links and remaining portal fields
 
-## Details requiring the organizer portal
+- [Repository](https://github.com/mcleanlipschutz/honeybee-pay)
+- [Current implementation branch](https://github.com/mcleanlipschutz/honeybee-pay/tree/codex/privacy-segment-1a)
+- [Draft development PR](https://github.com/mcleanlipschutz/honeybee-pay/pull/1)
+- [Public checkout demo](https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site)
+- [Current checkpoint](privacy/reports/final-handoff-validation.json)
+- [ZK proof evidence](privacy/reports/separate-fee-validation.json)
+- [Recording script](DEMO_SCRIPT.md) and [remaining steps](FINAL_HOURS.md)
 
-The public prize page was readable September 11; the September 13 retry timed
-out and the overview returned an error. Prize requirements were not freshly
-reverified. McLean reports eight hours until submission; use that as the working
-budget and the signed-in dashboard for its exact deadline/timezone, video limit
-and live-judging time. Do not rely on old public schedule estimates.
-Choose live judging only after checking personal availability. KYC and the
-commercial fee idea remain deferred; this draft makes no real-money launch claim.
+The Site's access configuration was rechecked: public, active, published version 3.
+It serves the public checkout; it does not host the local private wallet service.
+The latest code is on the linked branch, which must be made clear to judges.
+
+User actions still required: supply the recorded video URL and actual screenshots;
+check exact deadline, duration/field limits and judging availability in the signed-in
+portal; review and submit. No video or submission confirmation exists yet. Do not
+mark a request paid without a confirmed matching private receipt. KYC, commercial
+fees and real-money release remain deferred.

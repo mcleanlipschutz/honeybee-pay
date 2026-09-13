@@ -2,17 +2,15 @@
 
 ## Current submission access checkpoint - September 13
 
-The Site currently serves published version 3 and remains restricted to the
-owner, confirmed through its access configuration. The working hosted flow is
-the public Sepolia checkout/receipts/test-payment counter through Segment 1O;
-the local private-wallet runtime is not hosted. A public test payment and mobile
-login were verified after the original publication notes below.
+The access configuration was rechecked on September 13: **public**, active,
+published version 3. The public audience was previously authorized by McLean, who
+confirmed the homepage opens. This pass did not change access or deploy a version.
+The hosted flow is public Sepolia checkout, receipts and test activity; the newer
+private wallet runtime stays local. Public access does not prove a new signed-out
+login or transaction test. See [FINAL_HOURS.md](FINAL_HOURS.md) for current steps.
 
-Judges need an explicitly authorized access change before this URL can be used
-as a generally accessible demo. After changing access, test it in a signed-out
-browser. No audience change or new deployment was performed for this checkpoint.
-See [FINAL_HOURS.md](FINAL_HOURS.md) for the deadline handoff. The original
-publication identifiers and first-test instructions below are historical.
+The publication notes below describe the original September 10 owner-private
+release and are historical; later private implementation is in [ZK_FLOW.md](ZK_FLOW.md).
 
 Published privately on September 10, 2026:
 

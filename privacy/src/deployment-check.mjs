@@ -38,24 +38,28 @@ export async function inspectDeployment(network, rpc, pins, vkey, { blockTag: he
     throw new Error('Deployment block unavailable');
   }
   const blockTag = block.number;
-  for (const contract of Object.values(contracts)) {
+  // Independent reads use the same pinned block; the final canonical check is
+  // still required. Avoid spending most of a short fee quote on round trips.
+  await Promise.all(Object.values(contracts).map(async contract => {
     const code = await rpc('eth_getCode', [contract.address, blockTag]);
     if (typeof code !== 'string' || !/^0x(?:[0-9a-fA-F]{2})+$/.test(code)
         || keccak256(code) !== contract.runtimeCodeHash) throw new Error('Runtime bytecode differs from reviewed source record');
-  }
-  const implementation = await rpc('eth_getStorageAt', [contracts.proxy.address, implementationSlot, blockTag]);
+  }));
+  const [implementation, paused] = await Promise.all([
+    rpc('eth_getStorageAt', [contracts.proxy.address, implementationSlot, blockTag]),
+    rpc('eth_getStorageAt', [contracts.proxy.address, pausedSlot, blockTag]),
+  ]);
   if (!word(implementation) || !/^0x0{24}/.test(implementation)
       || getAddress('0x' + implementation.slice(-40)) !== getAddress(contracts.implementation.address)) {
     throw new Error('Proxy implementation differs from reviewed deployment');
   }
-  const paused = await rpc('eth_getStorageAt', [contracts.proxy.address, pausedSlot, blockTag]);
   if (!word(paused) || BigInt(paused) !== 0n) throw new Error('Proxy is paused or pause state is invalid');
-  const relayResult = await rpc('eth_call', [{ to: contracts.relay.address,
-    data: relayInterface.encodeFunctionData('railgun') }, blockTag]);
+  const [relayResult, encodedKey] = await Promise.all([
+    rpc('eth_call', [{ to: contracts.relay.address, data: relayInterface.encodeFunctionData('railgun') }, blockTag]),
+    rpc('eth_call', [{ to: contracts.proxy.address, data: walletInterface.encodeFunctionData('getVerificationKey', [1, outputs]) }, blockTag]),
+  ]);
   const [target] = relayInterface.decodeFunctionResult('railgun', relayResult);
   if (getAddress(target) !== getAddress(contracts.proxy.address)) throw new Error('Relay targets a different wallet contract');
-  const encodedKey = await rpc('eth_call', [{ to: contracts.proxy.address,
-    data: walletInterface.encodeFunctionData('getVerificationKey', [1, outputs]) }, blockTag]);
   const [actualKey] = walletInterface.decodeFunctionResult('getVerificationKey', encodedKey);
   const key = actualKey.toArray(true);
   assert.deepEqual(key.slice(1), expectedContractKey(vkey, outputs), 'Onchain verification key does not match pinned circuit');

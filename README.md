@@ -7,6 +7,8 @@ is deferred until after testing and a review of the time before submission; it
 may wait until after the contest. See the [first-test checklist](TEST_CHECKLIST.md).
 The hosted checkout uses public test transfers. The newer local private-payment
 flow is described in [ZK_FLOW.md](ZK_FLOW.md); funded end-to-end validation remains pending.
+Start with [remaining steps](FINAL_HOURS.md), [submission text](SUBMISSION.md), and
+the [demo script](DEMO_SCRIPT.md).
 
 ## The problem
 
@@ -36,7 +38,7 @@ published to the hosted demo.
 
 **Submission handoff:** see [FINAL_HOURS.md](FINAL_HOURS.md) for the short demo
 script and deadline checklist, and [SUBMISSION.md](SUBMISSION.md) for portal text.
-The earlier eight-hour estimate is historical; use the organizer portal for the
+Earlier time estimates are historical; use the organizer portal for the
 current deadline and video limit. The hosted Site was made public with McLean's
 authorization, and he confirmed that its homepage opens. It remains the public
 payment build; the private-wallet runtime has not been hosted.
@@ -49,8 +51,11 @@ shutdown and account leases. Funded private settlement remains unverified.
 
 **Current ZK handoff:** [ZK_FLOW.md](ZK_FLOW.md) contains the update commands,
 read-only broadcaster check, small deposit steps, private-payment confirmation
-and merchant receipt check. The code path is implemented; broadcaster discovery
-still times out from the development environment and must be checked on the laptop.
+and merchant receipt check. The Windows laptop has now found a compatible
+WETH broadcaster and verified the fee-token contract. Funding review and simulation
+have been shown, but no wrap, approval, shield or private-payment confirmation has
+yet been supplied. The fee-expiry follow-up reduces RPC delay without extending
+freshness limits and preserves original-transaction controls after expiry.
 
 ### Completed implementation and recorded validation
 
@@ -65,18 +70,19 @@ still times out from the development environment and must be checked on the lapt
 | Encrypted request history and backups | Saved requests, history reopening, separate encrypted history export and merge-only restore. | Restores preserve newer records, skip duplicates and reject conflicts. McLean reported merchant history recovery and request import with matching terms. Request history is not a payment receipt or settlement ledger. [1U](privacy/SEGMENT-1U.md), [1V](privacy/SEGMENT-1V.md). |
 | Buyer private-funds check | Imported request connected to an authenticated account scan; exact balance/shortfall and an expiring result in local checkout. | Controlled scans and client validation passed; actual workers reject unauthorized requests and wrong-chain preflight. Live funded checks and browser interactions remain pending. Fees are unchecked and payment is not authorized. [1W](privacy/SEGMENT-1W.md). |
 | Deposit activity and recovery | Local account-scoped attempt list and read-only reconciliation, including missing-hash recovery for a recorded attempt. | Controlled provider/storage tests passed. Status reads never submit a transaction. Actual browser and live deposit checks remain pending. [1X](privacy/SEGMENT-1X.md). |
-| Private merchant payment | Fee quote, explicit buyer confirmation, actual transfer/POI prover, onchain proof check, Waku broadcaster and encrypted attempt journal. | Real 01x03 synthetic proof and pinned deployed key passed; ten labeled integration/security tests pass. No funded private transfer yet. [Evidence and limits](ZK_FLOW.md). |
+| Private merchant payment | Fee quote, explicit buyer confirmation, actual transfer/POI prover, onchain proof check, Waku broadcaster and encrypted attempt journal. | Two real synthetic 01x02 proofs, bound to the same relay batch, passed local and deployed verification; separate-fee integration tests passed. No funded private transfer yet. [Evidence and limits](ZK_FLOW.md). |
 | Private receipts | Original-nullifier recovery, exact calldata/events, outgoing POI refresh and merchant-decrypted request memo matching. | Controlled wrong-hash, lost-response, reverted-authorization and merchant-matching checks pass. Live sender/merchant recognition remains pending. |
 | Dependency security update | Same-major networking/parser pins; wallet and prover SDK versions preserved. | Fresh production audits: no high/critical findings; 5 low private-runtime and 23 moderate checkout findings remain. Offline wallet/proof compatibility passed. [1Y](privacy/SEGMENT-1Y.md). |
 
 ### Latest validation
 
-The current checkout has **39 passing tests** and builds successfully. The
-private-payment module has **10 passing integration/security tests with labeled
-doubles**, plus a passing real 01x03 synthetic proof/tamper check and a matching
-deployed verifier key. A 37-test private API/regression run also passed before
-the final independent-review fixes. See [ZK_FLOW.md](ZK_FLOW.md) for exact scope,
-remaining live gates and the trust review. Historical segment results follow.
+Current fee-expiry follow-up: **40 checkout tests**, 21 focused deployment/funding/preflight tests and
+10 account-sync/POI tests passed; production client/server build passed.
+The [handoff report](privacy/reports/final-handoff-validation.json) records the final
+scope. The earlier separate-fee release passed 43 focused private tests plus four
+balance/sync tests, and two actual synthetic Groth16 proofs passed local and deployed
+Sepolia verification. See [proof evidence](privacy/reports/separate-fee-validation.json)
+and [ZK_FLOW.md](ZK_FLOW.md) for trust limits. These are not funded settlement tests.
 
 September 13: nine focused account-sync/POI tests, the offline rules demo and a
 fresh real synthetic-input proof/tamper check passed. The Windows IPv4-preferred

@@ -5,13 +5,13 @@ import { createShieldSubmission } from './shield-submission.mjs';
 import { assetForToken } from './shield-review.mjs';
 import { createLiveShieldValidation } from './shield-live-validation.mjs';
 
-export function ShieldConfirmation({ review, quote, client, connection, accountId, isCurrent, disabled, onBusyChange, needsNetworkSwitch }) {
+export function ShieldConfirmation({ review, quote, client, connection, accountId, isCurrent, disabled, onBusyChange, needsNetworkSwitch, canConfirm }) {
   const asset = assetForToken(review.token);
   const latest = useRef(connection); latest.current = connection;
   const active = useRef(false), model = useRef(null);
   const [busy, setBusy] = useState(false), [outcome, setOutcome] = useState(null), [message, setMessage] = useState('');
   const run = async check => {
-    if (active.current || disabled || !isCurrent()) return;
+    if (active.current || disabled || !isCurrent() || (!check && !canConfirm)) return;
     active.current = true; setBusy(true); onBusyChange(true); setMessage('');
     try {
       if (!check) {
@@ -42,8 +42,8 @@ export function ShieldConfirmation({ review, quote, client, connection, accountI
     finally { active.current = false; if (isCurrent()) { setBusy(false); onBusyChange(false); } }
   };
   return <div className="shield-confirmation">
-    {!outcome && <button className="primary" type="button" disabled={disabled || busy} onClick={() => void run(false)}>
-      {busy ? 'Rechecking before wallet confirmation…' : needsNetworkSwitch ? 'Switch to Sepolia' : quote.stage === 'wrap' ? `Wrap ${formatUnits(BigInt(quote.transaction.value), 18)} Sepolia ETH for fees` : quote.stage === 'approval'
+    {!outcome && <button className="primary" type="button" disabled={disabled || busy || !canConfirm} onClick={() => void run(false)}>
+      {busy ? 'Rechecking before wallet confirmation…' : !canConfirm ? 'Refresh the deposit review or network fee to continue' : needsNetworkSwitch ? 'Switch to Sepolia' : quote.stage === 'wrap' ? `Wrap ${formatUnits(BigInt(quote.transaction.value), 18)} Sepolia ETH for fees` : quote.stage === 'approval'
         ? `Approve exactly ${formatUnits(BigInt(review.amountUnits), asset.decimals)} ${asset.label}`
         : `Confirm ${formatUnits(BigInt(review.amountUnits), asset.decimals)} ${asset.label} deposit`}
     </button>}

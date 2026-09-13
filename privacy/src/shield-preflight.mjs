@@ -56,35 +56,42 @@ export async function preflightShield({ review, prepared, checkSession, expiresA
   freshBlock();
   const call = async (abi, to, name, args = []) => abi.decodeFunctionResult(name,
     await request('eth_call', [{ to, data: abi.encodeFunctionData(name, args) }, blockTag]));
-  if (asset.id === 'fee-weth') await verifyFeeToken(rpc, deployment, check);
-  if ((await call(tokenInterface, token, 'decimals'))[0] !== BigInt(asset.decimals)
-      || (asset.id === 'usdc' && ((await call(tokenState, token, 'paused'))[0]
-      || (await call(tokenState, token, 'isBlacklisted', [shield.from]))[0]
-      || (await call(tokenState, token, 'isBlacklisted', [proxyContract]))[0]))) throw new Error('Test token is not available for this deposit');
-  const [balance] = await call(tokenInterface, token, 'balanceOf', [shield.from]);
+  if (asset.id === 'fee-weth') await verifyFeeToken(request, deployment, check);
+  else {
+    const [[decimals], [paused], [senderBlocked], [proxyBlocked]] = await Promise.all([
+      call(tokenInterface, token, 'decimals'), call(tokenState, token, 'paused'),
+      call(tokenState, token, 'isBlacklisted', [shield.from]), call(tokenState, token, 'isBlacklisted', [proxyContract]),
+    ]);
+    if (decimals !== BigInt(asset.decimals) || paused || senderBlocked || proxyBlocked) throw new Error('Test token is not available for this deposit');
+  }
+  const [[balance], [feeBps], [allowance]] = await Promise.all([
+    call(tokenInterface, token, 'balanceOf', [shield.from]), call(walletInterface, proxyContract, 'shieldFee'),
+    call(tokenInterface, token, 'allowance', [shield.from, proxyContract]),
+  ]);
   if (balance < amount && asset.id !== 'fee-weth') throw new Error('Insufficient public test USDC');
-  const [feeBps] = await call(walletInterface, proxyContract, 'shieldFee');
   const [received, fee] = await call(walletInterface, proxyContract, 'getFee', [amount, true, feeBps]);
   if (feeBps.toString() !== review.feeBps || received.toString() !== review.receivedUnits
       || fee.toString() !== review.feeUnits || received + fee !== amount) throw new Error('Protocol fee changed; create a new review');
-  const [allowance] = await call(tokenInterface, token, 'allowance', [shield.from, proxyContract]);
   const stage = balance < amount ? 'wrap' : allowance < amount ? 'approval' : 'shield';
   const transaction = stage === 'wrap' ? { ...shield, to: token, data: wrapInterface.encodeFunctionData('deposit'), value: '0x' + (amount - balance).toString(16) } : stage === 'shield' ? structuredClone(shield) : { ...shield,
     to: token, data: tokenInterface.encodeFunctionData('approve', [proxyContract, amount]) };
   const { chainId: _chain, ...callTransaction } = transaction;
   // No allowance overrides: simulate only the next executable transaction.
-  const simulation = await request('eth_call', [callTransaction, blockTag]);
+  const [simulation, estimateValue, priorityValue, nativeBalanceValue] = await Promise.all([
+    request('eth_call', [callTransaction, blockTag]), request('eth_estimateGas', [callTransaction, blockTag]),
+    request('eth_maxPriorityFeePerGas', []), request('eth_getBalance', [shield.from, blockTag]),
+  ]);
   if (stage === 'approval' ? tokenInterface.decodeFunctionResult('approve', simulation)[0] !== true : simulation !== '0x') {
     throw new Error('Transaction simulation did not succeed');
   }
-  const estimate = quantity(await request('eth_estimateGas', [callTransaction, blockTag]));
+  const estimate = quantity(estimateValue);
   const gasLimit = (estimate * 120n + 99n) / 100n;
   if (estimate < 21000n || gasLimit > 2_000_000n) throw new Error('Gas estimate outside test limits');
-  const priority = quantity(await request('eth_maxPriorityFeePerGas', []));
+  const priority = quantity(priorityValue);
   const maxFeePerGas = 2n * quantity(block.baseFeePerGas) + priority;
   if (maxFeePerGas === 0n || maxFeePerGas > 50_000_000_000n) throw new Error('Network fee outside test limits');
   const maxNetworkFee = gasLimit * maxFeePerGas;
-  const nativeBalance = quantity(await request('eth_getBalance', [shield.from, blockTag]));
+  const nativeBalance = quantity(nativeBalanceValue);
   if (nativeBalance < maxNetworkFee + BigInt(transaction.value)) throw new Error('Insufficient Sepolia ETH for this transaction');
   const canonical = await request('eth_getBlockByNumber', [blockTag, false]);
   if (canonical?.hash !== block.hash || canonical?.number !== blockTag) throw new Error('Block changed during fee check');

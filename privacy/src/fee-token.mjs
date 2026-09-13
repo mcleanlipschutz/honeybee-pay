@@ -10,11 +10,11 @@ export async function verifyFeeToken(rpc, deployment, checkSession) {
   const block = deployment.blockNumber;
   const code = await rpc('eth_getCode', [feeWETH.token, block]);
   if (typeof code !== 'string' || keccak256(code) !== feeWETH.runtimeCodeHash) throw new Error('Fee-token contract changed');
-  for (const [name, expected] of [['decimals', 18n], ['symbol', 'WETH']]) {
+  await Promise.all([['decimals', 18n], ['symbol', 'WETH']].map(async ([name, expected]) => {
     const encoded = await rpc('eth_call', [{ to: feeWETH.token, data: abi.encodeFunctionData(name) }, block]);
     if (abi.decodeFunctionResult(name, encoded)[0] !== expected) throw new Error('Fee-token metadata changed');
     checkSession();
-  }
+  }));
   const canonical = await rpc('eth_getBlockByNumber', [block, false]);
   if (canonical?.number !== block || canonical?.hash !== deployment.blockHash) throw new Error('Fee-token verification block changed');
   checkSession();

@@ -100,6 +100,28 @@ test('changed protocol state, failed simulation, stale blocks and insufficient f
   await assert.rejects(expired.run({ checkSession: () => { if (!live) throw new Error('expired'); } }), /expired/);
 });
 
+test('slow independent RPC reads share round trips without widening the block freshness window', async () => {
+  const f = fixture({ now: Math.floor(Date.now() / 1000) * 1000 });
+  let time = f.now, pending = [], peak = 0;
+  const rpc = async (method, params) => {
+    // Each simulated network round trip costs five seconds. Calls issued before
+    // a response arrives share that latency; no wall-clock sleeps or real RPC.
+    await new Promise(resolve => {
+      pending.push(resolve); peak = Math.max(peak, pending.length);
+      if (pending.length === 1) setImmediate(() => {
+        time += 5000; const ready = pending; pending = []; ready.forEach(done => done());
+      });
+    });
+    return f.rpc(method, params);
+  };
+  const { shieldPreflight: q } = await f.run({ rpc, now: () => time });
+  assert.equal(q.expiresAt, f.now + 60000, 'Block-based expiry was not extended');
+  assert.ok(q.expiresAt - time >= 25000, 'Parallel reads leave time for review');
+  assert.ok(peak > 1 && peak <= 4, 'Read concurrency stays bounded');
+  validateShieldPreflight(q, f.review, time);
+  assert.throws(() => validateShieldPreflight(q, f.review, q.expiresAt), /expired/);
+});
+
 test('fee ceilings round up and cover estimated execution across 1000 bounded gas samples', async () => {
   for (let i = 0; i < 1000; i++) {
     const estimate = randomInt(21000, 1_666_666);

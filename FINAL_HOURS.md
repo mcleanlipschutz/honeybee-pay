@@ -1,115 +1,103 @@
-# Honeybee Pay: final-hours handoff
+# Honeybee Pay: remaining steps
 
-Updated September 13, 2026. McLean earlier reported eight hours until submission
-while using a phone hotspot at work. That is a historical report, not a current
-countdown. The organizer portal controls the deadline, field limits, video length
-and judging. The active task is now completing ZK: follow **[ZK_FLOW.md](ZK_FLOW.md)**
-for the implemented local payment path and remaining funded test. This earlier
-recording plan does not establish that the live private test has passed.
+Updated September 13, 2026. McLean reported just over three hours remaining before
+this preparation pass; that is a historical time budget, not a live countdown.
+Use the signed-in organizer portal for the exact deadline and video limit.
 
-## What to demonstrate
+## Ready without further user input
 
-Honeybee Pay combines an email-based public USDC checkout with buyer-approved
-payment checks and an evolving ZK payment layer. The public test payment has
-settled. Private wallet recovery and offline ZK proof checks work; complete
-private merchant settlement is still unfinished. A passing POI connection check
-does not establish a completed wallet scan or spendable funds.
+- Fee-delay fix: independent fixed-block reads overlap; the POI probe precedes
+  block selection; one full final simulation replaces two. Expiry and fee caps
+  remain enforced. The page shows a countdown and preserves original-transaction
+  controls when a quote or review expires. Windows confirmation still needs testing.
+- Current submission description, technical explanation, challenge narrative and
+  AI disclosure: [SUBMISSION.md](SUBMISSION.md).
+- Ready-to-read recording script, shot list and judging answers: [DEMO_SCRIPT.md](DEMO_SCRIPT.md).
+- Current evidence and explicit limits: [handoff checkpoint](privacy/reports/final-handoff-validation.json).
+- Hosted access rechecked: public, active, published version 3; local private features
+  remain on the development branch. No public deployment or main merge in this pass.
+- Sponsor requirements rechecked. Privy Best financial flow is the supported target;
+  other unbuilt integrations should not be claimed.
 
-| Evidence | What it shows | Limit |
-| --- | --- | --- |
-| Existing 1-USDC Sepolia receipt | An actual public test transfer and receipt lookup | Public transfer; not a private payment or customer adoption |
-| Separate buyer/merchant wallet recovery | Account-bound local wallets and encrypted backups | Local runtime; no private settlement |
-| Merchant request download/import/history | Reviewable recipient, amount, token, network and expiry | Unpaid request; not a paid receipt |
-| `npm.cmd run demo:rules` | Approved proposal accepted; changed recipient rejected by the adapter | Offline SDK doubles; not a live AI exploit or cryptographic proof |
-| `npm.cmd run proof:smoke` | Real proof generation/verification and rejected tampering | Synthetic inputs; no transaction or settlement |
+## 1. Apply the update on the laptop
 
-## Current installation and live test
+In the original PowerShell window running the local server, press **Ctrl+C**. If
+asked to terminate the batch job, type **Y** and Enter. Keep that window open so
+its account-directory setting survives. Enter each following command separately,
+waiting for the prompt to return. Copy only the command, not prompts or output.
 
-Follow [ZK_FLOW.md](ZK_FLOW.md) in order. The current update requires a private
-dependency install, additional pinned proving artifacts, a broadcaster check,
-and a frontend build before reopening the local page. Earlier restart-only
-instructions are superseded. The broadcaster check must pass before depositing
-test assets; a funded private payment and merchant receipt remain unverified.
+```powershell
+cd "C:\Users\McLean Lipschutz\honeybee-pay-windows\privacy"
+```
 
-The hosted public-payment demo is now public with McLean's authorization and
-homepage confirmation. Publication access does not publish the local wallet
-database or encrypted backups. Private features remain local.
+```powershell
+git pull --ff-only
+```
 
-Hosted URL: https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site
+```powershell
+cd ..\checkout
+```
 
-## Recording preparation
+```powershell
+npm.cmd run build
+```
 
-- Open the hosted public checkout, the local wallet page, and a second PowerShell
-  window for offline demonstrations. Keep the local server's window running.
-- In hosted Receipts, expand **Find a transaction by its hash**, paste the hash
-  below and choose **Find receipt**. The September 10 transfer may be outside the
-  first recent-history page. Open **Download receipt** and confirm it works.
+```powershell
+cd ..\privacy
+```
 
-  ```text
-  0x3247ad91ac4f8ee5b735dfeb53bad84e1d5e127be53840f62194034e6d00e9a5
-  ```
+```powershell
+npm.cmd run wallet:web
+```
 
-- Show this as a previously completed public test payment. A new transfer is not
-  necessary to show the existing receipt. The shared counter is test activity,
-  not customers, revenue or an endorsement of security.
-- Reopen merchant request history and the buyer's imported request. If the old
-  request expired, create a fresh 1-test-USDC request in **Request payment** and
-  import the downloaded file through **Pay a request**. Do not edit old JSON to
-  change expiry or imply that it was paid.
-- In the second PowerShell window:
+Leave the server running. Open **http://127.0.0.1:4173** and press **Ctrl+F5**.
+No dependency reinstall, artifact download or blanket audit fix is needed for this
+update. Do not recreate existing wallets, replace backups or remove storage.
 
-  ```powershell
-  cd "C:\Users\McLean Lipschutz\honeybee-pay-windows\privacy"
-  npm.cmd run demo:rules
-  npm.cmd run proof:smoke
-  ```
+## 2. Complete one funded private payment
 
-  The proof check is offline after the already-prepared artifacts. Two `ERROR: 4`
-  messages are expected from invalid-witness checks; judge success from the final
-  `offline-joinsplit-proof-check-passed` JSON and successful command exit. If it
-  fails on Windows, use the clearly dated recorded proof evidence in the repo
-  and describe it as recorded evidence. Never call a failed live run a pass.
-- Record only application screens and test output. Pause before entering wallet
-  passwords or email codes. Keep recovery-file contents and environment files out
-  of the recording.
+The earlier compatible-WETH broadcaster and fee-token checks already passed on
+the laptop. Fresh payment quotes still recheck current availability.
 
-## Suggested three-minute narration
+- [ ] Sign in as buyer and reopen **Wallet → Test deposit tools → Review test deposit**.
+- [ ] Select **Private payment fees · Sepolia WETH**, amount **0.005**, and enter the
+  recovery password. Check both wallet addresses and expected private credit.
+- [ ] Click **Check network fee**. While its countdown is active, click the single
+  next-step button. If needed: wrap the public WETH shortfall, confirm its original
+  transaction, refresh the fee, approve exactly 0.005 WETH, confirm that original
+  transaction, refresh the fee, then confirm the separate deposit. Each action
+  requires your wallet confirmation. An approval is not a deposit.
+- [ ] Wait for **deposit-confirmed**, then sync until the WETH is spendable privately.
+- [ ] Review and deposit **2 test USDC** for a **1 test USDC** merchant request. Follow
+  the exact approval/deposit checks again. Sync until both private balances are spendable.
+- [ ] As merchant, create a fresh 1-test-USDC request, allowing enough time, and download it.
+- [ ] As buyer, import it, verify its terms and check a separate WETH fee quote. Then
+  confirm the private payment once. Keep the page and server running during proof/POI
+  generation; this operation may take up to 15 minutes.
+- [ ] Check the original payment until confirmed. As merchant, require **Received 1 test USDC privately** for that same request and transaction.
+- [ ] Save the public transaction hash and non-secret confirmation screenshots. After
+  a normal restart, recheck the saved original payment; do not send a second payment.
 
-Check the portal's actual duration limit first; three minutes is a suggested cut.
+Detailed labels, fee limits and verification rules: [ZK_FLOW.md](ZK_FLOW.md).
+All amounts above are Sepolia test assets. No real USDC is needed.
+If the quote is immediately expired again, report how long Check network fee took;
+do not repeat a pending or unknown transaction. Use original-transaction recovery.
 
-| Time | Show | Say |
-| --- | --- | --- |
-| 0:00–0:20 | Honeybee checkout | “I’m McLean, and my cryptocurrency investigation work led me to Honeybee Pay. I want stablecoin payments to be simple for everyday users, with clear approval controls and better transaction privacy.” |
-| 0:20–1:00 | Email wallet and existing 1-USDC receipt | “Privy provides email sign-in and an embedded Ethereum wallet. Here is a completed public test-USDC payment on Sepolia. Honeybee checks the transfer against the reviewed terms and gives both parties a retrievable receipt.” |
-| 1:00–1:30 | Three-case rules demo | “This offline comparison starts with approved terms. An unprotected example accepts a substituted recipient. Honeybee’s adapter rejects that same substitution before proof preparation. This control is deterministic application code.” |
-| 1:30–2:10 | Local wallet, recovery confirmation and request | “The local privacy prototype has separate account-bound RAILGUN wallets, encrypted recovery files and merchant request history. I tested buyer and merchant recovery and checked that the restored addresses and request terms match.” |
-| 2:10–2:35 | Successful proof JSON or dated report | “This is a real offline zero-knowledge proof using synthetic inputs, including checks that reject altered output and witness data. It demonstrates a tested component of the privacy layer, not a settled private payment.” |
-| 2:35–3:00 | Current status | “The working payment demo is public. Full private merchant settlement and encrypted paid receipts are still under integration. My next milestone is one complete private payment with recovery. I directed the product and tradeoffs; Codex assisted with implementation and tests, which are recorded in the repository.” |
+## 3. Record and submit with a buffer
 
-Use your own words after rehearsal. Be ready to explain why Privy handles the
-public wallet, why RAILGUN supplies the privacy protocol, and why approval checks
-in the application do not constitute an independently enforced onchain firewall.
+Protect at least **60 minutes** for recording/upload/submission and **30 minutes**
+for a final buffer where time permits. If the first funded private payment remains
+blocked when that reserve begins, record the verified components and disclose the
+missing settlement. Do not spend the upload window on new features.
 
-## Submit with a buffer
+- [ ] Open the existing public receipt, local request/recovery screens and proof report.
+- [ ] Use [DEMO_SCRIPT.md](DEMO_SCRIPT.md); record only what the screen demonstrates.
+- [ ] Upload the video and play it back without relying on your signed-in account.
+- [ ] Check portal length limits, screenshot requirements and live-judging availability.
+- [ ] Paste [SUBMISSION.md](SUBMISSION.md), add the current branch/demo/video links,
+  select supported prizes, review and submit.
+- [ ] Save the portal's submission confirmation and recheck all links.
 
-| From now | Task | Completion evidence |
-| --- | --- | --- |
-| 0–20 minutes | One IPv4-enabled sync attempt; resolve hosted-demo audience | Actual scan result and a signed-out access check after authorization |
-| 20–60 minutes | Rehearse the existing payment, request/recovery, rules and proof demonstrations | Chosen screens open; honest narration matches them |
-| 1–2 hours | Record, upload and play back the video; choose screenshots | Video link works without your account; no passwords or backup contents appear |
-| 2–3 hours | Paste SUBMISSION.md into the organizer's fields, review and submit | Portal confirmation and saved screenshot |
-| Remaining time | Correct only demonstrated problems or organizer feedback | Recheck links and confirmed submission; retain upload/deadline buffer |
-
-- [ ] Confirm the portal countdown, video limit, required screenshots and live-judging availability.
-- [ ] Use the current source branch, not main alone:
-      https://github.com/mcleanlipschutz/honeybee-pay/tree/codex/privacy-segment-1a
-- [ ] Copy the description, how-it-is-made and AI-use disclosure from SUBMISSION.md.
-- [ ] Verify the exact Privy prize requirements in the portal. It is the existing
-      demonstrated sponsor target; do not select unimplemented integrations as completed work.
-- [ ] Add the accessible demo/video/source links and required screenshots.
-- [ ] State that private settlement is unfinished and private signing is disabled.
-- [ ] Submit, wait for confirmation, and save a screenshot. Nothing in this file submits the form.
-
-Keep KYC, commercial fees, email delivery, QR links and additional sponsor
-integrations outside this deadline pass. Preserve the working source and existing
-test evidence. The current stable prototype is the submission foundation.
+KYC, real-money fees, new sponsor integrations, QR/email features and cosmetic
+redesign are outside this deadline pass. Wallet confirmations, account sign-ins,
+recording and final portal submission require McLean.

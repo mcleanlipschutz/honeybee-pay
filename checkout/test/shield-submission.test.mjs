@@ -115,7 +115,7 @@ test('live signing gate re-simulates exact terms and rejects fee increases, stag
     isCurrent: () => current, preflight: async () => { checks++; return { shieldReview: f.review, shieldPreflight: fresh }; } });
   const controller = f.controller({ assertLiveValidation: gate }); controller.setQuote(original);
   assert.equal((await controller.confirm(original.quoteId)).status, 'pending');
-  assert.equal(checks, 2); assert.equal(f.sends.length, 1);
+  assert.equal(checks, 1); assert.equal(f.sends.length, 1);
   const higher = { ...original, maxFeePerGasWei: '2200000000', maxNetworkFeeWei: '264000000000000' };
   delete higher.quoteId; fresh = digest(higher, 'quoteId');
   await assert.rejects(gate(), /terms or fees changed/);
@@ -155,10 +155,29 @@ test('wrong network, expiry, wallet changes and unavailable persistence prevent 
     const f = fixture(), c = f.controller(), q = c.setQuote(f.quote()); change(f);
     await assert.rejects(c.confirm(q.quoteId)); assert.equal(f.sends.length, 0);
   }
-  const f = fixture(); let checks = 0;
-  const c = f.controller({ assertLiveValidation: async () => { if (++checks === 2) f.nonce('0x1'); } }), q = c.setQuote(f.quote());
+  const f = fixture();
+  const c = f.controller({ assertLiveValidation: async () => { f.nonce('0x1'); } }), q = c.setQuote(f.quote());
   assert.equal((await c.confirm(q.quoteId)).status, 'not-submitted'); assert.equal(f.sends.length, 0);
   assert.throws(() => createShieldAttemptJournal({ scope: shieldAttemptScope('x'), storage: f.browser.storage, locks: {} }), /unavailable/);
+});
+
+test('one slow final simulation follows persistence and expired quotes still cannot reach the wallet', async () => {
+  for (const delay of [35000, 60000]) {
+    const f = fixture(); let calls = 0;
+    const q = f.quote();
+    const gate = createLiveShieldValidation({ review: f.review, quote: q, now: f.now, isCurrent: () => true,
+      preflight: async () => {
+        calls++;
+        assert.equal((await f.journal.list())[0].status, 'awaiting-wallet');
+        f.advance(delay);
+        return { shieldReview: f.review, shieldPreflight: f.quote() };
+      } });
+    const c = f.controller({ assertLiveValidation: gate }); c.setQuote(q);
+    const outcome = await c.confirm(q.quoteId);
+    assert.equal(calls, 1);
+    assert.equal(outcome.status, delay < 60000 ? 'pending' : 'not-submitted');
+    assert.equal(f.sends.length, delay < 60000 ? 1 : 0);
+  }
 });
 
 test('wallet rejection consumes the quote; timeout or malformed response blocks new attempts after reload', async () => {

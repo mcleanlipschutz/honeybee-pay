@@ -85,7 +85,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
       else if (action === 'unlock') setMessage('Wallet and recovery password checked. The wallet is now locked again.');
       else if (action === 'sync') setMessage('Private wallet history checked. The balance below is a snapshot; the wallet is locked again.');
       else if (action === 'shield-review') setMessage('Deposit review prepared. Your wallet is locked again. No funds were moved.');
-      else if (action === 'shield-preflight') setMessage('The next transaction was simulated and its fee checked. No funds were moved.');
+      else if (action === 'shield-preflight') setMessage('Fee check completed. Review the fee and use the next wallet step while its countdown is active. No funds were moved.');
     } catch (error) {
       if (alive.current) {
         setMessage(error.message);
@@ -241,14 +241,17 @@ export function PrivateWalletPanel({ connection, runtime }) {
             <p>Estimated maximum network fee for {quote.stage === 'wrap' ? 'wrapping Sepolia ETH' : quote.stage === 'approval' ? 'approval' : 'the deposit'}: <strong>{formatUnits(BigInt(quote.maxNetworkFeeWei), 18)} Sepolia ETH</strong></p>
             <p>{quote.stage === 'wrap' ? 'Wrapping creates WETH in your public wallet. Approval and private deposit are separate steps.' : quote.stage === 'approval' ? 'This covers approval only. The deposit needs a separate fee check after approval confirms.' : 'The exact deposit was simulated successfully. This does not mean it has been submitted or confirmed.'}</p>
             <p>Next wallet step: {confirmationStep === 'switch-network' ? 'switch to Sepolia' : quote.stage === 'wrap' ? 'confirm wrapping Sepolia ETH' : quote.stage === 'approval' ? 'confirm the exact token approval' : 'confirm the deposit'}.</p>
-            <p>Fee check expires at {new Date(quote.expiresAt).toLocaleTimeString()}. The actual network fee may be lower.</p>
-          </> : <p>{quote ? 'The network fee check expired.' : 'Network fee: not checked yet.'} Check it before proceeding to wallet confirmation.</p>}
+            <p><strong>Fee check valid for {Math.max(0, Math.ceil((quote.expiresAt - clock) / 1000))} more seconds.</strong> The final recheck must finish before expiry; a slow connection may require refreshing. The actual network fee may be lower.</p>
+          </> : <p>{quote ? 'The network fee check expired. Refresh it to start a new wallet step. An original transaction already requested can still be checked below or in Deposit activity.' : 'Network fee: not checked yet. Check it before proceeding to wallet confirmation.'}</p>}
           {runtime?.shieldPreflightEnabled && <button type="button" className="secondary" disabled={busy} onClick={() => perform('shield-preflight')}>{busy ? 'Checking…' : quoteCurrent ? 'Refresh network fee' : 'Check network fee'}</button>}
-          {runtime?.shieldSubmissionEnabled && quoteCurrent && <ShieldConfirmation key={quote.quoteId}
-            review={review} quote={quote} client={client} connection={connection} accountId={accountId} disabled={busy}
-            onBusyChange={value => { inFlight.current = value; setBusy(value); }}
-            needsNetworkSwitch={confirmationStep === 'switch-network'}
-            isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
+        </> : <p>Choose “Review test deposit” again to check fresh terms.</p>}
+        {runtime?.shieldSubmissionEnabled && quote && <ShieldConfirmation key={quote.quoteId}
+          review={review} quote={quote} client={client} connection={connection} accountId={accountId} disabled={busy}
+          canConfirm={reviewCurrent && quoteCurrent}
+          onBusyChange={value => { inFlight.current = value; setBusy(value); }}
+          needsNetworkSwitch={confirmationStep === 'switch-network'}
+          isCurrent={() => alive.current && latest.current?.authenticated && latest.current.userId === accountId}/>}
+        {reviewCurrent && <>
           <details className="wallet-details"><summary>Funding wallet and destination</summary>
             <p>Public funding wallet</p><code>{review.publicAddress}</code>
             <button type="button" className="text-button" onClick={() => copyAddress(review.publicAddress)}>Copy funding address</button>
@@ -258,7 +261,7 @@ export function PrivateWalletPanel({ connection, runtime }) {
           </details>
           <p>A shield deposit exposes the public funding wallet, token, amount and timing. Funds become spendable privately only after confirmation and a successful wallet scan.</p>
           <p>Approval and deposit each require your wallet confirmation. Keep this page open and verify each original transaction before continuing.</p>
-        </> : <p>Choose “Review test deposit” again to check fresh terms.</p>}
+        </>}
       </div>}
       {runtime?.privateRequestsEnabled && existing && ['pay', 'request', 'recovery'].includes(section) && <PrivatePaymentRequests key={`${accountId}:${section}`} view={section} created={result?.paymentRequest} history={result?.requestHistory} encryptedHistory={result?.encryptedRequestHistory}
         wallet={result?.privateWallet} checkPayment={runtime?.privatePaymentCheckEnabled ? checkPayment : null}

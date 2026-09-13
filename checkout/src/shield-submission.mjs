@@ -50,7 +50,10 @@ export function createShieldSubmission({ review: source, expected, userId, getCo
       busy = true;
       let claimed = false, walletRequested = false, walletHash = null;
       try {
-        await assertLiveValidation();
+        // Fail closed before even reading the provider when no live gate is
+        // installed. The expensive simulation runs once, after persistence and
+        // immediately before the final account/network/nonce checks and prompt.
+        if (assertLiveValidation === requireLiveShieldValidation) requireLiveShieldValidation();
         const q = quoted(quoteId), selected = current().wallet;
         const provider = await selected.getEthereumProvider();
         const chain = await provider.request({ method: 'eth_chainId' });

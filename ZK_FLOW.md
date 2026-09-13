@@ -4,8 +4,9 @@ Updated September 13, 2026. Current Windows instructions for
 `codex/privacy-segment-1a`. This flow runs on the trusted computer at
 **http://127.0.0.1:4173**. The separately hosted checkout remains a public-transfer demo.
 
-The latest Windows diagnostic connected to Waku and received eligible Sepolia
-offers, but none accepted Circle test USDC as a fee. This update keeps the
+Earlier Windows diagnostics found no broadcaster accepting Circle test USDC.
+The latest Windows check now found a compatible Sepolia WETH offer and verified
+the pinned fee-token contract. This implementation keeps the
 merchant payment in Circle test USDC and pays the broadcaster in **Sepolia WETH**.
 No real USDC or mainnet assets are needed.
 
@@ -14,6 +15,21 @@ RAILGUN transfer/POI generation, broadcaster submission, encrypted pre-send
 records and buyer/merchant receipt checks. **A funded end-to-end private payment
 has not yet been validated.** Two real synthetic Groth16 proofs passed the
 live Sepolia verifier; that does not establish spendable roots, POI or settlement.
+
+## Current laptop checkpoint
+
+The `0.005` WETH review shows a `0.0000125` WETH protocol fee and `0.0049875` WETH expected
+private credit. Simulation succeeded, but its short quote expired before a wallet
+confirmation was reported. No funded private transaction is claimed.
+
+For the fee-delay update, use the exact pull/build/restart sequence in
+[FINAL_HOURS.md](FINAL_HOURS.md); no reinstall or artifact download is needed.
+Independent RPC reads now overlap at the same checked block; the POI probe runs
+before selecting that block. One final full re-simulation replaces two. The same
+60-second block freshness limit and fee caps still apply. Start the next step
+while the countdown is active; the final checks can consume some remaining time.
+Expiry disables a new confirmation but retains an existing attempt's status and
+original-transaction check. Windows confirmation must still validate the fix.
 
 ## 1. Update and verify availability
 

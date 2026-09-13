@@ -1,5 +1,24 @@
 # Honeybee Pay: first end-to-end test
 
+## Final autonomous handoff — September 13
+
+- [x] Windows evidence recorded: verified Sepolia WETH contract and compatible broadcaster offer.
+- [x] Deposit review and successful simulation recorded; expired quote remains the last reported browser state.
+- [x] Fee-delay fix: bounded parallel fixed-block reads, POI before block selection, one final simulation after durable intent.
+- [x] Preserve expiry, amount/fee caps, exact transaction and account/network/nonce checks, and duplicate protection.
+- [x] Countdown and mounted original-transaction controls after quote/review expiry; expired new confirmation disabled.
+- [x] 40 checkout, 21 focused deployment/funding/preflight, and 10 account-sync/POI tests passed; production build passed.
+- [x] Independent delta review: no blocking finding; this is not an audit or actual wallet interaction test.
+- [x] Current submission copy, demo script, judging answers and exact laptop handoff prepared.
+- [x] Public repository and Site access configuration verified; official prize requirements rechecked.
+- [ ] Windows confirmation of the fee-delay fix.
+- [ ] Actual test wrap/approval/shield receipts and spendable balances for both tokens.
+- [ ] Funded private payment, matching merchant receipt and original-attempt recheck after restart.
+- [ ] Recorded video, portal review and confirmed submission.
+
+Current steps: [FINAL_HOURS.md](FINAL_HOURS.md). Evidence: [handoff report](privacy/reports/final-handoff-validation.json).
+Older milestones below retain their original scope; they do not override this checkpoint.
+
 Updated September 13, 2026. Checked items are implemented/validated as stated;
 they do not imply a live payment has settled.
 

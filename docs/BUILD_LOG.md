@@ -1233,3 +1233,56 @@ steps, evidence scope, CROPS compromises and remaining funded gates. Root MIT
 licensing does not imply the verified Relay (UNLICENSED), WETH9 (GPL-3.0-or-later)
 or all dependencies share that license. No merge, public deployment, new
 contract, or real-money transaction is included.
+
+
+## September 13, 2026 — Final autonomous fee-delay and submission pass
+
+McLean reported just over three hours remaining and requested completion of work
+that did not need him. His Windows output had verified the Sepolia WETH runtime
+at block 0xb275cf and found a compatible WETH broadcaster. A 0.005 WETH review and
+simulation were displayed; no funding transaction hash was supplied. The short
+fee quote repeatedly appeared expired. The exact Windows timing cause was not
+reproduced, so this pass addresses observed code delays and expiry presentation
+without claiming the laptop flow now completes.
+
+Independent fixed-block reads now overlap in groups of at most four. The POI
+probe finishes before deployment block selection. The confirmation controller
+performs one full final re-simulation after durable attempt persistence, followed
+by the same account, network, nonce and exact-transaction checks. Missing live
+validation still fails closed before provider access. Original quote expiry and
+all amount/gas caps remain enforced; no block-age extension or automatic wallet
+confirmation was added. The UI shows quote validity and keeps original-attempt
+controls mounted after quote/review expiry while disabling a new confirmation.
+
+Validation: 40 checkout tests; 21 deployment/shield-preflight/WETH funding tests;
+10 account-sync/POI tests; production client/server build. The delayed-RPC test
+models five seconds per round trip and leaves at least 25 seconds in the unchanged
+60-second block window. A 35-second final simulation can reach the wallet after
+persistence; a 60-second delay cannot. Existing altered state, reorg, fee, nonce,
+account and duplicate guards pass. The offline rules demo passed using labeled
+SDK doubles. No fresh proof rerun was needed for this scheduling/UI delta; the
+prior two real synthetic Groth16 proofs and deployed checks remain separately
+recorded in separate-fee-validation.json.
+
+Independent QA found no must-fix regression. Its copy suggestion was applied:
+“Fee check valid for … more seconds” does not imply clicking freezes expiry.
+Code and controlled tests do not establish actual Windows latency or wallet-UI
+behavior. Local browser access had been blocked; no bypass was attempted. CROPS
+trust assumptions remain documented in ZK_FLOW.md: local secrets, public funding
+metadata, identity/RPC/history/POI/broadcaster/protocol controls, mixed dependency
+licenses and unverified independent exit.
+
+Prepared SUBMISSION.md, DEMO_SCRIPT.md and FINAL_HOURS.md with current evidence,
+conditional success narration, judging answers and exact per-command laptop steps.
+Corrected stale README and mobile-access claims. GitHub metadata confirms the
+repo is public; Sites configuration confirms active/public published version 3.
+This pass changed neither hosting nor audience. Browser-page fetches and the
+existing public receipt's explorer recheck were unavailable; metadata success is
+not represented as a fresh signed-out login or wallet test. The official ETHOnline
+prize page was readable September 13; Privy Best financial flow is the supported
+target, while unbuilt sponsor/control integrations are not claimed.
+
+Remaining user actions: local update and wallet confirmations, funded private
+buyer/merchant receipt validation and original-attempt recovery, recording/upload,
+and signed-in portal review/submission. Real-money deployment, KYC, commercial fees,
+new sponsor integrations and main merge remain outside this deadline pass.

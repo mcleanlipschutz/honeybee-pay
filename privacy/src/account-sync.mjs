@@ -47,11 +47,13 @@ export async function prepareAccountSync(config, checkSession, { blockTag = 'fin
   const key = await artifacts.get(artifactPrefix + 'vkey.json');
   if (!key) throw new Error('Pinned verification key unavailable');
   const pins = JSON.parse(await readFile(new URL('../config/sepolia-deployment.json', import.meta.url), 'utf8'));
-  onStage('deployment-check');
-  const deployment = await inspectDeployment(accountSyncNetwork, rpc, pins, JSON.parse(key), { blockTag });
-  checkSession();
+  // Finish the independent service probe before choosing the deployment block.
+  // A slow POI response must not consume the fee quote's block freshness budget.
   onStage('poi-service');
   await checkPOIService(poiURL, checkSession);
+  checkSession();
+  onStage('deployment-check');
+  const deployment = await inspectDeployment(accountSyncNetwork, rpc, pins, JSON.parse(key), { blockTag });
   checkSession();
   return { artifacts, deployment, rpcURL, poiURL };
 }
