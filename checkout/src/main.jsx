@@ -7,12 +7,12 @@ import { isLocalDemo } from './account-client.mjs';
 import './style.css';
 const Legacy = lazy(() => import('./LegacyCheckout.jsx').then(m => ({ default: m.LegacyCheckout })));
 function Connected({ runtime, tools }) {
-  const { ready, authenticated, login, logout, user, getAccessToken } = usePrivy();
+  const { ready, authenticated, login, logout, user, getAccessToken, error } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
   const { sendTransaction } = useSendTransaction();
   const { exportWallet } = useExportWallet();
   const wallet = wallets.find(w => w.walletClientType === 'privy');
-  const connection = { ready, walletsReady, authenticated, userId: user?.id, email: user?.email?.address, getAccessToken, wallet, login, logout, sendTransaction, exportWallet };
+  const connection = { ready, walletsReady, authenticated, error, userId: user?.id, email: user?.email?.address, getAccessToken, wallet, login, logout, sendTransaction, exportWallet };
   const key = `${authenticated && user?.id || 'signed-out'}:${wallet?.address || ''}`;
   return tools ? <Suspense fallback={<p>Opening development tools…</p>}><Legacy key={key} runtime={runtime} connection={connection}/></Suspense> : <MobileWallet key={key} connection={connection} local={!!runtime}/>;
 }

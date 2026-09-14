@@ -1668,3 +1668,13 @@ shutdown. These are automated checks, not proof of successful phone login or a
 funded payment. Physical-device authentication/camera/payment validation and real
 Midnight proof/private settlement remain incomplete. The prepared Wave 1 deck,
 demo and personal-submission checklist remain available from the previous update.
+
+## September 14, 2026 — investigate reported phone sign-in timeout
+
+The phone still cannot initialize sign-in. The provider's initialization error was
+being discarded by the UI. Added fixed, non-sensitive error categories/support
+codes and a read-only storage check. Kept authentication readiness and payment
+consent gates intact. No provider configuration or access restrictions changed.
+See `checkout/reports/sign-in-diagnosis.md` for observed evidence, 68 distinct
+passing automated tests, build validation and the device evidence still needed.
+This is a diagnostic improvement; successful phone login remains unverified.

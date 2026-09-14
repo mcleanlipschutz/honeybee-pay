@@ -43,3 +43,12 @@ test('email login is enabled before embedded wallets report ready',()=>{
  const f=fixture();f.props.connection.authenticated=false;f.props.connection.walletsReady=false;let count=0;f.props.connection.login=()=>count++;f.render();
  const login=f.button('Continue with email');assert.equal(login.props.disabled,false);login.props.onClick();assert.equal(count,1);
 });
+test('provider startup errors reach the screen and retry reloads without login or signing',()=>{
+ const f=fixture();let reloads=0,logins=0;
+ f.props.connection.authenticated=false;f.props.connection.ready=false;
+ f.props.connection.error=new Error('Invalid app ID: private-provider-detail');
+ f.props.connection.login=()=>logins++;globalThis.location.reload=()=>reloads++;
+ f.render();assert.match(text(f.tree),/HB-A04/);assert.ok(!text(f.tree).includes('private-provider-detail'));
+ const retry=f.button('Try connecting again');assert.equal(retry.props.disabled,false);retry.props.onClick();
+ assert.equal(reloads,1);assert.equal(logins,0);assert.equal(f.calls.length,0);
+});
