@@ -1,0 +1,29 @@
+{
+  "compiler": "0.31.1",
+  "runtime": "0.16.0",
+  "fullBuild": true,
+  "sourceSha256": "f804df9b2ad13c30db8a04af86c25bdd828e1a7194421ab1e3937d7faa661ac8",
+  "artifacts": {
+    "contract/index.js": "dcc83b8f68b55c2ca5b7bb0d76b964d66ab12c2d7996e8a10abd15151ee1ba73",
+    "zkir/approve.zkir": "fbd27185d6e68ee6df5d8c873e56eeee2f563cae38541a4eb04100a7c164b211",
+    "zkir/consume.zkir": "3d560bc9da71d96c777cb6b582a214eff875732775584771457aa8c1e654b3dc",
+    "keys/approve.prover": "8f0c20be5350211efc8123fe92de1261cc0c99378c9f1a09cf43a57f247ac8a4",
+    "keys/approve.verifier": "0cd97730ea93b0ec2e19b54ec95009b275fb4e7191629d9b8be268ce6fc3a7d3",
+    "keys/consume.prover": "a66dc35616f63f8c2773f16f3c3e8f6200666d1c54c03096fb57c51a15429685",
+    "keys/consume.verifier": "8dff17f610d1c046d6acb9a270ab89bf4306d1a98eb3bd91154a6ac6fdbad8c7"
+  },
+  "validatedOn": "2026-09-14",
+  "node": "24.19.0",
+  "tests": {
+    "passed": 16,
+    "failed": 0
+  },
+  "demo": "passed",
+  "npmAudit": {
+    "reportedVulnerabilities": 0,
+    "scope": "midnight package only"
+  },
+  "transactionProofGenerated": false,
+  "networkDeployment": false,
+  "paymentSettlement": false
+}

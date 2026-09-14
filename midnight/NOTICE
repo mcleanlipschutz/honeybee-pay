@@ -1,0 +1,10 @@
+Honeybee Pay Midnight invoice-approval prototype
+Copyright 2026 McLean Lipschutz
+
+New code and documentation within midnight/ are licensed under Apache-2.0.
+Pre-existing Honeybee Pay code outside this directory retains its existing license.
+Dependencies retain their own licenses.
+
+The simulator follows the Compact runtime-context pattern from
+midnightntwrk/example-counter, Copyright Midnight Foundation, Apache-2.0:
+https://github.com/midnightntwrk/example-counter/blob/273f083ab36a52407f16ec9a9796d902226e05d6/contract/src/test/counter-simulator.ts
