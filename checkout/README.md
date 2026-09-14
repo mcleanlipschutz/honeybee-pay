@@ -4,13 +4,13 @@ The everyday interface is a mobile web wallet with **Wallet, Pay, Request and Ac
 
 ## Current capabilities
 
-- Read the wallet's available Sepolia test-USDC balance.
+- Read the wallet's available Sepolia test-USDC balance; refresh automatically while the app is visible.
 - Receive funds using a wallet address or QR code. This is crypto funding, not a bank/card on-ramp.
 - Send test USDC to a wallet, scan a QR code using the rear camera, or paste a Honeybee request. QR image processing stays in the browser.
 - Create fixed-amount or open-amount requests with a link and QR code, share through the phone's share sheet, and expire requests after 24 hours.
 - Calculate network fees automatically. Show exact recipient, USDC amount and the maximum test-ETH network fee before one explicit Pay click.
 - View verified sent/received transfers, load earlier history and find a transaction by hash.
-- Reopen uncertain payment attempts without sending again. Offer secure wallet export in Account > Wallet backup through Privy's separate-origin modal. Honeybee never reads the exported private key.
+- Reopen uncertain payment attempts and automatically check confirmation without sending again. Offer secure wallet export in Account > Wallet backup through Privy's separate-origin modal. Honeybee never reads the exported private key.
 - Home-screen metadata for the mobile web app. This is not an App Store/Play Store native application.
 
 **Test scope:** Ethereum Sepolia, Circle test USDC `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`, chain 11155111, 6 decimals, maximum 10 USDC per payment. No real money, swaps, arbitrary assets, bank deposits or private payment settlement in this mobile flow. Transactions are public. Existing experimental privacy tools are documented separately.
@@ -62,5 +62,13 @@ Security: wallet keys/signing depend on Privy. There are no new upgradeable Hone
 Accepted compromise: a public testnet prototype with hosted sign-in and public RPC, not a production private wallet. The terminal test suite and JSX handler doubles are automated; they are not physical-camera, real email authentication or funded-wallet tests.
 
 ## Validation record
+
+### September 14 reliability follow-up
+
+Balances refresh every 15 seconds after the previous read completes. Pending payments reconcile every 12 seconds after the previous check, using the existing exact-transfer, nonce and canonical-receipt verifier. Refreshes pause when the tab is hidden and resume on focus/visibility. Only one read per loop can run at once; cleanup invalidates late results. Automatic recovery uses a nonblocking browser lock and the existing attempt-ID guard, stops at a terminal result, and never invokes wallet signing or resubmission. Manual refresh and Check status remain available.
+
+After 20 seconds of stalled sign-in or wallet loading, the screen offers a page reload. This preserves the request URL and local payment journal. It is a recovery option, not evidence that a provider/domain or real-device authentication problem has been resolved. Fee-promotion copy was removed from the wallet; the fee stays visible in payment review.
+
+All 64 checkout tests and the production build pass. Four additional tests cover overlapping foreground events, hidden-tab pause/resume, transient read failure, cleanup during a slow read and terminal-result shutdown. Physical-phone email login, camera use and funded sending remain unverified. See `reports/mobile-reliability-validation.json`.
 
 This iteration passes 60 checkout tests, including actual JSX handler doubles for explicit consent, duplicate clicks, account changes and nonce zero, plus the production build. No physical phone/authenticated funded payment was exercised here. `npm audit fix` applied compatible updates; 27 moderate dependency advisories remain, with no high/critical findings in this registry audit. Some suggested fixes are breaking downgrades and require separate dependency review. See `reports/mobile-simplification-validation.json`. This is not an independent security audit.

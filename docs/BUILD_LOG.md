@@ -1652,3 +1652,19 @@ or hosted-site update occurred. Existing uncertain RAILGUN payment state was not
 accessed or changed. Approval commitments expose linkage, timing and counts;
 the module does not make public Sepolia transfers private. See the module README
 for limitations, and the M2–M5 plan for proof, checkout, settlement and submission.
+
+## September 14, 2026 — mobile reliability follow-up
+
+Added visible-tab balance refresh and automatic reconciliation of existing pending
+payments. Reads do not overlap within each loop; background tabs pause; cleanup
+discards late results. Existing exact-transfer, nonce, canonical-receipt and
+attempt-ID verification remains in force. Status checks cannot sign or resend.
+Stalled sign-in/wallet loading offers a page reload after 20 seconds, preserving
+the request URL and payment journal. Removed fee-promotion copy inside the wallet.
+
+All 64 checkout tests and the production build pass. Four new tests exercise the
+refresh loop's concurrency, visibility, transient failures, cleanup and terminal
+shutdown. These are automated checks, not proof of successful phone login or a
+funded payment. Physical-device authentication/camera/payment validation and real
+Midnight proof/private settlement remain incomplete. The prepared Wave 1 deck,
+demo and personal-submission checklist remain available from the previous update.
