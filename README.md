@@ -1,3 +1,5 @@
+> **September 14 mobile update:** Honeybee Pay now centers on Wallet, Pay, Request and Activity with automatic fee review. See [mobile technical documentation](checkout/README.md), [your checklist](USER-CHECKLIST.md), and [Midnight Wave 1 submission materials](midnight/SUBMISSION.md). The live wallet uses public Sepolia test USDC. Midnight proof/deployment and private settlement remain in progress.
+
 # Honeybee Pay
 
 **Midnight Buildathon follow-up:** new Compact invoice-approval work starts in

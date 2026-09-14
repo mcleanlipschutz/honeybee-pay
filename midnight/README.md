@@ -108,3 +108,9 @@ required for the submitted Midnight functionality. See [LICENSE](LICENSE) and
 Primary references: [Compact security model](https://docs.midnight.network/compact/smart-contract-security),
 [commitment API](https://docs.midnight.network/compact/standard-library/exports),
 and the official [counter simulator](https://github.com/midnightntwrk/example-counter/blob/273f083ab36a52407f16ec9a9796d902226e05d6/contract/src/test/counter-simulator.ts).
+
+## Mobile request adapter
+
+`src/mobile-invoice.mjs` maps a supported Honeybee request to Compact terms. It domain-separates and hashes the request UUID into `invoiceId`, left-pads each 20-byte EVM recipient/token address to 32 bytes, uses chain 11155111 and exact six-decimal atomic units, and sets `maximum` equal to the approved payment amount. Open-amount requests require an explicit amount. Expiry, origin, network, asset and unknown fields are checked. The three adapter tests include real calls into the generated contract simulator. This is deterministic encoding and simulation, not authenticated merchant identity, UI proof linkage or payment.
+
+See [submission materials](SUBMISSION.md) and [proof infrastructure status](PROOF_READINESS.md).

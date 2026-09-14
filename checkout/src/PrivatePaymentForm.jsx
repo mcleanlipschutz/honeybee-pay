@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { formatUnits } from 'viem';
-import { testAmountUnits } from '../../shared/test-assets.mjs';
+import { testAmountUnits } from './shared/test-assets.mjs';
 
 export function PrivatePaymentForm({ request, wallet, transact, disabled, isCurrent }) {
   const [payment, setPayment] = useState(null), [message, setMessage] = useState(''), [busy, setBusy] = useState(false);

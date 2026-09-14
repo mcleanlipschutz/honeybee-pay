@@ -15,8 +15,10 @@
   "validatedOn": "2026-09-14",
   "node": "24.19.0",
   "tests": {
-    "passed": 16,
-    "failed": 0
+    "passed": 19,
+    "failed": 0,
+    "originalContractTests": 16,
+    "mobileRequestAdapterTests": 3
   },
   "demo": "passed",
   "npmAudit": {
@@ -25,5 +27,6 @@
   },
   "transactionProofGenerated": false,
   "networkDeployment": false,
-  "paymentSettlement": false
+  "paymentSettlement": false,
+  "mobileRequestAdapter": "passed local generated-contract simulation"
 }

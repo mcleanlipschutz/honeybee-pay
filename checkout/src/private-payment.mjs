@@ -1,7 +1,7 @@
 import { keccak256, stringToHex } from 'viem';
 import { validatePaymentRequest, validatePrivateRecipient } from './private-request.mjs';
 
-import { feeWETH } from '../../shared/test-assets.mjs';
+import { feeWETH } from './shared/test-assets.mjs';
 
 export function validatePaymentSummary(value, wallet, { allowExpired = true, now = Date.now() } = {}) {
   const result = structuredClone(value), { quoteId, ...q } = result.quote;

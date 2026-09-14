@@ -1,6 +1,6 @@
 import { decodeFunctionData, encodeFunctionData, getAddress, keccak256, parseAbi, parseUnits, stringToHex } from 'viem';
 
-import { testAsset, testAmountUnits, assetForToken } from '../../shared/test-assets.mjs';
+import { testAsset, testAmountUnits, assetForToken } from './shared/test-assets.mjs';
 export { assetForToken };
 
 export const shieldToken = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';

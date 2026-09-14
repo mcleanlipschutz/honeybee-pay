@@ -9,6 +9,7 @@ Compact runtime 0.16.0, with dependencies pinned in `package-lock.json`.
 | Full Compact compile | Passed; `approve` and `consume` circuits, proving keys and verifying keys produced |
 | Artifact verification | Seven expected nonempty artifacts verified and hashed |
 | Generated-contract tests | 16 passed, 0 failed |
+| Mobile-request adapter tests | 3 passed, 0 failed; exact term encoding and mutation rejection through generated contract |
 | Terminal demonstration | Passed all six scenarios |
 | npm production dependency audit | 0 reported vulnerabilities for this package on this date |
 | Actual Midnight transaction proof generation/verification | Not performed |

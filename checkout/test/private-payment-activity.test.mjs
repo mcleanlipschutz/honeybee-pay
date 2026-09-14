@@ -27,7 +27,7 @@ const source = await readFile(new URL('../src/PrivatePaymentActivity.jsx', impor
 let { code } = await transformWithOxc(source, 'PrivatePaymentActivity.jsx', { jsx: { runtime: 'classic' } });
 for (const [specifier, replacement] of [
   ['react', hooksURL], ['viem', import.meta.resolve('viem')],
-  ['../../shared/test-assets.mjs', new URL('../../shared/test-assets.mjs', import.meta.url).href],
+  ['./shared/test-assets.mjs', new URL('../src/shared/test-assets.mjs', import.meta.url).href],
 ]) code = code.replaceAll(JSON.stringify(specifier), JSON.stringify(replacement));
 const { PrivatePaymentActivity } = await import(moduleURL(`import {FormData} from ${JSON.stringify(hooksURL)};\n${code}`));
 const nodes = value => Array.isArray(value) ? value.flatMap(nodes)
