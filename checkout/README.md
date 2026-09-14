@@ -63,6 +63,12 @@ Accepted compromise: a public testnet prototype with hosted sign-in and public R
 
 ## Validation record
 
+### September 14 phone sign-in and payment handoff
+
+The owner's phone sign-in and 17 test-USDC balance were observed after adding the deployed origin to Privy's allowed origins. Their subsequent 1 USDC payment remains unresolved: the server has a pending intent without a transaction hash. This must not be treated as a completed payment or cleared to permit a duplicate.
+
+The signing SDK now uses an explicit Sepolia RPC override matching the balance/review/recovery connection. Its public transaction fields preserve the reviewed fee ceilings and nonce zero. Status checks distinguish missing confirmation from a failed network read. All 70 checkout tests and the production build pass, including tests against the installed SDK's chain normalization and transaction converter. Live payment completion still needs verification. See [payment handoff diagnosis](reports/payment-handoff-diagnosis.md).
+
 ### September 14 reliability follow-up
 
 Balances refresh every 15 seconds after the previous read completes. Pending payments reconcile every 12 seconds after the previous check, using the existing exact-transfer, nonce and canonical-receipt verifier. Refreshes pause when the tab is hidden and resume on focus/visibility. Only one read per loop can run at once; cleanup invalidates late results. Automatic recovery uses a nonblocking browser lock and the existing attempt-ID guard, stops at a terminal result, and never invokes wallet signing or resubmission. Manual refresh and Check status remain available.

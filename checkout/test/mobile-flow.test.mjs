@@ -30,8 +30,14 @@ function fixture(){
 test('new mobile flow reviews without signing, then one explicit click sends exact total and preserves nonce zero',async()=>{
  const f=fixture();await f.review();assert.equal(f.calls.length,0);assert.match(text(f.tree),/Ready to pay/);
  const pay=f.button('Pay 1 USDC');const first=pay.props.onClick();void pay.props.onClick();await tick();
- assert.equal(f.calls.length,1);assert.equal(f.calls[0][0].nonce,'0x0');assert.equal(f.calls[0][0].gas,60000n);assert.equal(f.calls[0][1].uiOptions.showWalletUIs,false);
+ assert.equal(f.calls.length,1);assert.equal(f.calls[0][0].nonce,'0x0');assert.equal(f.calls[0][0].gasLimit,60000n);assert.equal(f.calls[0][0].gas,undefined);assert.equal(f.calls[0][1].uiOptions.showWalletUIs,false);
  f.release();await first;f.render();assert.match(text(f.tree),/Checking your payment/);assert.equal(f.button('Pay 1 USDC'),undefined);assert.equal([...f.records.values()].map(JSON.parse)[0].status,'pending');
+ f.rpc.getBlockNumber=async()=>21n;f.rpc.getLogs=async()=>[];
+ await f.button('Check status').props.onClick();f.render();assert.match(text(f.tree),/haven’t found confirmation yet/);
+ f.rpc.getLogs=async()=>{throw Error('private RPC error detail');};
+ await f.button('Check status').props.onClick();f.render();assert.match(text(f.tree),/Payment status is unavailable/);
+ assert.ok(!text(f.tree).includes('private RPC error detail'));assert.equal(f.calls.length,1);
+ assert.equal([...f.records.values()].map(JSON.parse)[0].status,'pending');
 });
 test('a changed account blocks the actual send handler before wallet signing',async()=>{
  const f=fixture();await f.review();f.props.connection.authenticated=false;f.render();

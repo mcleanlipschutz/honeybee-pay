@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { createPublicClient, http, formatUnits, toHex } from 'viem';
-import { sepolia } from 'viem/chains';
+import { createPublicClient, http, formatUnits } from 'viem';
+import { paymentChain, PAYMENT_RPC_URL, toWalletTransaction } from './wallet-network.mjs';
 import QRCode from 'qrcode';
 import QrScanner from 'qr-scanner';
 import { CHAIN_ID } from './payment.mjs';
@@ -11,7 +11,7 @@ import { loadPublicReceiptPage, findPublicReceipts, sortReceipts, ReceiptError }
 import { trackPayment } from './payment-tracking.mjs';
 import { startVisibleRefresh } from './visible-refresh.mjs';
 import { signInIssue, canReadWalletStorage } from './sign-in-status.mjs';
-const rpc = createPublicClient({ chain: sepolia, transport: http('https://ethereum-sepolia-rpc.publicnode.com', { timeout: 15000, retryCount: 1 }) });
+const rpc = createPublicClient({ chain: paymentChain, transport: http(PAYMENT_RPC_URL, { timeout: 15000, retryCount: 1 }) });
 const short = a => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const units = amount => formatUnits(BigInt(amount), 6);
 function Icon({ name, ...props }) {
@@ -117,7 +117,7 @@ export function MobileWallet({ connection, local = false }) {
   };
   const finishCheck = async (record, hash, holdsLock = false) => {
     const result = await inspectAttempt(rpc, record, hash);
-    if (!result) throw new Error('Pending');
+    if (!result) return null;
     const apply = () => { const latest = commitAttemptResult(localStorage, address, result); setAttempt(latest); setRefresh(v=>v+1); setMessage(''); return latest; };
     if (holdsLock) return apply();
     if (!navigator.locks) throw new Error('Secure recovery is unavailable in this browser.');
@@ -146,7 +146,7 @@ export function MobileWallet({ connection, local = false }) {
         record = beginAttempt(localStorage, address, { approved: review.approved, createdAt: Date.now(), afterBlock: afterBlock.toString(), nonce, intentId }); setAttempt(record);
         // Persist uncertainty before invoking the wallet. A rejected promise does not prove a transfer was not sent.
         started = true; setMessage('Sending your payment…');
-        const result = await current.current.sendTransaction({ ...transaction, nonce: toHex(nonce) }, { address, uiOptions: { showWalletUIs: false } });
+        const result = await current.current.sendTransaction(toWalletTransaction(transaction, nonce), { address, uiOptions: { showWalletUIs: false } });
         if (!/^0x[0-9a-f]{64}$/i.test(result?.hash || '')) throw new Error('Missing hash');
         record = { ...record, hash: result.hash }; saveAttempt(localStorage, address, record); setAttempt(record);
         if (intentId) void trackPayment('/api/payment-submissions', { id:intentId, hash:result.hash }, connection.getAccessToken).catch(()=>{});
@@ -162,8 +162,11 @@ export function MobileWallet({ connection, local = false }) {
   };
   const recheck = async () => {
     if (operation.current) return; operation.current = true; setBusy(true); setMessage('Checking your payment…');
-    try { await finishCheck(attempt, recoveryHash.trim() || undefined); }
-    catch { setMessage('Confirmation is still pending. Check again shortly. If you have a transaction reference, enter it below.'); }
+    try {
+      const result = await finishCheck(attempt, recoveryHash.trim() || undefined);
+      if (!result) setMessage('We haven’t found confirmation yet. Please don’t send this payment again while we check.');
+    }
+    catch { setMessage('Payment status is unavailable right now. We haven’t confirmed whether it went through. Try checking again shortly.'); }
     finally { operation.current = false; setBusy(false); }
   };
   useEffect(() => {

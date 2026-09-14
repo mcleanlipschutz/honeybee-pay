@@ -1678,3 +1678,20 @@ consent gates intact. No provider configuration or access restrictions changed.
 See `checkout/reports/sign-in-diagnosis.md` for observed evidence, 68 distinct
 passing automated tests, build validation and the device evidence still needed.
 This is a diagnostic improvement; successful phone login remains unverified.
+
+## September 14, 2026 — phone sign-in restored; investigate payment handoff
+
+The owner added the deployed origin in Privy and showed successful phone sign-in
+with 17 test USDC. The next 1 USDC payment remains unconfirmed: authenticated
+intent creation succeeded, but live tracking has no transaction hash.
+
+Pinned the embedded wallet to the same Sepolia RPC as balance/review/recovery,
+normalized the public SDK gas-limit field while preserving exact fee caps and
+nonce zero, and distinguished unavailable status reads from missing confirmation.
+The installed SDK accepts the old gas spelling too, so that spelling is not an
+established cause. No payment was signed, resent, cleared or marked successful.
+
+All 70 checkout tests and the production build pass. Tests exercise the installed
+SDK converter/chain normalization and the actual JSX send handler with doubles.
+See `checkout/reports/payment-handoff-diagnosis.md` for evidence, limitations,
+CROPS implications and the remaining phone status/receipt check.

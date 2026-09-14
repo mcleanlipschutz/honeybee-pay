@@ -11,6 +11,7 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "@privy-io/chains": "0.6.0",
     "@privy-io/react-auth": "3.42.0",
     "@scure/base": "1.2.6",
     "drizzle-orm": "0.45.2",

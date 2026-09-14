@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { PrivyProvider, usePrivy, useWallets, useSendTransaction, useExportWallet } from '@privy-io/react-auth';
-import { sepolia } from 'viem/chains';
+import { paymentChain } from './wallet-network.mjs';
 import { MobileWallet } from './MobileWallet.jsx';
 import { isLocalDemo } from './account-client.mjs';
 import './style.css';
@@ -29,6 +29,6 @@ async function bootstrap() {
   }
   const appId = runtime?.appId || import.meta.env.VITE_PRIVY_APP_ID;
   const tools = !!runtime && new URLSearchParams(location.search).get('tools') === '1';
-  createRoot(document.getElementById('root')).render(appId ? <PrivyProvider appId={appId} clientId={import.meta.env.VITE_PRIVY_CLIENT_ID || undefined} config={{ loginMethods: ['email'], defaultChain: sepolia, supportedChains: [sepolia], embeddedWallets: { ethereum: { createOnLogin: 'all-users' } }, appearance: { theme: 'light', accentColor: '#e9b931' } }}><Connected runtime={runtime} tools={tools}/></PrivyProvider> : <MobileWallet/>);
+  createRoot(document.getElementById('root')).render(appId ? <PrivyProvider appId={appId} clientId={import.meta.env.VITE_PRIVY_CLIENT_ID || undefined} config={{ loginMethods: ['email'], defaultChain: paymentChain, supportedChains: [paymentChain], embeddedWallets: { ethereum: { createOnLogin: 'all-users' } }, appearance: { theme: 'light', accentColor: '#e9b931' } }}><Connected runtime={runtime} tools={tools}/></PrivyProvider> : <MobileWallet/>);
 }
 void bootstrap();
