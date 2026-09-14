@@ -1,8 +1,8 @@
-import { validatePrivateRequestHistory } from '../../shared/private-request-history.mjs';
+import { validatePrivateRequestHistory } from './shared/private-request-history.mjs';
 import { bech32m } from '@scure/base';
 import { keccak256, stringToHex } from 'viem';
-import { validatePrivateRequest, privateRequestFile, readPrivateRequestFile, privateRequestInvoice } from '../../shared/private-request.mjs';
-export { privateRequestAmount, requestLifetimes, requestFileLimit } from '../../shared/private-request.mjs';
+import { validatePrivateRequest, privateRequestFile, readPrivateRequestFile, privateRequestInvoice } from './shared/private-request.mjs';
+export { privateRequestAmount, requestLifetimes, requestFileLimit } from './shared/private-request.mjs';
 
 export function validatePrivateRecipient(recipient) {
   if (typeof recipient !== 'string' || recipient.length !== 127 || recipient !== recipient.toLowerCase()) throw new Error('Invalid private recipient');

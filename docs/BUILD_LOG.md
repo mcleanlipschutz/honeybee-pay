@@ -1621,3 +1621,77 @@ recovery attempt, and 15 minutes for recording/upload/submission. SUBMISSION.md
 and DEMO_SCRIPT.md describe the actual unknown funded outcome. The working public
 checkout is the submission foundation; private settlement remains experimental.
 No final portal submission or video recording was performed by the assistant.
+
+## September 14, 2026 — Midnight Buildathon M1: invoice-approval contract
+
+McLean requested the next buildathon steps after reporting the ETHOnline entry
+submitted. Started `codex/midnight-wave1` from the remote development baseline
+`cca718ca9fa8c3f58449b7cd4e3be91b19748bf5`. The new `midnight/` package contains an
+original Compact contract for exact private invoice approval and one-time
+consumption, owner-secret witness authentication, salted commitments bound to a
+contract instance, generated-runtime simulation, adversarial tests, and a build
+plan. This is not connected to checkout or a payment rail.
+
+Read the AKINDO event rules: a compiling Compact contract is mandatory, newly
+submitted Midnight code must be Apache-2.0, and a public repository, deck, video
+and Wave progress description are required. New module files use Apache-2.0;
+existing code retains its license. The welcome email confirms September 16,
+15:00 UTC / 11:00 a.m. Eastern as the current Wave deadline. The full rules PDF
+link is a placeholder in the public summary, so no separate PDF was verified.
+
+Compiler 0.31.1 generated the two circuit/key sets, using its matching runtime
+0.16.0. Sixteen initial generated-contract tests passed, including changed
+recipient/amount/asset/chain/invoice/ceiling, malicious owner witness, replay,
+integer bounds, salted commitment separation and public-ledger field inspection.
+The demo also passed. The final build script additionally verifies nonempty
+artifacts and records source/artifact hashes; simulation rejects stale artifacts.
+Final validation is recorded in `midnight/VALIDATION.md`.
+
+No Midnight proof transaction, network deployment, funded payment, portal entry
+or hosted-site update occurred. Existing uncertain RAILGUN payment state was not
+accessed or changed. Approval commitments expose linkage, timing and counts;
+the module does not make public Sepolia transfers private. See the module README
+for limitations, and the M2–M5 plan for proof, checkout, settlement and submission.
+
+## September 14, 2026 — mobile reliability follow-up
+
+Added visible-tab balance refresh and automatic reconciliation of existing pending
+payments. Reads do not overlap within each loop; background tabs pause; cleanup
+discards late results. Existing exact-transfer, nonce, canonical-receipt and
+attempt-ID verification remains in force. Status checks cannot sign or resend.
+Stalled sign-in/wallet loading offers a page reload after 20 seconds, preserving
+the request URL and payment journal. Removed fee-promotion copy inside the wallet.
+
+All 64 checkout tests and the production build pass. Four new tests exercise the
+refresh loop's concurrency, visibility, transient failures, cleanup and terminal
+shutdown. These are automated checks, not proof of successful phone login or a
+funded payment. Physical-device authentication/camera/payment validation and real
+Midnight proof/private settlement remain incomplete. The prepared Wave 1 deck,
+demo and personal-submission checklist remain available from the previous update.
+
+## September 14, 2026 — investigate reported phone sign-in timeout
+
+The phone still cannot initialize sign-in. The provider's initialization error was
+being discarded by the UI. Added fixed, non-sensitive error categories/support
+codes and a read-only storage check. Kept authentication readiness and payment
+consent gates intact. No provider configuration or access restrictions changed.
+See `checkout/reports/sign-in-diagnosis.md` for observed evidence, 68 distinct
+passing automated tests, build validation and the device evidence still needed.
+This is a diagnostic improvement; successful phone login remains unverified.
+
+## September 14, 2026 — phone sign-in restored; investigate payment handoff
+
+The owner added the deployed origin in Privy and showed successful phone sign-in
+with 17 test USDC. The next 1 USDC payment remains unconfirmed: authenticated
+intent creation succeeded, but live tracking has no transaction hash.
+
+Pinned the embedded wallet to the same Sepolia RPC as balance/review/recovery,
+normalized the public SDK gas-limit field while preserving exact fee caps and
+nonce zero, and distinguished unavailable status reads from missing confirmation.
+The installed SDK accepts the old gas spelling too, so that spelling is not an
+established cause. No payment was signed, resent, cleared or marked successful.
+
+All 70 checkout tests and the production build pass. Tests exercise the installed
+SDK converter/chain normalization and the actual JSX send handler with doubles.
+See `checkout/reports/payment-handoff-diagnosis.md` for evidence, limitations,
+CROPS implications and the remaining phone status/receipt check.

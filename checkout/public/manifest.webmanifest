@@ -1,0 +1,1 @@
+{"id": "/", "name": "Honeybee Pay", "short_name": "Honeybee", "description": "A simple wallet for test USDC payments.", "start_url": "/", "scope": "/", "display": "standalone", "background_color": "#fbfcf6", "theme_color": "#173d32", "icons": [{"src": "/assets/honeybee-mascot.png", "sizes": "any", "type": "image/png", "purpose": "any"}]}

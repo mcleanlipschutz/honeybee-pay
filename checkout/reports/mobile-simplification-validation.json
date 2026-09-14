@@ -1,0 +1,23 @@
+{
+  "date": "2026-09-14",
+  "testSuite": {
+    "passed": 60,
+    "failed": 0
+  },
+  "productionBuild": "passed",
+  "npmAudit": {
+    "info": 0,
+    "low": 0,
+    "moderate": 27,
+    "high": 0,
+    "critical": 0,
+    "total": 27
+  },
+  "npmAuditFix": "Safe compatible updates applied; remaining fixes require dependency review, some suggested fixes downgrade major dependencies. No force downgrade applied.",
+  "readOnlyReview": "Request/QR expiry, recovery race, nonce zero, corrupt journal findings corrected and covered by tests.",
+  "realEmailLogin": "requires user phone",
+  "physicalCamera": "requires user phone",
+  "fundedPayment": "not performed this iteration",
+  "midnightProofOrPrivateSettlement": false,
+  "gasSponsorship": false
+}

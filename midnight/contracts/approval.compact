@@ -1,0 +1,75 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 McLean Lipschutz
+// Experimental invoice approval only. This contract does not transfer assets.
+pragma language_version >= 0.23;
+
+import CompactStandardLibrary;
+
+export struct Invoice {
+  invoiceId: Bytes<32>;
+  recipient: Bytes<32>;
+  asset: Bytes<32>;
+  chainId: Uint<64>;
+  amount: Uint<64>;
+  maximum: Uint<64>;
+}
+
+export sealed ledger authority: Bytes<32>;
+export sealed ledger instance: Bytes<32>;
+export ledger approved: Set<Bytes<32>>;
+export ledger consumed: Set<Bytes<32>>;
+
+witness ownerSecret(): Bytes<32>;
+
+constructor(ownerKey: Bytes<32>, instanceId: Bytes<32>) {
+  assert(ownerKey != default<Bytes<32>>, "Empty owner key");
+  assert(instanceId != default<Bytes<32>>, "Empty instance ID");
+  authority = disclose(ownerKey);
+  instance = disclose(instanceId);
+}
+
+export circuit ownerKey(secret: Bytes<32>, instanceId: Bytes<32>): Bytes<32> {
+  return disclose(persistentHash<Vector<3, Bytes<32>>>([
+    pad(32, "honeybee:owner:v1"), instanceId, secret
+  ]));
+}
+
+circuit authenticate(): [] {
+  assert(ownerKey(ownerSecret(), instance) == authority, "Unauthorized owner");
+}
+
+circuit validate(invoice: Invoice): [] {
+  assert(invoice.invoiceId != default<Bytes<32>>, "Empty invoice ID");
+  assert(invoice.recipient != default<Bytes<32>>, "Empty recipient");
+  assert(invoice.asset != default<Bytes<32>>, "Empty asset");
+  assert(invoice.chainId > 0, "Invalid chain");
+  assert(invoice.amount > 0, "Amount must be positive");
+  assert(invoice.amount <= invoice.maximum, "Amount exceeds approval limit");
+}
+
+export circuit invoiceCommitment(
+  instanceId: Bytes<32>, invoice: Invoice, salt: Bytes<32>
+): Bytes<32> {
+  assert(salt != default<Bytes<32>>, "Empty invoice salt");
+  return persistentCommit<[Bytes<32>, Bytes<32>, Invoice]>(
+    [pad(32, "honeybee:invoice:v1"), instanceId, invoice], salt
+  );
+}
+
+export circuit approve(invoice: Invoice, salt: Bytes<32>): [] {
+  authenticate();
+  validate(invoice);
+  const commitment = invoiceCommitment(instance, invoice, salt);
+  assert(!approved.member(commitment), "Invoice already approved");
+  assert(!consumed.member(commitment), "Approval already consumed");
+  approved.insert(commitment);
+}
+
+export circuit consume(invoice: Invoice, salt: Bytes<32>): [] {
+  authenticate();
+  validate(invoice);
+  const commitment = invoiceCommitment(instance, invoice, salt);
+  assert(approved.member(commitment), "Invoice does not match an approval");
+  assert(!consumed.member(commitment), "Approval already consumed");
+  consumed.insert(commitment);
+}
