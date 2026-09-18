@@ -54,7 +54,7 @@ contents. `consume` recomputes that commitment, requires a matching approval, an
 records its one-time consumption. Both operations require the owner secret.
 
 The commitment binds invoice ID, recipient identifier, asset identifier, chain ID,
-exact amount and maximum amount, plus the instance ID and a versioned domain.
+exact amount, maximum amount and request expiry (epoch milliseconds), plus the instance ID and the v2 invoice domain.
 Amounts are unsigned 64-bit integer units. Currency decimals and wallet-address
 encoding will be defined by the checkout adapter; they are not inferred here.
 Changing the amount fails even if the replacement is below the original maximum.
@@ -62,7 +62,7 @@ Changing the amount fails even if the replacement is below the original maximum.
 | Public ledger | Private local inputs |
 | --- | --- |
 | Pseudonymous owner authority and random instance ID | Owner secret |
-| Salted approved and consumed commitments | Invoice ID, recipient, asset, chain, amount and ceiling |
+| Salted approved and consumed commitments | Invoice ID, recipient, asset, chain, amount, ceiling and expiry |
 | Set sizes and approval/consumption linkage | Fresh 32-byte invoice salt |
 
 The compiler emits zero-knowledge circuits for these checks. **This milestone
@@ -84,8 +84,15 @@ proving keys is not proof generation. See [validation](VALIDATION.md).
 - Anyone can deploy a contract with their own authority. Before integration, the
   checkout must pin the expected contract, owner authority, chain and artifact
   identity; success from an arbitrary instance cannot authorize a payment.
-- The simulator's secret lives in process memory. Encrypted private-state storage,
-  recovery, cancellation, expiry and an independent security review remain work.
+- The simulator's secret lives in process memory. The separate Node-only test
+  storage adapter now uses the pinned official SDK's encrypted state and backups,
+  binds account/network/contract/source, rejects overwrite and serializes local
+  access. Its recovery tests use disposable secrets; it is not yet wired into the
+  browser or an actual proof transaction. Live recovery and independent review remain.
+- Expiry is bound into the commitment, and the mobile adapter rechecks the clock
+  and exact terms immediately before a future proof handoff. The circuit does not
+  consult a trusted chain clock. Do not claim on-chain expiry enforcement or use
+  this approval alone to authorize payment. Cancellation is not yet implemented.
 - No Midnight result is currently consumed by Honeybee's payment code. No bridge,
   cross-chain verifier, atomic settlement or native Midnight USDC integration is
   implemented. A public Sepolia transfer remains public even if invoice approval
@@ -111,6 +118,26 @@ and the official [counter simulator](https://github.com/midnightntwrk/example-co
 
 ## Mobile request adapter
 
-`src/mobile-invoice.mjs` maps a supported Honeybee request to Compact terms. It domain-separates and hashes the request UUID into `invoiceId`, left-pads each 20-byte EVM recipient/token address to 32 bytes, uses chain 11155111 and exact six-decimal atomic units, and sets `maximum` equal to the approved payment amount. Open-amount requests require an explicit amount. Expiry, origin, network, asset and unknown fields are checked. The three adapter tests include real calls into the generated contract simulator. This is deterministic encoding and simulation, not authenticated merchant identity, UI proof linkage or payment.
+`src/mobile-invoice.mjs` maps a supported Honeybee request to Compact terms. It domain-separates and hashes the request UUID into `invoiceId`, left-pads each 20-byte EVM recipient/token address to 32 bytes, uses chain 11155111 and exact six-decimal atomic units, and sets `maximum` equal to the approved payment amount. Open-amount requests require an explicit amount. Expiry, origin, network, asset and unknown fields are checked. Four adapter tests include calls into the generated contract simulator and repeat validation at handoff. This is deterministic encoding and simulation, not authenticated merchant identity, UI proof linkage or payment.
 
 See [submission materials](SUBMISSION.md) and [proof infrastructure status](PROOF_READINESS.md).
+
+## Pre-proof regression gate
+
+After installing the pinned dependencies in `checkout`, `privacy` and `midnight`
+and completing `npm run compile` in `midnight`, run from the repository root:
+
+```bash
+node scripts/verify-pre-zk.mjs
+```
+
+This runs all three test suites and builds the checkout. To additionally require
+a healthy, version-matched local prover, append `--with-prover`. Missing prover
+infrastructure must fail that mode. Neither command sends witness data or funds.
+
+`src/private-state.mjs` supports one initialized approval-state record per explicit
+account/network/contract/source context, using the official 4.1.1 encrypted
+provider. Backup passwords remain local. Recovery refuses existing state and
+cross-context backups. A leftover operation lock fails closed for manual review;
+it is never automatically deleted after a crash. Browser backup UX, proof-provider
+wiring and finalized deployment recovery are still integration work.

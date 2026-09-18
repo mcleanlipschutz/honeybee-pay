@@ -17,6 +17,7 @@ function amountUnits(amount){
  if(units<=0n||units>10_000_000n)reject();return units;
 }
 export function invoiceFromMobileRequest(link,{amount,now=Date.now()}={}){
+ if(!Number.isSafeInteger(now)||now<=0)reject();
  if(typeof link!=='string'||link.length>4096)reject();
  let url,data;try{url=new URL(link);}catch{reject();}
  if(url.origin!==ORIGIN||url.pathname!=='/'||url.search||url.username||url.password||!/^#pay=[A-Za-z0-9_-]+$/.test(url.hash))reject();
@@ -28,5 +29,18 @@ export function invoiceFromMobileRequest(link,{amount,now=Date.now()}={}){
  const units=amountUnits(data.amount===''?amount:data.amount);
  if(amount!==undefined&&amountUnits(amount)!==units)reject();
  return Object.freeze({invoiceId:new Uint8Array(createHash('sha256').update('honeybee:mobile-request:v1:'+data.id.toLowerCase()).digest()),
-   recipient:bytesAddress(data.recipient),asset:bytesAddress(TOKEN),chainId:BigInt(CHAIN),amount:units,maximum:units});
+   recipient:bytesAddress(data.recipient),asset:bytesAddress(TOKEN),chainId:BigInt(CHAIN),amount:units,maximum:units,expiresAt:BigInt(data.expiresAt)});
+}
+
+// Recheck at the actual proof/consume boundary, not only when a QR is opened.
+// This is a local-clock safety gate, not a claim of on-chain expiry enforcement.
+export function revalidateMobileInvoice(link, approved, options = {}) {
+ const current = invoiceFromMobileRequest(link, options);
+ for (const key of ['invoiceId','recipient','asset','chainId','amount','maximum','expiresAt']) {
+  const equal = current[key] instanceof Uint8Array
+   ? approved?.[key] instanceof Uint8Array && Buffer.from(current[key]).equals(Buffer.from(approved[key]))
+   : current[key] === approved?.[key];
+  if (!equal) reject();
+ }
+ return current;
 }

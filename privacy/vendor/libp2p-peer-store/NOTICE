@@ -1,0 +1,24 @@
+Honeybee local security patch, September 18, 2026
+
+Derived from @libp2p/peer-store 11.2.7, libp2p/js-libp2p contributors.
+Upstream declares Apache-2.0 OR MIT; this copy is distributed under Apache-2.0.
+All existing upstream notices and package metadata are retained.
+
+Modification: reject a PeerRecord whose payload peer ID differs from the peer
+ID derived from the verified envelope public key, before any store read/write.
+The same guard is added to the TypeScript source and exported JavaScript.
+Local version: 11.2.7-honeybee.1. This is not an upstream release.
+
+Motivation: npm audit's GHSA-vrf4-mx87-p53w report, plus inspection and a local
+synthetic-peer regression of the installed implementation. This preserves the
+existing libp2p 2 / peer-store 11 interfaces instead of forcing peer-store 12.
+The npm advisory may still flag the upstream version family; do not describe
+this as a clean advisory audit or an independently audited dependency.
+
+The package export uses dist/src/index.js. The unused standalone minified bundle
+and nested node_modules were not copied. Original source maps are retained as
+upstream reference, not regenerated mapping evidence for the inserted guard.
+Upstream development dependencies were omitted from the local runtime package
+so directory installation does not pull unrelated build/test tools into the app.
+
+Reference: https://github.com/advisories/GHSA-vrf4-mx87-p53w

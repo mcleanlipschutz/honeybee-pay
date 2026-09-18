@@ -11,9 +11,11 @@
     "compile": "node scripts/compile.mjs",
     "compile:fast": "node scripts/compile.mjs --skip-zk",
     "test": "node --test test/*.test.mjs",
-    "demo": "node src/demo.mjs"
+    "demo": "node src/demo.mjs",
+    "proof:preflight": "node scripts/proof-preflight.mjs"
   },
   "dependencies": {
-    "@midnight-ntwrk/compact-runtime": "0.16.0"
+    "@midnight-ntwrk/compact-runtime": "0.16.0",
+    "@midnight-ntwrk/midnight-js-level-private-state-provider": "4.1.1"
   }
 }

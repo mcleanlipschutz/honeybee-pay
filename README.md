@@ -1,4 +1,4 @@
-> **September 14 mobile update:** Honeybee Pay now centers on Wallet, Pay, Request and Activity with automatic fee review. See [mobile technical documentation](checkout/README.md), [your checklist](USER-CHECKLIST.md), and [Midnight Wave 1 submission materials](midnight/SUBMISSION.md). The live wallet uses public Sepolia test USDC. Midnight proof/deployment and private settlement remain in progress.
+> **September 18 pre-ZK update:** Payment recovery, exact invoice binding, artifact validation and encrypted test-state recovery have been strengthened. See [current readiness and remaining gates](PRE-ZK-READINESS.md) and [your short checklist](USER-CHECKLIST.md). The live mobile wallet still uses public Sepolia test USDC. Actual Midnight proof verification, deployment and private settlement are not complete. The older status sections below are historical.
 
 # Honeybee Pay
 

@@ -1,6 +1,12 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 # Midnight buildathon — next build segments
 
+**September 18 checkpoint:** M1 has been strengthened with v2 expiry binding,
+seven-artifact verification and a repeatable regression gate. Official encrypted
+state recovery and a local-only prover preflight are tested foundations for M2,
+not completion of M2. See [current readiness](PROOF_READINESS.md). The dates below
+record the September 14 plan; September 16 is no longer a future deadline.
+
 Prepared September 14, 2026. Wave 1 submission closes **September 16, 2026,
 15:00 UTC / 11:00 a.m. America/New_York**, confirmed by the AKINDO welcome email.
 The [event page](https://app.akindo.io/wave-hacks/jaMZjqPOBsLXvjdG) was read directly.

@@ -76,3 +76,24 @@ test('corrupt stored payment details cannot reach the money display',()=>{
  const storage=memory(),approved=approvePayment({sender,recipient,amount:'1'}), original=beginAttempt(storage,sender,{approved,afterBlock:'10',nonce:0,createdAt:Date.now()});
  for(const change of [{amountUnits:'bad'},{amountUnits:'0'},{amountUnits:'10000001'},{recipient:'bad'},{recipient:sender},{expiresAt:'yesterday'}]){ storage.setItem(attemptKey(sender),JSON.stringify({...original,approved:{...approved,...change}}));assert.throws(()=>readAttempt(storage,sender)); }
 });
+
+test('read-only recovery moves past the first 1000 blocks and cycles without changing the journal',async()=>{
+ const f=minedFixture(),scan={},ranges=[];f.attempt.id='first';f.attempt.hash=null;
+ f.rpc.getBlockNumber=async()=>2020n;
+ f.rpc.getLogs=async q=>{ranges.push([q.fromBlock,q.toBlock]);return [];};
+ for(let i=0;i<4;i++)assert.equal(await inspectAttempt(f.rpc,f.attempt,undefined,scan),null);
+ assert.deepEqual(ranges,[[11n,1010n],[1011n,2010n],[2011n,2019n],[11n,1010n]]);
+ assert.equal(f.attempt.hash,null);assert.equal(f.attempt.status,'pending');
+ await inspectAttempt(f.rpc,{...f.attempt,id:'second',afterBlock:'2000'},undefined,scan);
+ assert.deepEqual(ranges.at(-1),[2001n,2019n]);
+});
+
+test('recovery does not skip a page after a network error or candidates beyond the first batch',async()=>{
+ const f=minedFixture(),scan={};f.attempt.id='first';f.attempt.hash=null;f.rpc.getBlockNumber=async()=>2020n;
+ let fail=true,reads=0;
+ f.rpc.getLogs=async()=>{reads++;if(fail)throw Error('offline');return Array.from({length:21},(_,i)=>({removed:false,args:{value:1000000n},transactionHash:'0x'+(i+1).toString(16).padStart(64,'0')}));};
+ await assert.rejects(inspectAttempt(f.rpc,f.attempt,undefined,scan));assert.equal(scan.next,11n);
+ fail=false;f.rpc.getTransactionReceipt=async()=>null;f.rpc.getTransaction=async()=>null;
+ await inspectAttempt(f.rpc,f.attempt,undefined,scan);assert.equal(scan.queue.length,1);assert.equal(scan.next,11n);
+ await inspectAttempt(f.rpc,f.attempt,undefined,scan);assert.equal(scan.queue.length,0);assert.equal(scan.next,1011n);assert.equal(reads,2);
+});

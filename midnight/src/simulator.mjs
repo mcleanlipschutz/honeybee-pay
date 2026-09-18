@@ -3,20 +3,14 @@
 // Uses the compiler-generated contract and the official Compact runtime.
 // Runtime-context pattern: midnightntwrk/example-counter (Apache-2.0),
 // Copyright Midnight Foundation. This is local simulation, not a ZK proof.
-import { createHash, randomBytes } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import { verifyBuild } from './verify-build.mjs';
 import {
   createConstructorContext, createCircuitContext, sampleContractAddress,
 } from '@midnight-ntwrk/compact-runtime';
-import { Contract, ledger, pureCircuits } from '../managed/approval/contract/index.js';
-
-const build = JSON.parse(readFileSync(new URL('../managed/approval/build.json', import.meta.url)));
-const source = readFileSync(new URL('../contracts/approval.compact', import.meta.url));
-const generated = readFileSync(new URL('../managed/approval/contract/index.js', import.meta.url));
-const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
-if (build.sourceSha256 !== sha256(source) || build.artifacts['contract/index.js'] !== sha256(generated)) {
-  throw new Error('Compact artifacts are stale or changed. Run npm run compile before testing.');
-}
+// Verify before executing generated JavaScript, including every key for a full build.
+verifyBuild({ requireFull: false });
+const { Contract, ledger, pureCircuits } = await import('../managed/approval/contract/index.js');
 
 export const bytes32 = () => new Uint8Array(randomBytes(32));
 export const witnesses = {
@@ -65,6 +59,6 @@ export class ApprovalSimulator {
 export function sampleInvoice() {
   return {
     invoiceId: bytes32(), recipient: bytes32(), asset: bytes32(),
-    chainId: 11155111n, amount: 1_000_000n, maximum: 2_000_000n,
+    chainId: 11155111n, amount: 1_000_000n, maximum: 2_000_000n, expiresAt: BigInt(Date.now() + 300_000),
   };
 }

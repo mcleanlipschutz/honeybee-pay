@@ -32,7 +32,7 @@ test('new mobile flow reviews without signing, then one explicit click sends exa
  const pay=f.button('Pay 1 USDC');const first=pay.props.onClick();void pay.props.onClick();await tick();
  assert.equal(f.calls.length,1);assert.equal(f.calls[0][0].nonce,'0x0');assert.equal(f.calls[0][0].gasLimit,60000n);assert.equal(f.calls[0][0].gas,undefined);assert.equal(f.calls[0][1].uiOptions.showWalletUIs,false);
  f.release();await first;f.render();assert.match(text(f.tree),/Checking your payment/);assert.equal(f.button('Pay 1 USDC'),undefined);assert.equal([...f.records.values()].map(JSON.parse)[0].status,'pending');
- f.rpc.getBlockNumber=async()=>21n;f.rpc.getLogs=async()=>[];
+ f.rpc.getBlockNumber=async()=>22n;f.rpc.getLogs=async()=>[];
  await f.button('Check status').props.onClick();f.render();assert.match(text(f.tree),/haven’t found confirmation yet/);
  f.rpc.getLogs=async()=>{throw Error('private RPC error detail');};
  await f.button('Check status').props.onClick();f.render();assert.match(text(f.tree),/Payment status is unavailable/);

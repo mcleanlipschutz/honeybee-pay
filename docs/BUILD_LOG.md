@@ -1695,3 +1695,27 @@ All 70 checkout tests and the production build pass. Tests exercise the installe
 SDK converter/chain normalization and the actual JSX send handler with doubles.
 See `checkout/reports/payment-handoff-diagnosis.md` for evidence, limitations,
 CROPS implications and the remaining phone status/receipt check.
+
+## September 18, 2026 — pre-ZK revisions and corrections
+
+Improved hashless mobile recovery to advance through confirmed block pages,
+process every candidate and retry safely without signing, clearing or resending.
+Live tracking still showed the existing 1 USDC intent pending without a hash;
+its outcome is unknown. The older private attempt remains separate and untouched.
+
+Midnight invoice v2 now commits expiry and revalidates exact terms at handoff.
+Full Compact 0.31.1 compilation passed. Source, runtime and all seven artifacts
+are verified before use. Added local-only proof-server metadata checks and
+official SDK encrypted-state storage with disposable-secret recovery tests.
+The actual preflight correctly exited 2 because no local prover was available.
+
+Backported peer-record signer/payload identity validation into the existing
+libp2p peer-store API and pinned Waku UUID 11.1.1. Synthetic adversarial records
+are rejected; valid signed records and the Waku request codec still work.
+No real network proof, deployment, payment or private wallet was exercised.
+
+The consolidated gate passed 25 Midnight, 211 privacy and 72 checkout tests
+(308 total) plus the production build. Current production audits report Midnight
+0 findings, privacy 6 low, checkout 23 moderate; local-fork corrections require
+their own regression evidence and independent review, not just advisory counts.
+See PRE-ZK-READINESS.md and USER-CHECKLIST.md for concrete remaining gates.

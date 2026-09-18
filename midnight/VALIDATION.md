@@ -1,35 +1,37 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-# M1 validation — September 14, 2026
+# Pre-proof validation — September 18, 2026
 
-Validated on Linux, Node.js 24.19.0, Compact compiler 0.31.1 (language 0.23.0),
-Compact runtime 0.16.0, with dependencies pinned in `package-lock.json`.
+Linux, Node.js 24.19.0, Compact compiler 0.31.1, runtime 0.16.0 and
+official encrypted-state provider 4.1.1. Dependencies are lockfile-pinned.
 
 | Check | Result |
 | --- | --- |
-| Full Compact compile | Passed; `approve` and `consume` circuits, proving keys and verifying keys produced |
-| Artifact verification | Seven expected nonempty artifacts verified and hashed |
-| Generated-contract tests | 16 passed, 0 failed |
-| Mobile-request adapter tests | 3 passed, 0 failed; exact term encoding and mutation rejection through generated contract |
-| Terminal demonstration | Passed all six scenarios |
-| npm production dependency audit | 0 reported vulnerabilities for this package on this date |
-| Actual Midnight transaction proof generation/verification | Not performed |
-| Midnight network deployment/finalization | Not performed |
-| Browser connection to this contract | Not implemented |
-| Asset transfer or merchant settlement | Not performed |
+| Full Compact v2 compile | Passed; both circuits, proving keys and verifying keys produced |
+| Build gate | All seven nonempty artifact hashes, source freshness and runtime identity checked before generated code executes |
+| Generated-contract tests | 16 passed, including changed expiry and replay rejection |
+| Mobile-request adapter | 4 passed, including revalidation of expiry and exact terms |
+| Artifact/local-prover boundary | 4 passed; missing/tampered files, wrong versions and remote endpoints rejected |
+| Official encrypted-state storage | 1 integration test passed: disposable secret initialization, reopen, encrypted export/restore, wrong password, isolation and non-overwrite |
+| Total Midnight tests | 25 passed, 0 failed |
+| Terminal demonstration | All six scenarios passed |
+| Production dependency audit | 0 reported vulnerabilities in midnight package on this date |
+| Real proof-service preflight | Exited 2: no verified local prover; no witness data posted |
+| Actual Midnight transaction proof / network finalization | Not performed |
+| Browser proof connection / asset settlement | Not implemented / not performed |
 
-The build and tests were rerun after adding artifact completeness and freshness
-checks. Tests exercise compiler-generated code through the official runtime,
-not a separately reimplemented approval algorithm. The public-ledger test checks
-field exposure; it is not a proof of network anonymity or ZK soundness. The npm
-audit is a registry-advisory check, not a security audit of the contract or SDK.
+The invoice now includes expiry under the v2 commitment domain. This is a schema
+change requiring a fresh disposable contract for testing, not reuse of v1 state.
+The circuit binds the expiry value but does not enforce a trusted chain clock.
 
-The compiler's updater could not resolve the GitHub API in this environment. The
-standalone compiler was downloaded from its official versioned GitHub release
-and verified as 0.31.1. The build used `HONEYBEE_COMPACTC` as documented in the
-README. Docker was unavailable, so a local network/proof-service integration was
-not attempted. M2 is the next gate for real proof and network evidence.
+Tests call generated Compact code through the official runtime. Storage testing
+uses the actual pinned SDK and fresh synthetic secrets, not a user's wallet.
+Neither those tests nor key generation demonstrate ZK soundness, anonymity or a
+verified transaction proof. Registry audits do not replace independent review.
 
-Machine-readable source and artifact hashes are in [validation.json](validation.json).
-Those hashes document this run; a later source change requires a fresh compile,
-test and evidence record. Generated keys are build artifacts, not wallet secrets,
-but are excluded from Git and recreated by the build command.
+The standalone official compiler completed the full build through
+`HONEYBEE_COMPACTC`. Docker/Podman are unavailable in this environment; the
+loopback prover and actual transaction integration remain the next gates.
+
+[validation.json](validation.json) records this run's source/artifact hashes.
+Generated artifacts are excluded from Git and recreated by the compile command.
+Any source change requires a fresh compile, tests and evidence record.

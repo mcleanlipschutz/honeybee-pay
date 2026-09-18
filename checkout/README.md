@@ -37,7 +37,7 @@ Honeybee links use a URL fragment so request fields do not appear in HTTP paths.
 
 `mobile-attempt.mjs` stores public pending intent metadata before calling the wallet. Web Locks serialize send operations across same-origin tabs. A random attempt ID and identity-checked recovery writes prevent slow old checks from overwriting a newer send. Unknown SDK/network errors keep the send locked. Only an explicit provider rejection before a hash, or a matching canonical confirmed/reverted transaction, resolves the uncertainty. Corrupt/unavailable browser storage fails closed without deleting the record.
 
-Recovery requires the exact sender, recipient, token call, amount, nonce and canonical block, at least two confirmations and matching transfer log. Automatic hash discovery scans the first 1,000 blocks after the attempt. A later transfer can be checked by its exact transaction reference. Do not clear browser data or start a replacement on another device while a payment is unresolved. The journal protects this browser/origin, not all devices. Request replay prevention and cross-device spending locks are not claimed. The hosted aggregate counter retains its stricter finalized-block rule.
+Recovery requires the exact sender, recipient, token call, amount, nonce and canonical block, at least two confirmations and matching transfer log. Automatic hash discovery advances through 1,000-block pages, checking up to 20 candidates per pass without dropping remaining candidates. A failed read does not advance its cursor; after reaching the confirmed head it rescans from the anchor to cover temporary omissions. Manual and background checks have independent in-memory cursors, reset on reload; neither changes the journal until exact receipt verification succeeds. An exact transaction reference can also be supplied. A hashless reverted transaction has no transfer event and still needs its reference; an empty scan cannot prove that nothing was sent. Do not clear browser data or start a replacement on another device while a payment is unresolved. The journal protects this browser/origin, not all devices. Request replay prevention and cross-device spending locks are not claimed. The hosted aggregate counter retains its stricter finalized-block rule.
 
 ## Privacy development and Midnight
 
@@ -62,6 +62,20 @@ Security: wallet keys/signing depend on Privy. There are no new upgradeable Hone
 Accepted compromise: a public testnet prototype with hosted sign-in and public RPC, not a production private wallet. The terminal test suite and JSX handler doubles are automated; they are not physical-camera, real email authentication or funded-wallet tests.
 
 ## Validation record
+
+### September 18 pre-proof corrections
+
+Hashless recovery now advances through confirmed history in bounded pages instead
+of repeatedly checking only the first 1,000 blocks. It processes every matching
+candidate across passes, preserves its cursor on RPC failures, and cycles history
+again after reaching the head. Background and manual checks have separate cursors.
+All 72 checkout tests and the production build pass. No payment was resent, cleared
+or marked successful. The existing 1 USDC intent still has no transaction hash.
+
+The current production dependency audit reports 23 moderate findings (including
+transitive packages), no high or critical findings. These remain a release-review
+item; a registry audit is not an independent security review. Midnight work remains
+separate from this public Sepolia payment app.
 
 ### September 14 phone sign-in and payment handoff
 

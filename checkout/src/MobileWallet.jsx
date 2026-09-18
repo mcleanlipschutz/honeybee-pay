@@ -61,6 +61,7 @@ export function MobileWallet({ connection, local = false }) {
   const [review, setReview] = useState(null); const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false); const [scanning, setScanning] = useState(false);
   const [requestAmount, setRequestAmount] = useState(''); const [request, setRequest] = useState(null); const [requestUrl, setRequestUrl] = useState(''); const [attempt, setAttempt] = useState(null); const [storageError, setStorageError] = useState(''); const [recoveryHash, setRecoveryHash] = useState(''); const [account, setAccount] = useState(false);
   const operation = useRef(false); const current = useRef(connection); current.current = connection;
+  const recoveryScan = useRef({});
   useEffect(() => () => { current.current = null; }, []);
   const address = connection?.wallet?.address;
   const active = connection?.authenticated && connection?.walletsReady && address;
@@ -116,7 +117,7 @@ export function MobileWallet({ connection, local = false }) {
     finally { operation.current = false; setBusy(false); }
   };
   const finishCheck = async (record, hash, holdsLock = false) => {
-    const result = await inspectAttempt(rpc, record, hash);
+    const result = await inspectAttempt(rpc, record, hash, recoveryScan.current);
     if (!result) return null;
     const apply = () => { const latest = commitAttemptResult(localStorage, address, result); setAttempt(latest); setRefresh(v=>v+1); setMessage(''); return latest; };
     if (holdsLock) return apply();
@@ -172,11 +173,13 @@ export function MobileWallet({ connection, local = false }) {
   useEffect(() => {
     // Reconcile only the existing attempt. Nothing in this loop can sign or resend.
     if (!active || !pending) return;
+    // Manual checks have a separate cursor; overlapping reads must not skip pages.
+    const scan = {};
     return startVisibleRefresh(async signal => {
       if (operation.current) return;
       const saved = readAttempt(localStorage, address);
       if (!saved || saved.id !== attempt.id || saved.status !== 'pending') return false;
-      const result = await inspectAttempt(rpc, saved);
+      const result = await inspectAttempt(rpc, saved, undefined, scan);
       if (!result || signal.aborted || !navigator.locks) return;
       return navigator.locks.request(attemptKey(address), { ifAvailable: true }, lock => {
         if (!lock || signal.aborted) return;

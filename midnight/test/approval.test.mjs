@@ -30,7 +30,7 @@ test('unapproved invoice cannot be consumed', () => {
   assert.equal(simulator.state.consumed.size(), 0n);
 });
 
-for (const field of ['invoiceId', 'recipient', 'asset', 'chainId', 'amount', 'maximum']) {
+for (const field of ['invoiceId', 'recipient', 'asset', 'chainId', 'amount', 'maximum', 'expiresAt']) {
   test(`changing ${field} invalidates an existing approval`, () => {
     const { simulator, invoice, salt } = fixture();
     simulator.execute('approve', invoice, salt);
@@ -73,6 +73,7 @@ test('invalid identifiers and an empty salt fail before approval', () => {
     assert.throws(() => simulator.execute('approve', { ...invoice, [field]: new Uint8Array(32) }, salt), /Empty/);
   }
   assert.throws(() => simulator.execute('approve', { ...invoice, chainId: 0n }, salt), /Invalid chain/);
+  assert.throws(() => simulator.execute('approve', { ...invoice, expiresAt: 0n }, salt), /Invalid expiry/);
   assert.throws(() => simulator.execute('approve', invoice, new Uint8Array(32)), /Empty invoice salt/);
   assert.equal(simulator.state.approved.size(), 0n);
 });

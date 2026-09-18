@@ -1,27 +1,38 @@
-# Honeybee Pay — your checklist
+# Honeybee Pay — what needs you
 
-Prepared September 14, 2026. These are the steps that need your phone, account access or personal decision. You do not need to write code or choose transaction fees.
+Updated September 18, 2026. No coding or manual fee selection is required from you.
 
-## Before the Wave 1 deadline
+## Before real zero-knowledge testing
 
-- [ ] **Try the new wallet on your phone.** Open https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site and tap Continue with email. Enter your own verification code. Confirm that your wallet opens and the balance appears. Allow camera access when you choose Scan.
-- [ ] **Confirm one small test payment on your phone.** Use only Sepolia test USDC and a little test ETH. Add money shows the address and free test-funding links. With a second test wallet, try a request QR/link, review the recipient and automatic fee, send once, and check Activity in both wallets. If a payment is pending, use Check status rather than sending again. Report any screen that is unclear. This is a device/authentication check I cannot complete in your place.
-- [ ] **Review the prepared pitch, demo video and submission text.** They accurately call the live app a public test wallet and the Midnight result local contract simulation. The video is ready to upload; recording your voice is optional unless the portal specifically requires it.
-- [ ] **Submit through your AKINDO account by September 16 at 15:00 UTC / 11:00 a.m. Eastern.** Confirm your personal eligibility and registered team details, attach the deck/video, paste the prepared text and exact Wave 1 source link, accept the required terms, then submit. Keep the confirmation. The event requires personal submission and prohibits automated entry tools. If it requests video/deck URLs, upload the prepared files through your account first.
+- [x] Sign in on your phone. You added the deployed origin in Privy and showed
+  the wallet open with 17 test USDC.
+- [ ] Check the existing 1 USDC payment in the same phone browser. Refresh Honeybee
+  and use Check status. Send the updated screen if unresolved. Do not resend,
+  clear browser data, or create a replacement on another device. The older
+  experimental private-payment attempt is separate and must also be preserved.
+- [ ] Make your Windows laptop available with Docker running and WSL integration
+  enabled. Tell me if you are now using a different computer. The local-only
+  proof service and readiness check are prepared; no paid cloud prover is needed.
+- [ ] When prompted for test deployment, connect a separate Midnight Preview test
+  wallet and personally approve test actions. Keep seeds and passwords on your
+  device. This is not your Sepolia wallet and requires no purchase of real assets.
 
-## To unblock the next development segment
+## Work I still own
 
-- [ ] **Provide a developer machine with Docker and access to a test-only Midnight wallet.** I still need to complete the compatible proving setup, real proofs, deployment and integration there. Keep seed phrases and recovery passwords on your device; do not paste them into chat.
-- [ ] **Decide whether Honeybee should cover users' network fees.** Automatic fee calculation is already implemented. Removing the need to obtain test ETH also requires sponsorship. If you want Honeybee to pay, approve/configure a gas-sponsorship budget in the Privy account. I will then wire and validate the complete sponsored-payment and recovery flow before enabling it. No paid sponsorship has been activated here.
+Connect and verify a real proof round trip; wire the tested encrypted-state adapter
+into it; verify interrupted-operation recovery; pin the deployed contract and proof
+context; connect the mobile screen; and validate settlement separately. These are
+engineering tasks, not tasks you must implement. They are not complete merely
+because the regression suite or contract simulation passes.
 
-## Optional personal backup
+## Later, not blockers for the first isolated proof test
 
-- [ ] Open your account menu > Wallet backup and save a private backup through the secure wallet dialog. Only you should view the key. Do not share it in chat or a screen recording.
+- [ ] Test camera/QR flow and matching sender/recipient activity after reconciling
+  the existing payment.
+- [ ] Save your wallet backup privately through its secure account dialog.
+- [ ] Decide on fee sponsorship before any paid budget is activated. None is enabled.
+- [ ] Verify your buildathon submission confirmation and next applicable wave in
+  the portal. The previously documented September 16 Wave 1 cutoff has passed;
+  the old checklist is not a future deadline. Nothing was submitted automatically.
 
-## Already handled for you
-
-The mobile interface, email-login readiness fix, wallet balance, receive address, camera/QR-image scanning, payment links, automatic fee review, single-click send flow, confirmed history and interrupted-payment recovery are implemented. Technical documentation is in GitHub. The Midnight contract compiles, its request adapter works in simulation, and automated checks have been run. The pitch deck, recorded-output demo video and submission description are prepared. The PR has the `midnightntwrk` label.
-
-## Work that remains mine
-
-Real Midnight proofs and deployment, private-state recovery, connecting the mobile flow to the approval contract, payment settlement integration, sponsorship implementation after account setup, and production/multi-asset support are still engineering work. The current app is a mobile web prototype for public Sepolia test USDC. It is not yet a native app, real-money wallet or completed private payment product.
+Technical status: [PRE-ZK-READINESS.md](PRE-ZK-READINESS.md).

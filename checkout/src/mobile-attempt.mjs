@@ -39,18 +39,28 @@ export function isExplicitRejection(error) {
   // Do not use message text or HTTP errors as evidence that no transaction was sent.
   return error?.code === 4001 || error?.cause?.code === 4001;
 }
-export async function inspectAttempt(rpc, attempt, suppliedHash) {
+export async function inspectAttempt(rpc, attempt, suppliedHash, scan = {}) {
   if (await rpc.getChainId() !== CHAIN_ID) throw new Error('The payment network is unavailable.');
   const a = attempt.approved;
   let hashes = [attempt.hash || suppliedHash].filter(Boolean);
   if (hashes.some(hash => !/^0x[0-9a-f]{64}$/i.test(hash))) throw new Error('Enter the complete transaction reference.');
   if (!hashes.length) {
     const head = await rpc.getBlockNumber();
-    const fromBlock = BigInt(attempt.afterBlock) + 1n;
-    const toBlock = head < fromBlock + 999n ? head : fromBlock + 999n;
+    const anchor = BigInt(attempt.afterBlock) + 1n;
+    const identity = `${attempt.id}:${a.sender}:${attempt.nonce}:${attempt.afterBlock}`;
+    if (scan.identity !== identity) Object.assign(scan, { identity, next: anchor, queue: [], afterPage: anchor });
+    // Only scan blocks with two confirmations. Cycle the history again after
+    // reaching the head, so a temporary log omission/reorg isn't permanent.
+    if (scan.next > head) Object.assign(scan, { next: anchor, queue: [] });
+    const fromBlock = scan.next;
+    const toBlock = head - 1n < fromBlock + 999n ? head - 1n : fromBlock + 999n;
     if (toBlock < fromBlock) return null;
-    const logs = await rpc.getLogs({ address: USDC, event, args: { from: a.sender, to: a.recipient }, fromBlock, toBlock, strict: true });
-    hashes = [...new Set(logs.filter(l => !l.removed && l.args.value === BigInt(a.amountUnits)).map(l => l.transactionHash))].slice(0, 20);
+    if (!scan.queue.length) {
+      const logs = await rpc.getLogs({ address: USDC, event, args: { from: a.sender, to: a.recipient }, fromBlock, toBlock, strict: true });
+      scan.queue = [...new Set(logs.filter(l => !l.removed && l.args.value === BigInt(a.amountUnits)).map(l => l.transactionHash))];
+      scan.afterPage = toBlock < head - 1n ? toBlock + 1n : anchor;
+    }
+    hashes = scan.queue.slice(0, 20);
   }
   for (const hash of hashes) {
     const [receipt, tx, head] = await Promise.all([rpc.getTransactionReceipt({ hash }), rpc.getTransaction({ hash }), rpc.getBlockNumber()]);
@@ -64,6 +74,11 @@ export async function inspectAttempt(rpc, attempt, suppliedHash) {
     if (receipt.status === 'reverted') return { ...attempt, hash, status: 'failed' };
     verifyReceipt(receipt, a);
     return { ...attempt, hash, status: 'confirmed' };
+  }
+  if (!attempt.hash && !suppliedHash) {
+    // Only advance after every RPC/verification in this batch completed.
+    scan.queue.splice(0, hashes.length);
+    if (!scan.queue.length) scan.next = scan.afterPage;
   }
   return null;
 }

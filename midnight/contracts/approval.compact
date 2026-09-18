@@ -12,6 +12,7 @@ export struct Invoice {
   chainId: Uint<64>;
   amount: Uint<64>;
   maximum: Uint<64>;
+  expiresAt: Uint<64>;
 }
 
 export sealed ledger authority: Bytes<32>;
@@ -45,6 +46,7 @@ circuit validate(invoice: Invoice): [] {
   assert(invoice.chainId > 0, "Invalid chain");
   assert(invoice.amount > 0, "Amount must be positive");
   assert(invoice.amount <= invoice.maximum, "Amount exceeds approval limit");
+  assert(invoice.expiresAt > 0, "Invalid expiry");
 }
 
 export circuit invoiceCommitment(
@@ -52,7 +54,7 @@ export circuit invoiceCommitment(
 ): Bytes<32> {
   assert(salt != default<Bytes<32>>, "Empty invoice salt");
   return persistentCommit<[Bytes<32>, Bytes<32>, Invoice]>(
-    [pad(32, "honeybee:invoice:v1"), instanceId, invoice], salt
+    [pad(32, "honeybee:invoice:v2"), instanceId, invoice], salt
   );
 }
 

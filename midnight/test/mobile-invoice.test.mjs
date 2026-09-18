@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {invoiceFromMobileRequest} from '../src/mobile-invoice.mjs';
+import {invoiceFromMobileRequest,revalidateMobileInvoice} from '../src/mobile-invoice.mjs';
 import {ApprovalSimulator,bytes32} from '../src/simulator.mjs';
 const now=Date.now();
 const request={v:1,id:'16e02a9e-c754-4fda-b7ec-f2e8615507ad',chainId:11155111,token:'0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',recipient:'0x2222222222222222222222222222222222222222',amount:'1.25',expiresAt:now+86400000};
@@ -13,7 +13,17 @@ test('a mobile request maps to exact Compact terms and passes one approval/consu
 });
 test('request mutation cannot consume the original approval commitment',()=>{
  const sim=new ApprovalSimulator(),salt=bytes32(),invoice=invoiceFromMobileRequest(link(request),{now});sim.execute('approve',invoice,salt);
- for(const change of [{amount:'1.26'},{recipient:'0x3333333333333333333333333333333333333333'},{id:'26e02a9e-c754-4fda-b7ec-f2e8615507ad'}]) assert.throws(()=>sim.execute('consume',invoiceFromMobileRequest(link({...request,...change}),{now}),salt));
+ for(const change of [{amount:'1.26'},{recipient:'0x3333333333333333333333333333333333333333'},{id:'26e02a9e-c754-4fda-b7ec-f2e8615507ad'},{expiresAt:request.expiresAt+1}]) assert.throws(()=>sim.execute('consume',invoiceFromMobileRequest(link({...request,...change}),{now}),salt));
+});
+
+test('proof handoff rechecks expiry and every approved term without invoking a signer',()=>{
+ const original=link(request),approved=invoiceFromMobileRequest(original,{now});
+ assert.deepEqual(revalidateMobileInvoice(original,approved,{now:now+1}),approved);
+ assert.throws(()=>revalidateMobileInvoice(original,approved,{now:request.expiresAt}));
+ assert.throws(()=>revalidateMobileInvoice(link({...request,expiresAt:request.expiresAt+1}),approved,{now}));
+ const altered={...approved,recipient:new Uint8Array(32)};
+ assert.throws(()=>revalidateMobileInvoice(original,altered,{now}));
+ for(const invalid of [NaN,Infinity,-1,'today'])assert.throws(()=>invoiceFromMobileRequest(original,{now:invalid}));
 });
 test('adapter rejects expiry, wrong network/token, extra calls and conflicting amounts',()=>{
  for(const change of [{expiresAt:now},{chainId:1},{token:request.recipient},{amount:'1e0'},{amount:'10.000001'},{data:'0x1234'}])assert.throws(()=>invoiceFromMobileRequest(link({...request,...change}),{now}));

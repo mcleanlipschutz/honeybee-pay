@@ -1,22 +1,60 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-# Real-proof infrastructure status
+# Real-proof readiness — September 18, 2026
 
-Checked September 14, 2026. This records a remaining engineering blocker, not a completed proof run.
+Offline prerequisites improved; no actual Midnight transaction proof is verified yet.
 
-- Full Compact compilation and both circuit key sets succeed locally.
-- The official generated-runtime simulation and mobile-request adapter tests pass.
-- The `zkir --help` command exposes compile/key-generation commands, not a transaction-proving CLI.
-- No Docker, Podman, Skopeo or Cargo executable is available in this environment.
-- The official Ledger 8.1.2 release lists WASM packages and test reports, without a standalone proof-server executable. The official local proof-server guide distributes a Docker image.
-- No approved, functioning local proof endpoint or funded Midnight test wallet is connected. No user witness, secret, seed or payment password has been sent to a remote prover.
+## Completed here
 
-To unblock the next engineering segment, provide a developer machine with Docker and a test-only Midnight wallet. The agent should first resolve the exact compiler, ZKIR, ledger and proof-server compatibility against the target network; do not infer compatibility just from matching major numbers or blindly use `latest`. Bind the prover only to localhost. Then implement actual proof generation/verification, encrypted private-state recovery and disposable test deployment, and capture canonical transaction/contract evidence. These implementation tasks remain the agent's work.
+- Full Compact 0.31.1 compilation with runtime 0.16.0; both circuits and four keys.
+- Invoice v2 binds request expiry along with the exact approved terms. The adapter
+  rejects expired/changed terms again at handoff; this is not an on-chain clock check.
+- All seven artifact hashes and the installed runtime are checked before generated
+  simulator code executes or the proof-infrastructure gate passes.
+- Official encrypted-state provider 4.1.1 is pinned. Disposable-state tests cover
+  reopening, backup/restore, wrong passwords, concurrent initialization,
+  non-overwrite and account/network/contract isolation. No user keys were used.
+- Loopback-only proof-server configuration and bounded, metadata-only readiness
+  checks reject remote URLs, redirects, credentials, oversized responses and
+  mismatched versions.
+- The consolidated regression/build command never proves, signs or sends funds.
 
-Authoritative references inspected:
+## Compatible test target
 
-- [Run a proof server](https://docs.midnight.network/guides/run-proof-server)
-- [Proof-server release routing](https://docs.midnight.network/relnotes/proof-server)
-- [Official ledger releases](https://github.com/midnightntwrk/midnight-ledger/releases/tag/ledger-8.1.2)
-- [Environment release overview](https://docs.midnight.network/relnotes/overview)
+The official [compatibility matrix](https://docs.midnight.network/relnotes/support-matrix),
+checked September 18, lists Compact 0.31.1, runtime 0.16.0, Midnight.js 4.1.1 and
+proof server 8.1.0 for Preview. Components used here are pinned. The image uses an
+explicit 8.1.0 tag, not latest; an immutable image digest is not yet recorded.
 
-No real proof, network deployment, browser proof connection or private settlement is claimed.
+On the developer's trusted computer, inside midnight:
+
+```bash
+docker compose -f proof-server.yml up -d
+npm run proof:preflight
+```
+
+The published port is loopback-only. Startup may fetch public proving parameters.
+See the [official local-proving guide](https://docs.midnight.network/guides/local-proving).
+The check only reads health/version/readiness metadata and posts no witness data.
+Infrastructure readiness is not proof verification.
+
+## Remaining acceptance gates
+
+1. Local infrastructure: this environment has no Docker/Podman executable and no
+   verified local prover. The real preflight currently exits 2.
+2. Real proof harness (engineering): connect official transaction/proof providers
+   to the v2 artifacts using disposable secrets first. Capture genuine proof
+   verification plus invalid-input rejection; mocks and simulation cannot pass.
+3. Test deployment (owner + engineering): connect an isolated Preview test wallet,
+   obtain free test resources, explicitly approve deployment and record finalized
+   contract/transaction evidence. Pin authority, contract, network and artifacts.
+   The changed v2 contract requires a fresh disposable deployment, not silent reuse
+   of a v1 contract or its state.
+4. Integrated recovery (engineering): connect the tested encrypted storage to real
+   failed/interrupted proof transactions and fresh-process recovery. The storage
+   adapter alone is not end-to-end proof recovery.
+5. Payment integration: independently reconcile the older public and private
+   pending attempts; preserve explicit payment consent and matching settlement
+   evidence. Midnight approval cannot make a public USDC transfer private.
+
+Keep all seeds and backup passwords on your device. No witness was sent remotely,
+contract deployed, or payment signed during these checks.
