@@ -1,0 +1,41 @@
+{
+  "compiler": "0.31.1",
+  "runtime": "0.16.0",
+  "fullBuild": true,
+  "sourceSha256": "1004d32cf5d5e00a7922404dfa104b6fc1ae70bb5c324a9adddae7fc522c62ae",
+  "artifacts": {
+    "contract/index.js": "893adf8b9d829f3526e4bd9c0ce04cb88ccdcd1db17371e05485cd0795c59d23",
+    "zkir/approve.zkir": "05274d4ef88686db6baef962ad05881f740518972950ea51738dbee18b375a9e",
+    "zkir/consume.zkir": "fb762918fdb39f4d21de1e7b01ac355ecaa6c5a644f9a8b3c64e29d99961f07e",
+    "keys/approve.prover": "0441b45016bf188f8bb8cbb95cf46153b945c2178831d29868b3174178159e0c",
+    "keys/approve.verifier": "d6491542b268cfdb00daac019cf1dfc0339b7cc781f835d3517b812b3a810aab",
+    "keys/consume.prover": "d537248182884a032e6c5216c7a1be572f7db21203ef084237896a80e2e5a1dc",
+    "keys/consume.verifier": "b39d45010e4a2d43345f832edc7b8dbf02a67bcd203fa4908012713b693377be"
+  },
+  "validatedOn": "2026-09-18",
+  "node": "24.19.0",
+  "stateProvider": "4.1.1",
+  "tests": {
+    "passed": 25,
+    "failed": 0,
+    "generatedContractTests": 16,
+    "mobileRequestAdapterTests": 4,
+    "proofReadinessTests": 4,
+    "encryptedStateTests": 1
+  },
+  "demo": "passed",
+  "npmAudit": {
+    "reportedVulnerabilities": 0,
+    "scope": "midnight package only"
+  },
+  "proofPreflight": {
+    "exitCode": 2,
+    "infrastructureReady": false,
+    "privateInputsSent": false
+  },
+  "transactionProofGenerated": false,
+  "networkDeployment": false,
+  "paymentSettlement": false,
+  "mobileRequestAdapter": "passed local generated-contract simulation and handoff revalidation",
+  "encryptedPrivateState": "disposable-secret SDK backup/restore passed; not wired to a proof transaction"
+}

@@ -1,7 +1,8 @@
 import { decodeEventLog, erc20Abi, getAddress, isAddress, formatUnits } from 'viem';
 import { CHAIN_ID, USDC } from './payment.mjs';
+import { PAYMENT_RPC_URL } from './wallet-network.mjs';
 
-const ENDPOINT = 'https://ethereum-sepolia-rpc.publicnode.com';
+const ENDPOINT = PAYMENT_RPC_URL;
 const TRANSFER = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const HASH = /^0x[0-9a-fA-F]{64}$/;
 const HEX = /^0x[0-9a-fA-F]+$/;

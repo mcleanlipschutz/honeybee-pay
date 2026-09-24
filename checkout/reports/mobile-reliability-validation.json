@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-14",
+  "testSuite": {
+    "passed": 64,
+    "failed": 0
+  },
+  "productionBuild": "passed",
+  "changes": [
+    "Read-only visible-tab balance refresh with no overlapping reads",
+    "Read-only pending-payment reconciliation, preserving canonical verification and duplicate-send protection",
+    "Stalled sign-in/wallet page-reload recovery after 20 seconds without clearing payment storage",
+    "Removed automatic-fee promotion from the wallet"
+  ],
+  "realEmailLogin": "not exercised",
+  "physicalCamera": "not exercised",
+  "fundedPayment": "not performed",
+  "midnightProofOrPrivateSettlement": false,
+  "gasSponsorship": false
+}

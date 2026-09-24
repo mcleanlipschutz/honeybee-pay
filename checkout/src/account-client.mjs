@@ -1,13 +1,13 @@
 import { keccak256, stringToHex } from 'viem';
-import { validateHistoryBackup } from '../../shared/request-history-backup.mjs';
+import { validateHistoryBackup } from './shared/request-history-backup.mjs';
 import { privateRequestAmount, validatePaymentRequest, validatePaymentRequestHistory } from './private-request.mjs';
 import { validateShieldReview } from './shield-review.mjs';
 import { validateShieldPreflight } from './shield-preflight.mjs';
-import { validatePrivatePaymentCheck, validateSpendableSnapshot } from '../../shared/private-payment-check.mjs';
+import { validatePrivatePaymentCheck, validateSpendableSnapshot } from './shared/private-payment-check.mjs';
 import { validatePrivateRecipient } from './private-request.mjs';
-import { feeWETH } from '../../shared/test-assets.mjs';
+import { feeWETH } from './shared/test-assets.mjs';
 import { validatePaymentSummary } from './private-payment.mjs';
-import { validateRedeliveryReview } from '../../shared/payment-redelivery-review.mjs';
+import { validateRedeliveryReview } from './shared/payment-redelivery-review.mjs';
 
 const messages = {
   'payment-check-failed': 'Private funds could not be checked. Check your recovery password, request expiry and local connection, then try again. No payment was authorized.',

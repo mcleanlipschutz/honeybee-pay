@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createAccountWalletClient, isLocalDemo, readRecoveryFile } from './account-client.mjs';
-import { createHistoryBackupReader } from '../../shared/request-history-backup.mjs';
+import { createHistoryBackupReader } from './shared/request-history-backup.mjs';
 import { formatUnits } from 'viem';
 import { shieldAmountUnits, assetForToken } from './shield-review.mjs';
 import { PrivatePaymentRequests } from './PrivatePaymentRequests.jsx';

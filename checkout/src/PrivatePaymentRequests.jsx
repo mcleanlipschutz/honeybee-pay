@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits } from 'viem';
 import { createPaymentRequestReader, paymentRequestFile } from './private-request.mjs';
-import { validateHistoryBackup } from '../../shared/request-history-backup.mjs';
+import { validateHistoryBackup } from './shared/request-history-backup.mjs';
 import { PrivatePaymentCheck } from './PrivatePaymentCheck.jsx';
 import { PrivatePaymentForm } from './PrivatePaymentForm.jsx';
 

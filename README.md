@@ -1,4 +1,13 @@
+> **September 18 pre-ZK update:** Payment recovery, exact invoice binding, artifact validation and encrypted test-state recovery have been strengthened. See [current readiness and remaining gates](PRE-ZK-READINESS.md) and [your short checklist](USER-CHECKLIST.md). The live mobile wallet still uses public Sepolia test USDC. Actual Midnight proof verification, deployment and private settlement are not complete. The older status sections below are historical.
+
 # Honeybee Pay
+
+**Midnight Buildathon follow-up:** new Compact invoice-approval work starts in
+[midnight/README.md](midnight/README.md), with the
+[next build segments](midnight/BUILDATHON_PLAN.md). It is a local contract
+simulation, not a completed Midnight payment. Newly authored files in `midnight/`
+use Apache-2.0; pre-existing project code retains its existing license.
+
 Honeybee Pay is an ETHGlobal hackathon project that aims to simplify crypto payments with AI, protect transaction details using zero-knowledge proofs, and block payments that don’t match the user’s approved rules.
 
 The [product direction](PRODUCT_DIRECTION.md) is an app or website where users
