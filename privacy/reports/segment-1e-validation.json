@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-09-09T07:34:37.386223+00:00",
+  "nodeVersion": "24.19.0",
+  "cleanInstallWithScriptsDisabled": true,
+  "unitTests": {
+    "passed": 34,
+    "failed": 0
+  },
+  "offlineEngine": {
+    "status": "offline-engine-wallet-check-passed",
+    "walletsCreated": 2,
+    "encryptedWalletReloaded": true,
+    "wrongKeyRejected": true,
+    "proverRegistered": true,
+    "funded": false,
+    "proofGenerated": false,
+    "paymentReady": false
+  },
+  "offlineProof": {
+    "status": "offline-joinsplit-proof-check-passed",
+    "proofGenerated": true,
+    "proofVerified": true,
+    "alteredOutputRejected": true,
+    "alteredApprovalRejected": true,
+    "alteredRecipientWitnessRejected": true,
+    "alteredValueWitnessRejected": true,
+    "syntheticInputs": true,
+    "networkLoaded": false,
+    "paymentSettled": false,
+    "paymentReady": false
+  },
+  "freshArtifactDownloadPassed": true,
+  "audit": {
+    "info": 0,
+    "low": 4,
+    "moderate": 14,
+    "high": 10,
+    "critical": 0,
+    "total": 28
+  },
+  "networkCheck": {
+    "network": "Ethereum_Sepolia",
+    "chainID": 11155111,
+    "bytecodePresenceConfirmed": true,
+    "deploymentIdentityVerified": false
+  },
+  "mergePerformed": false,
+  "deploymentPerformed": false
+}

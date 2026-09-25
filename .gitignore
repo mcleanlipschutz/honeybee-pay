@@ -146,7 +146,13 @@ vite.config.ts.timestamp-*
 *.key
 *.pem
 keystore.json
+root.keystore.json
+account.backup.json
+honeybee-testnet-recovery.json
 keystores/
+
+# Local Honeybee proof artifacts and runtime state
+.honeybee/
 
 # Local ZK inputs and generated artifacts
 Prover.toml

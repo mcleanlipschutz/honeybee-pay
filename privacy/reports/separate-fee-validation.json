@@ -1,0 +1,66 @@
+{
+  "date": "2026-09-13",
+  "status": "implemented-with-funded-validation-pending",
+  "network": "Ethereum_Sepolia",
+  "merchantToken": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+  "merchantDecimals": 6,
+  "feeToken": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+  "feeDecimals": 18,
+  "maxFeeUnits": "10000000000000000",
+  "feeTokenRuntimeCodeHash": "0xc864e10689f2da18833652a3b075d43106e87f0f90d95ee64f6f0b33bc026083",
+  "feeTokenLiveCheck": {
+    "blockNumber": "0xb27552",
+    "blockHash": "0x7592b12b50e523346d541111b3f17475dd60a5f580a03e05cbe9c94f5e93e5f8",
+    "chainCodeDecimalsSymbolCanonicalBlockMatched": true
+  },
+  "proofShape": "two 01x02 proofs bound to the reviewed relay and full ordered nullifier batch; empty actions",
+  "realGroth16": {
+    "syntheticInputs": true,
+    "proofs": 2,
+    "locallyVerified": true,
+    "liveVerifierAcceptedBoth": true,
+    "removedProofBindingRejectedByLiveVerifier": true,
+    "changedRelayBindingRejectedLocally": true,
+    "liveRelayEncoderMatched": true,
+    "blockNumber": "0xb27572",
+    "blockHash": "0x488f7e693571dba87fa2f4b7813a8068318301b271bbfa8b279b63bf76935335",
+    "readOnlyNonBypassSender": true,
+    "spendableRootEstablished": false,
+    "poiProved": false,
+    "settlementEstablished": false
+  },
+  "tests": {
+    "focusedPrivacyPassed": 43,
+    "checkoutPassed": 39,
+    "productionClientServerBuild": "passed",
+    "existingBundleWarnings": true,
+    "adapter": "actual pinned SDK iterative estimator; generator/wallet/RPC doubles; actual zero-fee 01x01 shape and Sepolia Type1 gas modeled",
+    "funding": "recoverable real SDK shield note; RPC/wallet doubles; wrap, exact approval, deposit, invalid token code/units/network, gas+value bounds, before-prompt persistence, wrap receipt and duplicate prevention",
+    "payments": "SDK/RPC/broadcaster doubles; two-proof calldata and event checks; separate units; removed/reordered/edited batch rejection; cross-tree lost ACK; durable journal and merchant checks",
+    "focusedBalanceSyncPassed": 4
+  },
+  "independentReview": {
+    "fixesVerified": [
+      "cross-tree original-nullifier recovery",
+      "early unsupported exact-balance/fragmented shape rejection",
+      "wrap allowance wording",
+      "adapter fixture fidelity"
+    ],
+    "remainingMustFixSourceFindings": 0,
+    "securityAudit": false
+  },
+  "browserReview": {
+    "completed": false,
+    "reason": "Remote Browser could not open local isolated preview: ERR_BLOCKED_BY_CLIENT"
+  },
+  "remaining": [
+    "fresh WETH RelayAdapt broadcaster offer on laptop",
+    "actual wrap/exact approval/shield confirmations",
+    "funded balances spendable after restart",
+    "actual SDK private transfer and POI",
+    "broadcaster settlement and matching merchant receipt",
+    "original-attempt recovery after funded transfer"
+  ],
+  "fundedTransactionsSentByCodex": 0,
+  "paymentReady": false
+}

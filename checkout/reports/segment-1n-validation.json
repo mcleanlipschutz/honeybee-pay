@@ -1,0 +1,23 @@
+{
+  "segment": "1N",
+  "date": "2026-09-10",
+  "tests": {
+    "passed": 11,
+    "failed": 0
+  },
+  "build": "passed",
+  "liveReadOnlyHistory": {
+    "buyerRecords": 2,
+    "merchantRecords": 1,
+    "matchingPayment": "0x3247ad91ac4f8ee5b735dfeb53bad84e1d5e127be53840f62194034e6d00e9a5",
+    "amountUnits": "1000000",
+    "matchingReceiptReference": "11155111:0x3247ad91ac4f8ee5b735dfeb53bad84e1d5e127be53840f62194034e6d00e9a5:235",
+    "buyerDirection": "sent",
+    "merchantDirection": "received"
+  },
+  "receiptBrowserInteractionTested": false,
+  "emailSent": false,
+  "privateReceiptsImplemented": false,
+  "dependenciesChanged": false,
+  "fundsMovedByAgent": false
+}

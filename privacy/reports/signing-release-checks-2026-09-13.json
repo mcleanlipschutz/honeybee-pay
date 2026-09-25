@@ -1,0 +1,72 @@
+{
+  "checkedAt": "2026-09-13T10:14:18.404350+00:00",
+  "status": "release-regression-passed-live-payment-unverified",
+  "network": "Ethereum_Sepolia",
+  "checks": [
+    {
+      "command": "node --test checkout/test/*.test.mjs privacy/test/private-payment.test.mjs",
+      "passed": 49,
+      "failed": 0,
+      "scope": "checkout behavior and private-payment integration with explicit SDK/RPC/broadcaster doubles"
+    },
+    {
+      "command": "node --test --test-concurrency=1 privacy/test/account-server.test.mjs privacy/test/account-wallets.test.mjs privacy/test/account-sync.test.mjs",
+      "passed": 10,
+      "failed": 0,
+      "scope": "local HTTP API, actual disposable SDK wallets, cross-account isolation, recovery, and rejected network configuration"
+    },
+    {
+      "command": "npm run build",
+      "directory": "checkout",
+      "status": "passed",
+      "warnings": [
+        "existing large client chunks",
+        "node:worker_threads SSR externalization"
+      ]
+    },
+    {
+      "command": "git diff --cached --check",
+      "status": "passed"
+    }
+  ],
+  "testedSourceSHA256": {
+    "checkout/src/PrivatePaymentActivity.jsx": "f582b513d361376cbd714c506ae29302bb0e74d3b1b75d5018e194766b0f88b5",
+    "checkout/src/PrivatePaymentForm.jsx": "179b6126dd18d0a7d6a9f46cba5664fd6862d608389bc75e00ef7bf2f70a4847",
+    "checkout/src/PrivatePaymentRequests.jsx": "46c456d6750d53986d9897b24e7373b0c6f96874f9d2df108564c389daa7059d",
+    "checkout/src/PrivateWalletPanel.jsx": "7f7e8d7c939c6d771519c07bc4390e1cf5bdb5d57276d315dd07bbc54b83ae0c",
+    "checkout/src/ShieldConfirmation.jsx": "5642f86179ce69012fc53e1ed5332b93de9a5c489dcdb40a1cac6e18077ce98d",
+    "checkout/src/account-client.mjs": "b08a52893862393a3e1b07d3fcc76109af4733a9285f6771f0cad5dd0f60f85b",
+    "checkout/src/private-payment.mjs": "3071c535087baf8f7747c0446983ff90766db2993c416cb60fd8c777a2de7ed1",
+    "checkout/src/shield-live-validation.mjs": "56c8df51fa82fb07b0d20a880a3d53f62e9d458c2fee71724b107a0a0dabd1b5",
+    "checkout/src/shield-submission.mjs": "db94beda9bbf274f00f728f053f972eeb152e2baea2b9c7928ca319758e44fb6",
+    "checkout/test/shield-submission.test.mjs": "eb95a19284e921d364f7706d532bb30d9f429c91cde62586edf5ba5d076f4399",
+    "privacy/package-lock.json": "9c9068c0d640ecc0d8cb731be821a6cffa4b653f660decb839a585e03b3f4de0",
+    "privacy/package.json": "1613cc5c5986fee088d9c739dddd62ac9f7aa2c9bccf2e5b18d6337f44d46d2c",
+    "privacy/src/account-private-payment.mjs": "5907168486ac42c88902743e3a2b5f8d12606db962fa21c9fb996f4a7ba7b6c1",
+    "privacy/src/account-server-cli.mjs": "25b0c262d0ad23b1d63ba120b59eca5c53a7d099e5ff48095ee71e70206f5321",
+    "privacy/src/account-server.mjs": "63922e99692662d096a95224c9e906f231d87dfaf0b5008cd7f2b3e266ebc754",
+    "privacy/src/account-sync.mjs": "1cf6267bb18ace9dac7bc082797ef00ad156abc279b977ef0ff5bef044497254",
+    "privacy/src/account-wallet-worker.mjs": "8de68c79733c01e56c5ec6feb0e79da8bb4462dbc3428e2f09b5352cbc2d6f77",
+    "privacy/src/account-wallets.mjs": "b7f6f23546c3eeb6c66df3fc1d2606b41504bc3a5fa2b8cd56df74e9fb9ef0a4",
+    "privacy/src/broadcaster-preflight.mjs": "e8600d655ff56c533646cfc0533dc00dd738b60c510aba318b7c9b3bd18a393d",
+    "privacy/src/deployment-check.mjs": "0c72d6693b7b10a3be611e31c72c839fa7478cda2c163a136c437da9a0733d53",
+    "privacy/src/merchant-receipts.mjs": "cba1a9376211ddcf6208a78ec030d8c88505daeade9cb76ace9d53d1ec186d29",
+    "privacy/src/network-preflight.mjs": "a35897ca2c809264079e8582517fecbcc162495bdbfc68837aac97c68ebf52cb",
+    "privacy/src/payment-broadcaster.mjs": "40e2907628b15967fa3a3054aca590a2aaa07354cf204c18709c829d870a886e",
+    "privacy/src/payment-store.mjs": "7c2a55c2e6b6998939dd46400d62662f50b0debd0d8e6f6f07ca272932738467",
+    "privacy/src/payment-verification.mjs": "fe9873cadead0c1c383ac446e41f4fd8ba569082710840e7208efae857ff9bdf",
+    "privacy/src/proof-fixture.mjs": "d91683182cdc6b03a2310570b2506f77558487a598aa3075a0c0b2fd218f3046",
+    "privacy/src/proof-smoke.mjs": "fc5fabb855a7ff4e19e3f2595f13a36107b9e1fc054d4d0ef7114c42a2d6a760",
+    "privacy/src/snark-prover.mjs": "f1b5367475631e7e157a676cf14552c3323ee3a61eb2bc1749d4374d3988e9b5",
+    "privacy/src/transfer-artifacts.mjs": "d0a6e10a36d7732c19ef4381a00e3725244afc664f9599e11f004f0b38459999",
+    "privacy/test/payment-fixture.mjs": "ba289c9a6cf1aba89e038712688fe0b47a9aeba3811476a678c3ba42053350b6",
+    "privacy/test/private-payment.test.mjs": "538f650c547d56b2bcd55a3e0afc1e18eda5ebe83bc3d56124911f2af5c6fafa"
+  },
+  "transactionsSentByAgent": 0,
+  "userSecretsUsed": false,
+  "freshLiveRPCVerificationInThisRun": false,
+  "broadcasterConnectivityVerifiedOnUserLaptop": false,
+  "fundedPrivatePaymentVerified": false,
+  "nextGate": "Run broadcaster:preflight on the user laptop before depositing test assets.",
+  "kyc": "deferred"
+}

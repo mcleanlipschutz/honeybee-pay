@@ -1,0 +1,56 @@
+{
+  "checkedAt": "2026-09-09T18:38:35.120274+00:00",
+  "tests": {
+    "passed": 54,
+    "failed": 0
+  },
+  "baselineRpc": {
+    "code": "TIMEOUT",
+    "message": "request timeout"
+  },
+  "fixedSdkRpc": {
+    "status": "rpc-connected",
+    "blockNumber": 11669725
+  },
+  "liveSync": {
+    "status": "sync-timeout",
+    "stage": "history-scanning",
+    "network": "Ethereum_Sepolia",
+    "checkedAt": "2026-09-09T18:37:49.410Z",
+    "scans": {
+      "utxo": "Complete",
+      "txid": "Incomplete"
+    },
+    "deployment": {
+      "status": "reviewed-deployment-and-circuit-matched",
+      "network": "Ethereum_Sepolia",
+      "chainID": 11155111,
+      "blockNumber": "0xb210a3",
+      "blockHash": "0xec2ab86fe68d27267545ed4063f1923c2a0b471dc023f460222b9546339bdad7",
+      "proxy": "0xeCFCf3b4eC647c4Ca6D49108b311b7a7C9543fea",
+      "implementation": "0x16DC2574CC30E4deECfb9ba22d95E5126A2fC0B3",
+      "relay": "0x7e3d929EbD5bDC84d02Bd3205c777578f33A214D",
+      "runtimeCodeHashes": {
+        "proxy": "0xe9bcdc3bea3cda0b9e8e9337899c43175a19aac915d12bde6fa519df72cb95a9",
+        "implementation": "0xd9ed4f83c7592b5a366858ae7a4f6c764543373bf7465ab457b80edc3d74b016",
+        "relay": "0x49ad543ac0ffdd272bc3895a8e383bce0ebb60a043e2c05546bc88704687be37"
+      },
+      "proxyPaused": false,
+      "relayTargetMatches": true,
+      "circuit": "01x02",
+      "verificationKeyMatches": true,
+      "artifactsIPFSHash": "QmWFEVTTH3kdFxA8GLUKnCNZe5JwTVy7nJi2HgnzbVBLF4",
+      "paymentReady": false,
+      "note": "Matches reviewed Sourcify runtime records and circuit at this block; not an audit, synchronization check, or payment settlement."
+    },
+    "synchronized": false,
+    "paymentReady": false
+  },
+  "liveExitCode": 1,
+  "providerInitializationPassed": true,
+  "connectionResolved": true,
+  "synchronized": false,
+  "dependenciesChanged": false,
+  "fundsMoved": false,
+  "paymentReady": false
+}

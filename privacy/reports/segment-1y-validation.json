@@ -1,0 +1,1440 @@
+{
+  "segment": "1Y",
+  "date": "2026-09-11",
+  "status": "bounded-dependency-security-update-validated",
+  "runtime": {
+    "node": "24.19.0",
+    "npm": "11.9.0"
+  },
+  "tests": {
+    "privacySuitePassed": 127,
+    "checkoutSuitePassed": 38,
+    "dependencyFocusedRerunPassed": 4,
+    "failures": 0,
+    "checkoutBuildPassed": true,
+    "lockfileDryRunsPassed": true,
+    "cleanInstallVerified": false,
+    "fullRepositoryIncludingSolidityRun": false
+  },
+  "offlineEngine": {
+    "status": "offline-engine-wallet-check-passed",
+    "walletsCreated": 2,
+    "encryptedWalletReloaded": true,
+    "wrongKeyRejected": true,
+    "proverRegistered": true,
+    "funded": false,
+    "proofGenerated": false,
+    "paymentReady": false
+  },
+  "offlineProof": {
+    "status": "offline-joinsplit-proof-check-passed",
+    "proofGenerated": true,
+    "proofVerified": true,
+    "alteredOutputRejected": true,
+    "alteredApprovalRejected": true,
+    "alteredRecipientWitnessRejected": true,
+    "alteredValueWitnessRejected": true,
+    "syntheticInputs": true,
+    "networkLoaded": false,
+    "paymentSettled": false,
+    "paymentReady": false
+  },
+  "auditCommand": "npm audit --omit=dev --json --ignore-scripts",
+  "auditExitCodeBeforeAndAfter": 1,
+  "auditCountsAreAffectedPackagesIncludingInheritedFindings": true,
+  "audits": {
+    "privacy": {
+      "before": {
+        "affectedPackageCounts": {
+          "critical": 0,
+          "high": 10,
+          "info": 0,
+          "low": 4,
+          "moderate": 14,
+          "total": 28
+        },
+        "affectedPackages": [
+          {
+            "package": "@graphql-mesh/cache-localforage",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@graphql-mesh/cache-localforage"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@graphql-mesh/types",
+              "@graphql-mesh/utils"
+            ]
+          },
+          {
+            "package": "@graphql-mesh/graphql",
+            "severity": "high",
+            "nodes": [
+              "node_modules/@graphql-mesh/graphql"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@graphql-mesh/store",
+              "@graphql-mesh/types",
+              "@graphql-mesh/utils",
+              "@graphql-tools/url-loader"
+            ]
+          },
+          {
+            "package": "@graphql-mesh/http",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@graphql-mesh/http"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@graphql-mesh/runtime",
+              "@graphql-mesh/types",
+              "@graphql-mesh/utils"
+            ]
+          },
+          {
+            "package": "@graphql-mesh/merger-stitching",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@graphql-mesh/merger-stitching"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@graphql-mesh/store",
+              "@graphql-mesh/types",
+              "@graphql-mesh/utils"
+            ]
+          },
+          {
+            "package": "@graphql-mesh/runtime",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@graphql-mesh/runtime"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@graphql-mesh/types",
+              "@graphql-mesh/utils"
+            ]
+          },
+          {
+            "package": "@graphql-mesh/store",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@graphql-mesh/store"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@graphql-mesh/types",
+              "@graphql-mesh/utils"
+            ]
+          },
+          {
+            "package": "@graphql-mesh/types",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@graphql-mesh/types"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@graphql-mesh/store"
+            ]
+          },
+          {
+            "package": "@graphql-mesh/utils",
+            "severity": "high",
+            "nodes": [
+              "node_modules/@graphql-mesh/utils"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@graphql-mesh/types",
+              "dset",
+              "js-yaml"
+            ]
+          },
+          {
+            "package": "@graphql-tools/executor-graphql-ws",
+            "severity": "high",
+            "nodes": [
+              "node_modules/@graphql-tools/executor-graphql-ws"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "ws"
+            ]
+          },
+          {
+            "package": "@graphql-tools/executor-legacy-ws",
+            "severity": "high",
+            "nodes": [
+              "node_modules/@graphql-tools/executor-legacy-ws"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "ws"
+            ]
+          },
+          {
+            "package": "@graphql-tools/url-loader",
+            "severity": "high",
+            "nodes": [
+              "node_modules/@graphql-tools/url-loader"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@graphql-tools/executor-graphql-ws",
+              "@graphql-tools/executor-legacy-ws"
+            ]
+          },
+          {
+            "package": "@railgun-community/circomlibjs",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@railgun-community/circomlibjs"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "web3-utils"
+            ]
+          },
+          {
+            "package": "@railgun-community/engine",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@railgun-community/engine"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@railgun-community/circomlibjs",
+              "ethers"
+            ]
+          },
+          {
+            "package": "@railgun-community/shared-models",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@railgun-community/shared-models"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "ethers"
+            ]
+          },
+          {
+            "package": "@railgun-community/wallet",
+            "severity": "high",
+            "nodes": [
+              "node_modules/@railgun-community/wallet"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@graphql-mesh/cache-localforage",
+              "@graphql-mesh/graphql",
+              "@graphql-mesh/http",
+              "@graphql-mesh/merger-stitching",
+              "@graphql-mesh/runtime",
+              "@graphql-mesh/store",
+              "@graphql-mesh/types",
+              "@graphql-mesh/utils",
+              "@railgun-community/engine",
+              "@railgun-community/shared-models",
+              "axios",
+              "crypto-browserify",
+              "ethers"
+            ]
+          },
+          {
+            "package": "axios",
+            "severity": "high",
+            "nodes": [
+              "node_modules/axios"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-8hc4-vh64-cxmj",
+                "severity": "high",
+                "affectedRange": ">=1.3.2 <=1.7.3",
+                "url": "https://github.com/advisories/GHSA-8hc4-vh64-cxmj"
+              },
+              {
+                "id": "GHSA-jr5f-v2jv-69x6",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <1.8.2",
+                "url": "https://github.com/advisories/GHSA-jr5f-v2jv-69x6"
+              },
+              {
+                "id": "GHSA-4hjh-wcwx-xvwj",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <1.12.0",
+                "url": "https://github.com/advisories/GHSA-4hjh-wcwx-xvwj"
+              },
+              {
+                "id": "GHSA-3p68-rc4w-qgx5",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.15.0",
+                "url": "https://github.com/advisories/GHSA-3p68-rc4w-qgx5"
+              },
+              {
+                "id": "GHSA-w9j2-pvgh-6h63",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.15.1",
+                "url": "https://github.com/advisories/GHSA-w9j2-pvgh-6h63"
+              },
+              {
+                "id": "GHSA-pmwg-cvhr-8vh7",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <1.15.1",
+                "url": "https://github.com/advisories/GHSA-pmwg-cvhr-8vh7"
+              },
+              {
+                "id": "GHSA-3w6x-2g7m-8v23",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.15.2",
+                "url": "https://github.com/advisories/GHSA-3w6x-2g7m-8v23"
+              },
+              {
+                "id": "GHSA-xhjh-pmcv-23jw",
+                "severity": "low",
+                "affectedRange": ">=1.0.0 <1.15.1",
+                "url": "https://github.com/advisories/GHSA-xhjh-pmcv-23jw"
+              },
+              {
+                "id": "GHSA-445q-vr5w-6q77",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.15.1",
+                "url": "https://github.com/advisories/GHSA-445q-vr5w-6q77"
+              },
+              {
+                "id": "GHSA-m7pr-hjqh-92cm",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.15.1",
+                "url": "https://github.com/advisories/GHSA-m7pr-hjqh-92cm"
+              },
+              {
+                "id": "GHSA-5c9x-8gcm-mpgx",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.15.1",
+                "url": "https://github.com/advisories/GHSA-5c9x-8gcm-mpgx"
+              },
+              {
+                "id": "GHSA-vf2m-468p-8v99",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.15.1",
+                "url": "https://github.com/advisories/GHSA-vf2m-468p-8v99"
+              },
+              {
+                "id": "GHSA-pf86-5x62-jrwf",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <1.15.1",
+                "url": "https://github.com/advisories/GHSA-pf86-5x62-jrwf"
+              },
+              {
+                "id": "GHSA-6chq-wfr3-2hj9",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <1.15.1",
+                "url": "https://github.com/advisories/GHSA-6chq-wfr3-2hj9"
+              },
+              {
+                "id": "GHSA-xx6v-rp6x-q39c",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.15.1",
+                "url": "https://github.com/advisories/GHSA-xx6v-rp6x-q39c"
+              },
+              {
+                "id": "GHSA-43fc-jf86-j433",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <=1.13.4",
+                "url": "https://github.com/advisories/GHSA-43fc-jf86-j433"
+              },
+              {
+                "id": "GHSA-q8qp-cvcw-x6jj",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <1.15.2",
+                "url": "https://github.com/advisories/GHSA-q8qp-cvcw-x6jj"
+              },
+              {
+                "id": "GHSA-fvcv-3m26-pcqx",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.15.0",
+                "url": "https://github.com/advisories/GHSA-fvcv-3m26-pcqx"
+              },
+              {
+                "id": "GHSA-62hf-57xw-28j9",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.15.1",
+                "url": "https://github.com/advisories/GHSA-62hf-57xw-28j9"
+              },
+              {
+                "id": "GHSA-hfxv-24rg-xrqf",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <1.16.0",
+                "url": "https://github.com/advisories/GHSA-hfxv-24rg-xrqf"
+              },
+              {
+                "id": "GHSA-777c-7fjr-54vf",
+                "severity": "high",
+                "affectedRange": ">=1.7.0 <1.16.0",
+                "url": "https://github.com/advisories/GHSA-777c-7fjr-54vf"
+              },
+              {
+                "id": "GHSA-p92q-9vqr-4j8v",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <1.16.0",
+                "url": "https://github.com/advisories/GHSA-p92q-9vqr-4j8v"
+              },
+              {
+                "id": "GHSA-j5f8-grm9-p9fc",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <1.16.0",
+                "url": "https://github.com/advisories/GHSA-j5f8-grm9-p9fc"
+              },
+              {
+                "id": "GHSA-3g43-6gmg-66jw",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <1.15.2",
+                "url": "https://github.com/advisories/GHSA-3g43-6gmg-66jw"
+              },
+              {
+                "id": "GHSA-35jp-ww65-95wh",
+                "severity": "high",
+                "affectedRange": ">=1.0.0 <1.16.0",
+                "url": "https://github.com/advisories/GHSA-35jp-ww65-95wh"
+              },
+              {
+                "id": "GHSA-898c-q2cr-xwhg",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.16.0",
+                "url": "https://github.com/advisories/GHSA-898c-q2cr-xwhg"
+              },
+              {
+                "id": "GHSA-mmx7-hfxf-jppx",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.18.0",
+                "url": "https://github.com/advisories/GHSA-mmx7-hfxf-jppx"
+              },
+              {
+                "id": "GHSA-pmv8-rq9r-6j72",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.18.0",
+                "url": "https://github.com/advisories/GHSA-pmv8-rq9r-6j72"
+              },
+              {
+                "id": "GHSA-7q8q-rj6j-mhjq",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.18.0",
+                "url": "https://github.com/advisories/GHSA-7q8q-rj6j-mhjq"
+              },
+              {
+                "id": "GHSA-jqh4-m9w3-8hp9",
+                "severity": "moderate",
+                "affectedRange": ">=1.7.0 <1.18.0",
+                "url": "https://github.com/advisories/GHSA-jqh4-m9w3-8hp9"
+              },
+              {
+                "id": "GHSA-42h9-826w-cgv3",
+                "severity": "moderate",
+                "affectedRange": ">=1.0.0 <1.18.0",
+                "url": "https://github.com/advisories/GHSA-42h9-826w-cgv3"
+              }
+            ],
+            "inheritedFrom": []
+          },
+          {
+            "package": "bn.js",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/ethjs-unit/node_modules/bn.js",
+              "node_modules/number-to-bn/node_modules/bn.js"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-378v-28hj-76wf",
+                "severity": "moderate",
+                "affectedRange": "<4.12.3",
+                "url": "https://github.com/advisories/GHSA-378v-28hj-76wf"
+              }
+            ],
+            "inheritedFrom": []
+          },
+          {
+            "package": "browserify-sign",
+            "severity": "low",
+            "nodes": [
+              "node_modules/browserify-sign"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "elliptic"
+            ]
+          },
+          {
+            "package": "create-ecdh",
+            "severity": "low",
+            "nodes": [
+              "node_modules/create-ecdh"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "elliptic"
+            ]
+          },
+          {
+            "package": "crypto-browserify",
+            "severity": "low",
+            "nodes": [
+              "node_modules/crypto-browserify"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "browserify-sign",
+              "create-ecdh"
+            ]
+          },
+          {
+            "package": "dset",
+            "severity": "high",
+            "nodes": [
+              "node_modules/dset"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-f6v4-cf5j-vf3w",
+                "severity": "high",
+                "affectedRange": "<3.1.4",
+                "url": "https://github.com/advisories/GHSA-f6v4-cf5j-vf3w"
+              }
+            ],
+            "inheritedFrom": []
+          },
+          {
+            "package": "elliptic",
+            "severity": "low",
+            "nodes": [
+              "node_modules/elliptic"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-848j-6mx2-7j84",
+                "severity": "low",
+                "affectedRange": "<=6.6.1",
+                "url": "https://github.com/advisories/GHSA-848j-6mx2-7j84"
+              }
+            ],
+            "inheritedFrom": []
+          },
+          {
+            "package": "ethers",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/ethers"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "ws"
+            ]
+          },
+          {
+            "package": "ethjs-unit",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/ethjs-unit"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "bn.js",
+              "number-to-bn"
+            ]
+          },
+          {
+            "package": "js-yaml",
+            "severity": "high",
+            "nodes": [
+              "node_modules/js-yaml"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-mh29-5h37-fv8m",
+                "severity": "moderate",
+                "affectedRange": ">=4.0.0 <4.1.1",
+                "url": "https://github.com/advisories/GHSA-mh29-5h37-fv8m"
+              },
+              {
+                "id": "GHSA-h67p-54hq-rp68",
+                "severity": "moderate",
+                "affectedRange": ">=4.0.0 <=4.1.1",
+                "url": "https://github.com/advisories/GHSA-h67p-54hq-rp68"
+              },
+              {
+                "id": "GHSA-52cp-r559-cp3m",
+                "severity": "high",
+                "affectedRange": ">=4.0.0 <4.3.0",
+                "url": "https://github.com/advisories/GHSA-52cp-r559-cp3m"
+              },
+              {
+                "id": "GHSA-5p4m-2wfm-xmqj",
+                "severity": "high",
+                "affectedRange": ">=4.0.0 <4.3.1",
+                "url": "https://github.com/advisories/GHSA-5p4m-2wfm-xmqj"
+              },
+              {
+                "id": "GHSA-2883-xcg3-v3hh",
+                "severity": "high",
+                "affectedRange": ">=4.0.0 <4.3.2",
+                "url": "https://github.com/advisories/GHSA-2883-xcg3-v3hh"
+              }
+            ],
+            "inheritedFrom": []
+          },
+          {
+            "package": "number-to-bn",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/number-to-bn"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "bn.js"
+            ]
+          },
+          {
+            "package": "web3-utils",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/web3-utils"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "ethjs-unit",
+              "number-to-bn"
+            ]
+          },
+          {
+            "package": "ws",
+            "severity": "high",
+            "nodes": [
+              "node_modules/@graphql-tools/executor-graphql-ws/node_modules/ws",
+              "node_modules/@graphql-tools/executor-legacy-ws/node_modules/ws",
+              "node_modules/ethers/node_modules/ws"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-3h5v-q93c-6h6q",
+                "severity": "high",
+                "affectedRange": ">=8.0.0 <8.17.1",
+                "url": "https://github.com/advisories/GHSA-3h5v-q93c-6h6q"
+              },
+              {
+                "id": "GHSA-58qx-3vcg-4xpx",
+                "severity": "moderate",
+                "affectedRange": ">=8.0.0 <8.20.1",
+                "url": "https://github.com/advisories/GHSA-58qx-3vcg-4xpx"
+              },
+              {
+                "id": "GHSA-96hv-2xvq-fx4p",
+                "severity": "high",
+                "affectedRange": ">=8.0.0 <8.21.0",
+                "url": "https://github.com/advisories/GHSA-96hv-2xvq-fx4p"
+              }
+            ],
+            "inheritedFrom": []
+          }
+        ]
+      },
+      "after": {
+        "affectedPackageCounts": {
+          "critical": 0,
+          "high": 0,
+          "info": 0,
+          "low": 5,
+          "moderate": 0,
+          "total": 5
+        },
+        "affectedPackages": [
+          {
+            "package": "@railgun-community/wallet",
+            "severity": "low",
+            "nodes": [
+              "node_modules/@railgun-community/wallet"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "crypto-browserify"
+            ]
+          },
+          {
+            "package": "browserify-sign",
+            "severity": "low",
+            "nodes": [
+              "node_modules/browserify-sign"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "elliptic"
+            ]
+          },
+          {
+            "package": "create-ecdh",
+            "severity": "low",
+            "nodes": [
+              "node_modules/create-ecdh"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "elliptic"
+            ]
+          },
+          {
+            "package": "crypto-browserify",
+            "severity": "low",
+            "nodes": [
+              "node_modules/crypto-browserify"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "browserify-sign",
+              "create-ecdh"
+            ]
+          },
+          {
+            "package": "elliptic",
+            "severity": "low",
+            "nodes": [
+              "node_modules/elliptic"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-848j-6mx2-7j84",
+                "severity": "low",
+                "affectedRange": "<=6.6.1",
+                "url": "https://github.com/advisories/GHSA-848j-6mx2-7j84"
+              }
+            ],
+            "inheritedFrom": []
+          }
+        ]
+      }
+    },
+    "checkout": {
+      "before": {
+        "affectedPackageCounts": {
+          "critical": 0,
+          "high": 1,
+          "info": 0,
+          "low": 0,
+          "moderate": 24,
+          "total": 25
+        },
+        "affectedPackages": [
+          {
+            "package": "@gemini-wallet/core",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@gemini-wallet/core"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@metamask/rpc-errors"
+            ]
+          },
+          {
+            "package": "@metamask/rpc-errors",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@metamask/eth-json-rpc-provider/node_modules/@metamask/rpc-errors",
+              "node_modules/@metamask/json-rpc-engine/node_modules/@metamask/rpc-errors",
+              "node_modules/@metamask/providers/node_modules/@metamask/rpc-errors",
+              "node_modules/@metamask/rpc-errors"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@metamask/utils"
+            ]
+          },
+          {
+            "package": "@metamask/sdk",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@metamask/sdk"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@metamask/sdk-communication-layer",
+              "uuid"
+            ]
+          },
+          {
+            "package": "@metamask/sdk-communication-layer",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@metamask/sdk/node_modules/@metamask/sdk-communication-layer"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "uuid"
+            ]
+          },
+          {
+            "package": "@metamask/utils",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@metamask/eth-json-rpc-provider/node_modules/@metamask/json-rpc-engine/node_modules/@metamask/utils",
+              "node_modules/@metamask/eth-json-rpc-provider/node_modules/@metamask/rpc-errors/node_modules/@metamask/utils",
+              "node_modules/@metamask/json-rpc-engine/node_modules/@metamask/rpc-errors/node_modules/@metamask/utils",
+              "node_modules/@metamask/json-rpc-engine/node_modules/@metamask/utils",
+              "node_modules/@metamask/json-rpc-middleware-stream/node_modules/@metamask/utils",
+              "node_modules/@metamask/providers/node_modules/@metamask/rpc-errors/node_modules/@metamask/utils",
+              "node_modules/@metamask/providers/node_modules/@metamask/utils",
+              "node_modules/@metamask/utils"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "uuid"
+            ]
+          },
+          {
+            "package": "@privy-io/react-auth",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@privy-io/react-auth"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@walletconnect/ethereum-provider",
+              "x402"
+            ]
+          },
+          {
+            "package": "@reown/appkit",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@reown/appkit",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit-controllers",
+              "@reown/appkit-pay",
+              "@reown/appkit-scaffold-ui",
+              "@reown/appkit-ui",
+              "@reown/appkit-utils",
+              "@walletconnect/universal-provider"
+            ]
+          },
+          {
+            "package": "@reown/appkit-controllers",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@reown/appkit-controllers",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-controllers"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@walletconnect/universal-provider"
+            ]
+          },
+          {
+            "package": "@reown/appkit-pay",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@reown/appkit-pay",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-pay"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit-controllers",
+              "@reown/appkit-ui",
+              "@reown/appkit-utils"
+            ]
+          },
+          {
+            "package": "@reown/appkit-scaffold-ui",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@reown/appkit-scaffold-ui",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-scaffold-ui"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit-controllers",
+              "@reown/appkit-ui",
+              "@reown/appkit-utils"
+            ]
+          },
+          {
+            "package": "@reown/appkit-ui",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@reown/appkit-ui",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-ui"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit-controllers"
+            ]
+          },
+          {
+            "package": "@reown/appkit-utils",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@reown/appkit-utils",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-utils"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit-controllers",
+              "@walletconnect/universal-provider"
+            ]
+          },
+          {
+            "package": "@wagmi/connectors",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@gemini-wallet/core",
+              "@metamask/sdk",
+              "@walletconnect/ethereum-provider"
+            ]
+          },
+          {
+            "package": "@walletconnect/core",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@reown/appkit-controllers/node_modules/@walletconnect/core",
+              "node_modules/@reown/appkit-utils/node_modules/@walletconnect/core",
+              "node_modules/@reown/appkit/node_modules/@walletconnect/core",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-controllers/node_modules/@walletconnect/core",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-utils/node_modules/@walletconnect/core",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit/node_modules/@walletconnect/core",
+              "node_modules/@wagmi/connectors/node_modules/@walletconnect/core"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@walletconnect/utils"
+            ]
+          },
+          {
+            "package": "@walletconnect/ethereum-provider",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@walletconnect/ethereum-provider",
+              "node_modules/@walletconnect/ethereum-provider"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit",
+              "@walletconnect/sign-client",
+              "@walletconnect/universal-provider",
+              "@walletconnect/utils"
+            ]
+          },
+          {
+            "package": "@walletconnect/sign-client",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@reown/appkit-controllers/node_modules/@walletconnect/sign-client",
+              "node_modules/@reown/appkit-utils/node_modules/@walletconnect/sign-client",
+              "node_modules/@reown/appkit/node_modules/@walletconnect/sign-client",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-controllers/node_modules/@walletconnect/sign-client",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-utils/node_modules/@walletconnect/sign-client",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit/node_modules/@walletconnect/sign-client",
+              "node_modules/@wagmi/connectors/node_modules/@walletconnect/sign-client"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@walletconnect/core",
+              "@walletconnect/utils"
+            ]
+          },
+          {
+            "package": "@walletconnect/universal-provider",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@reown/appkit-controllers/node_modules/@walletconnect/universal-provider",
+              "node_modules/@reown/appkit-utils/node_modules/@walletconnect/universal-provider",
+              "node_modules/@reown/appkit/node_modules/@walletconnect/universal-provider",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-controllers/node_modules/@walletconnect/universal-provider",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-utils/node_modules/@walletconnect/universal-provider",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit/node_modules/@walletconnect/universal-provider",
+              "node_modules/@wagmi/connectors/node_modules/@walletconnect/universal-provider"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@walletconnect/sign-client",
+              "@walletconnect/utils"
+            ]
+          },
+          {
+            "package": "@walletconnect/utils",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@reown/appkit-controllers/node_modules/@walletconnect/utils",
+              "node_modules/@reown/appkit-utils/node_modules/@walletconnect/utils",
+              "node_modules/@reown/appkit/node_modules/@walletconnect/utils",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-controllers/node_modules/@walletconnect/utils",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-utils/node_modules/@walletconnect/utils",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit/node_modules/@walletconnect/utils",
+              "node_modules/@wagmi/connectors/node_modules/@walletconnect/utils"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "query-string",
+              "viem"
+            ]
+          },
+          {
+            "package": "decode-uri-component",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/decode-uri-component"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-vcc3-ghjq-m6fr",
+                "severity": "moderate",
+                "affectedRange": "<=0.4.2",
+                "url": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr"
+              }
+            ],
+            "inheritedFrom": []
+          },
+          {
+            "package": "query-string",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/query-string"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "decode-uri-component"
+            ]
+          },
+          {
+            "package": "uuid",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@metamask/eth-json-rpc-provider/node_modules/uuid",
+              "node_modules/@metamask/json-rpc-engine/node_modules/uuid",
+              "node_modules/@metamask/json-rpc-middleware-stream/node_modules/uuid",
+              "node_modules/@metamask/providers/node_modules/uuid",
+              "node_modules/@metamask/utils/node_modules/uuid",
+              "node_modules/uuid"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-w5hq-g745-h8pq",
+                "severity": "moderate",
+                "affectedRange": "<11.1.1",
+                "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq"
+              }
+            ],
+            "inheritedFrom": []
+          },
+          {
+            "package": "viem",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@reown/appkit-controllers/node_modules/@walletconnect/utils/node_modules/viem",
+              "node_modules/@reown/appkit-utils/node_modules/@walletconnect/utils/node_modules/viem",
+              "node_modules/@reown/appkit/node_modules/@walletconnect/utils/node_modules/viem",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-controllers/node_modules/@walletconnect/utils/node_modules/viem",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-utils/node_modules/@walletconnect/utils/node_modules/viem",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit/node_modules/@walletconnect/utils/node_modules/viem",
+              "node_modules/@wagmi/connectors/node_modules/@walletconnect/utils/node_modules/viem"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "ws"
+            ]
+          },
+          {
+            "package": "wagmi",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/wagmi"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@wagmi/connectors"
+            ]
+          },
+          {
+            "package": "ws",
+            "severity": "high",
+            "nodes": [
+              "node_modules/@reown/appkit-controllers/node_modules/@walletconnect/utils/node_modules/ws",
+              "node_modules/@reown/appkit-utils/node_modules/@walletconnect/utils/node_modules/ws",
+              "node_modules/@reown/appkit/node_modules/@walletconnect/utils/node_modules/ws",
+              "node_modules/@wagmi/connectors/node_modules/ws"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-58qx-3vcg-4xpx",
+                "severity": "moderate",
+                "affectedRange": ">=8.0.0 <8.20.1",
+                "url": "https://github.com/advisories/GHSA-58qx-3vcg-4xpx"
+              },
+              {
+                "id": "GHSA-96hv-2xvq-fx4p",
+                "severity": "high",
+                "affectedRange": ">=8.0.0 <8.21.0",
+                "url": "https://github.com/advisories/GHSA-96hv-2xvq-fx4p"
+              }
+            ],
+            "inheritedFrom": []
+          },
+          {
+            "package": "x402",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/x402"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "wagmi"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "affectedPackageCounts": {
+          "critical": 0,
+          "high": 0,
+          "info": 0,
+          "low": 0,
+          "moderate": 23,
+          "total": 23
+        },
+        "affectedPackages": [
+          {
+            "package": "@gemini-wallet/core",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@gemini-wallet/core"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@metamask/rpc-errors"
+            ]
+          },
+          {
+            "package": "@metamask/rpc-errors",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@metamask/eth-json-rpc-provider/node_modules/@metamask/rpc-errors",
+              "node_modules/@metamask/json-rpc-engine/node_modules/@metamask/rpc-errors",
+              "node_modules/@metamask/providers/node_modules/@metamask/rpc-errors",
+              "node_modules/@metamask/rpc-errors"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@metamask/utils"
+            ]
+          },
+          {
+            "package": "@metamask/sdk",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@metamask/sdk"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@metamask/sdk-communication-layer",
+              "uuid"
+            ]
+          },
+          {
+            "package": "@metamask/sdk-communication-layer",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@metamask/sdk/node_modules/@metamask/sdk-communication-layer"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "uuid"
+            ]
+          },
+          {
+            "package": "@metamask/utils",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@metamask/eth-json-rpc-provider/node_modules/@metamask/json-rpc-engine/node_modules/@metamask/utils",
+              "node_modules/@metamask/eth-json-rpc-provider/node_modules/@metamask/rpc-errors/node_modules/@metamask/utils",
+              "node_modules/@metamask/json-rpc-engine/node_modules/@metamask/rpc-errors/node_modules/@metamask/utils",
+              "node_modules/@metamask/json-rpc-engine/node_modules/@metamask/utils",
+              "node_modules/@metamask/json-rpc-middleware-stream/node_modules/@metamask/utils",
+              "node_modules/@metamask/providers/node_modules/@metamask/rpc-errors/node_modules/@metamask/utils",
+              "node_modules/@metamask/providers/node_modules/@metamask/utils",
+              "node_modules/@metamask/utils"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "uuid"
+            ]
+          },
+          {
+            "package": "@privy-io/react-auth",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@privy-io/react-auth"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "x402"
+            ]
+          },
+          {
+            "package": "@reown/appkit",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit-controllers",
+              "@reown/appkit-pay",
+              "@reown/appkit-scaffold-ui",
+              "@reown/appkit-ui",
+              "@reown/appkit-utils",
+              "@walletconnect/universal-provider"
+            ]
+          },
+          {
+            "package": "@reown/appkit-controllers",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-controllers"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@walletconnect/universal-provider"
+            ]
+          },
+          {
+            "package": "@reown/appkit-pay",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-pay"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit-controllers",
+              "@reown/appkit-ui",
+              "@reown/appkit-utils"
+            ]
+          },
+          {
+            "package": "@reown/appkit-scaffold-ui",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-scaffold-ui"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit-controllers",
+              "@reown/appkit-ui",
+              "@reown/appkit-utils"
+            ]
+          },
+          {
+            "package": "@reown/appkit-ui",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-ui"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit-controllers"
+            ]
+          },
+          {
+            "package": "@reown/appkit-utils",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-utils"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit-controllers",
+              "@walletconnect/universal-provider"
+            ]
+          },
+          {
+            "package": "@wagmi/connectors",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@gemini-wallet/core",
+              "@metamask/sdk",
+              "@walletconnect/ethereum-provider"
+            ]
+          },
+          {
+            "package": "@walletconnect/core",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-controllers/node_modules/@walletconnect/core",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-utils/node_modules/@walletconnect/core",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit/node_modules/@walletconnect/core",
+              "node_modules/@wagmi/connectors/node_modules/@walletconnect/core"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@walletconnect/utils"
+            ]
+          },
+          {
+            "package": "@walletconnect/ethereum-provider",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@walletconnect/ethereum-provider"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@reown/appkit",
+              "@walletconnect/sign-client",
+              "@walletconnect/universal-provider",
+              "@walletconnect/utils"
+            ]
+          },
+          {
+            "package": "@walletconnect/sign-client",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-controllers/node_modules/@walletconnect/sign-client",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-utils/node_modules/@walletconnect/sign-client",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit/node_modules/@walletconnect/sign-client",
+              "node_modules/@wagmi/connectors/node_modules/@walletconnect/sign-client"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@walletconnect/core",
+              "@walletconnect/utils"
+            ]
+          },
+          {
+            "package": "@walletconnect/universal-provider",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-controllers/node_modules/@walletconnect/universal-provider",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-utils/node_modules/@walletconnect/universal-provider",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit/node_modules/@walletconnect/universal-provider",
+              "node_modules/@wagmi/connectors/node_modules/@walletconnect/universal-provider"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@walletconnect/sign-client",
+              "@walletconnect/utils"
+            ]
+          },
+          {
+            "package": "@walletconnect/utils",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-controllers/node_modules/@walletconnect/utils",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit-utils/node_modules/@walletconnect/utils",
+              "node_modules/@wagmi/connectors/node_modules/@reown/appkit/node_modules/@walletconnect/utils",
+              "node_modules/@wagmi/connectors/node_modules/@walletconnect/utils"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "query-string"
+            ]
+          },
+          {
+            "package": "decode-uri-component",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/decode-uri-component"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-vcc3-ghjq-m6fr",
+                "severity": "moderate",
+                "affectedRange": "<=0.4.2",
+                "url": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr"
+              }
+            ],
+            "inheritedFrom": []
+          },
+          {
+            "package": "query-string",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/query-string"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "decode-uri-component"
+            ]
+          },
+          {
+            "package": "uuid",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/@metamask/eth-json-rpc-provider/node_modules/uuid",
+              "node_modules/@metamask/json-rpc-engine/node_modules/uuid",
+              "node_modules/@metamask/json-rpc-middleware-stream/node_modules/uuid",
+              "node_modules/@metamask/providers/node_modules/uuid",
+              "node_modules/@metamask/utils/node_modules/uuid",
+              "node_modules/uuid"
+            ],
+            "directAdvisories": [
+              {
+                "id": "GHSA-w5hq-g745-h8pq",
+                "severity": "moderate",
+                "affectedRange": "<11.1.1",
+                "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq"
+              }
+            ],
+            "inheritedFrom": []
+          },
+          {
+            "package": "wagmi",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/wagmi"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "@wagmi/connectors"
+            ]
+          },
+          {
+            "package": "x402",
+            "severity": "moderate",
+            "nodes": [
+              "node_modules/x402"
+            ],
+            "directAdvisories": [],
+            "inheritedFrom": [
+              "wagmi"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "lockfileSha256": {
+    "privacy": "78b3bf599e1ec7b22879ded105512012899ecbca8e87dcfc61de736923697c37",
+    "checkout": "2ec61f12035356d03a0c78951bda3f7453b9db4538bede5a316fa0a41f482fed"
+  },
+  "residualRiskReviewComplete": false,
+  "realMoneyReleaseApproved": false,
+  "actualBrowserInteractionsVerified": false,
+  "liveRpcOrFundedDepositVerified": false,
+  "signingControllerConnectedToUi": false,
+  "privateSigningGate": "closed",
+  "transactionsSignedOrBroadcast": 0,
+  "completedPrivatePayments": 0,
+  "hostedDeploymentChanged": false,
+  "commercialFeeIdea": "tabled",
+  "kyc": "deferred"
+}

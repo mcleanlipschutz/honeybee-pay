@@ -1,0 +1,43 @@
+Clean npm ci --ignore-scripts --no-audit --no-fund: exit 0
+
+
+> honeybee-private-transfer-review@0.3.0 test
+> node --test test/*.test.mjs
+
+✔ USDC decimal input becomes exact integer units (8.019912ms)
+✔ ambiguous, negative, zero and over-precision amounts fail (1.769322ms)
+✔ approval snapshot cannot be changed through the original object (0.706903ms)
+✔ changed id is blocked before proof generation (4.316376ms)
+✔ changed network is blocked before proof generation (0.329376ms)
+✔ changed recipient is blocked before proof generation (1.303994ms)
+✔ changed token is blocked before proof generation (0.326962ms)
+✔ changed amountUnits is blocked before proof generation (0.243164ms)
+✔ changed expiresAt is blocked before proof generation (0.302804ms)
+✔ public recipient is rejected (0.525161ms)
+✔ expiry equality is rejected (0.816318ms)
+✔ expiry during proving blocks transaction preparation (0.643905ms)
+✔ proof failure propagates and never populates (0.461737ms)
+✔ same approved recipients and privacy flags reach both SDK calls (3.271874ms)
+✔ mutation during asynchronous proving cannot replace the recipient (0.355432ms)
+✔ overlapping proof requests are rejected (1.180749ms)
+✔ real SDK decodes an upstream public address fixture (2.67384ms)
+✔ real adapter rejects the Segment 1A fake address before engine access (1.897695ms)
+✔ production, deprecated and unknown configurations are blocked (0.320851ms)
+✔ wrong RPC chain stops checks before contract lookup (1.063707ms)
+✔ empty contract code blocks preflight (0.379667ms)
+✔ contract-presence result never claims payment readiness (0.319511ms)
+✔ RPC wrapper rejects plaintext remote endpoints and write methods (0.343529ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1571.803327
+
+
+> honeybee-private-transfer-review@0.3.0 engine:smoke
+> node src/engine-smoke.mjs
+
+{"status":"offline-engine-wallet-check-passed","walletsCreated":2,"encryptedWalletReloaded":true,"wrongKeyRejected":true,"funded":false,"proofGenerated":false,"paymentReady":false}

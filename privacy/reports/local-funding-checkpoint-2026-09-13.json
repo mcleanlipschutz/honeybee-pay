@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-13",
+  "evidenceSource": "user-provided text from the local Windows application",
+  "independentlyRequeriedByAgent": false,
+  "network": "Ethereum_Sepolia",
+  "walletAddressesRecorded": false,
+  "accountSynchronization": {
+    "status": "user-reported-success",
+    "displayedCheckedAt": "9/13/2026, 5:28:34 AM",
+    "displayedTimezone": "not specified in the supplied output",
+    "spendablePrivateUSDCUnits": "0",
+    "decimals": 6,
+    "walletLockedAfterCheck": true
+  },
+  "depositReview": {
+    "amountUnits": "2000000",
+    "protocolFeeUnits": "5000",
+    "expectedPrivateCreditUnits": "1995000",
+    "approvalRequired": true,
+    "approvalAmountUnits": "2000000",
+    "expectedCreditIsNotAConfirmedBalance": true
+  },
+  "approvalPreflight": {
+    "status": "user-reported-simulation-passed",
+    "stage": "approval",
+    "quotedMaxNetworkFeeWei": "140777518860480",
+    "quotedMaxNetworkFeeSepoliaETH": "0.00014077751886048",
+    "displayedExpiry": "6:01:00 AM",
+    "quoteReusableWithoutRefresh": false,
+    "includesDepositNetworkFee": false
+  },
+  "remainingGates": [
+    "reviewed-signing-integration-release",
+    "actual-wallet-confirmation-and-browser-persistence",
+    "separate-deposit-simulation-and-fee-check",
+    "canonical-approval-and-deposit-receipts",
+    "post-deposit-spendability-and-recovery",
+    "private-merchant-payment-and-receipts"
+  ],
+  "userBuildReportedSubmissionEnabled": false,
+  "approvalTransactionHashProvided": false,
+  "depositTransactionHashProvided": false,
+  "depositSimulationVerified": false,
+  "privatePaymentSettled": false,
+  "transactionsSentByAgent": 0,
+  "kyc": "deferred"
+}

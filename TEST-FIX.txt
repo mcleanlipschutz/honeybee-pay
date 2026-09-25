@@ -1,0 +1,39 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> honeybee-private-transfer-review@0.3.1 test
+> node --test test/*.test.mjs
+
+✔ installed fork preserves every upstream non-manifest file (13.657803ms)
+✔ Poseidon matches two upstream reference vectors (174.985553ms)
+✔ lockfile excludes legacy runtime dependency chain (3.555171ms)
+✔ USDC decimal input becomes exact integer units (1.393816ms)
+✔ ambiguous, negative, zero and over-precision amounts fail (0.388287ms)
+✔ approval snapshot cannot be changed through the original object (0.448928ms)
+✔ changed id is blocked before proof generation (0.709883ms)
+✔ changed network is blocked before proof generation (0.270679ms)
+✔ changed recipient is blocked before proof generation (0.315527ms)
+✔ changed token is blocked before proof generation (0.214154ms)
+✔ changed amountUnits is blocked before proof generation (0.182957ms)
+✔ changed expiresAt is blocked before proof generation (0.279763ms)
+✔ public recipient is rejected (0.389849ms)
+✔ expiry equality is rejected (0.349157ms)
+✔ expiry during proving blocks transaction preparation (1.191079ms)
+✔ proof failure propagates and never populates (0.328035ms)
+✔ same approved recipients and privacy flags reach both SDK calls (1.116406ms)
+✔ mutation during asynchronous proving cannot replace the recipient (0.250849ms)
+✔ overlapping proof requests are rejected (0.35762ms)
+✔ real SDK decodes an upstream public address fixture (1.990156ms)
+✔ real adapter rejects the Segment 1A fake address before engine access (1.572425ms)
+✔ production, deprecated and unknown configurations are blocked (0.347204ms)
+✔ wrong RPC chain stops checks before contract lookup (1.033181ms)
+✔ empty contract code blocks preflight (0.309167ms)
+✔ contract-presence result never claims payment readiness (0.354956ms)
+✔ RPC wrapper rejects plaintext remote endpoints and write methods (0.381387ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1020.872134

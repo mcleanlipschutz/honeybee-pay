@@ -1,0 +1,99 @@
+{
+  "date": "2026-09-13",
+  "sourceBaseCommit": "7aa6527432d7fbde7fc99ee9557bf697ea9309ab",
+  "status": "fee-delay-fixed-awaiting-Windows-confirmation-and-funded-private-test",
+  "scope": "final autonomous preparation; no funded transactions, main merge or public deployment",
+  "codeChanges": {
+    "fixedBlockReadConcurrencyMax": 4,
+    "poiProbeBeforeDeploymentBlockSelection": true,
+    "fullSimulationsPerConfirmation": 1,
+    "finalSimulationAfterDurableClaim": true,
+    "blockFreshnessMs": 60000,
+    "expiryOrFeeCapsExtended": false,
+    "missingLiveGateFailsClosed": true,
+    "countdownShown": true,
+    "existingConfirmationMountedAfterQuoteOrReviewExpiry": true,
+    "expiredNewConfirmationDisabled": true
+  },
+  "validation": {
+    "platform": "linux",
+    "checkoutTestsPassed": 40,
+    "focusedDeploymentFundingPreflightTestsPassed": 21,
+    "focusedAccountSyncPOITestsPassed": 10,
+    "failed": 0,
+    "productionClientServerBuild": "passed",
+    "existingBundleWarnings": true,
+    "latencyTest": "simulated five-second RPC round trips; at least25seconds remain in unchanged60-second block window; no actual network or funds",
+    "submissionTimingTest": "one35-second final simulation succeeds after persistence;60-second expiry blocks wallet send",
+    "rulesDemo": "passed; offline SDK doubles; no actual prompt injection, proof generation or transaction"
+  },
+  "independentReview": {
+    "mustFixFindings": 0,
+    "copyImprovementApplied": "countdown describes validity, not a reservation of time after clicking",
+    "securityAudit": false,
+    "scope": "source and focused tests for fee-delay delta; actual Windows timing and wallet UI not verified"
+  },
+  "windowsEvidence": {
+    "source": "user-reported terminal and page output",
+    "feeTokenStatus": "fee-token-verified",
+    "feeToken": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+    "feeTokenBlock": "0xb275cf",
+    "feeTokenBlockHash": "0x97737a1cd285fc0cfef9af73514f2c04a587b7179ff5350de1cee578863c9607",
+    "broadcasterStatus": "private-broadcaster-ready",
+    "eligibleWETHOffersObserved": 1,
+    "depositReview": {
+      "token": "Sepolia WETH",
+      "gross": "0.005",
+      "protocolFee": "0.0000125",
+      "expectedPrivateCredit": "0.0049875"
+    },
+    "simulationReportedSuccessful": true,
+    "quoteExpiryReported": true,
+    "confirmationTransactionHashProvided": false,
+    "feeDelayFixTestedOnWindows": false
+  },
+  "existingProofEvidence": {
+    "report": "separate-fee-validation.json",
+    "realGroth16Proofs": 2,
+    "syntheticInputs": true,
+    "localAndDeployedVerifierPassed": true,
+    "fundedSettlementProven": false
+  },
+  "publicAccess": {
+    "source": "GitHub repository search and Sites get_site, read-only",
+    "repositoryVisibility": "public",
+    "siteURL": "https://honeybee-pay-testnet.ckxjvsccbf.chatgpt.site",
+    "siteAudience": "public",
+    "siteStatus": "active",
+    "publishedVersion": 3,
+    "privateRuntimeHosted": false,
+    "freshSignedOutLoginTested": false,
+    "publicWebFetch": "repository page and hosted page fetch unavailable; configuration checks succeeded",
+    "existingReceiptExplorerRecheck": "unavailable through web tool; earlier recorded receipt evidence retained"
+  },
+  "submission": {
+    "prepared": [
+      "SUBMISSION.md",
+      "DEMO_SCRIPT.md",
+      "FINAL_HOURS.md",
+      "ZK_FLOW.md"
+    ],
+    "officialPrizePageChecked": "2026-09-13",
+    "supportedTarget": "Privy Best financial flow, subject to demonstrated flow and organizer decision",
+    "portalDeadlineAndVideoLimitVerified": false,
+    "videoRecorded": false,
+    "submitted": false
+  },
+  "remainingUserActions": [
+    "pull, build and restart existing local server",
+    "confirm test-only wrap/approval/shield transactions and sync spendable balances",
+    "confirm one private merchant payment and match both receipts",
+    "recheck saved original payment after restart",
+    "record and upload the demo",
+    "review portal fields, prizes, judging availability and submit"
+  ],
+  "fundedTransactionsSentByCodex": 0,
+  "privatePaymentSettled": false,
+  "paymentReady": false,
+  "trustReview": "See ZK_FLOW.md CROPS review; local runtime handles keys/passwords, funding metadata is public, third-party identity/RPC/history/POI/broadcaster/protocol controls remain, independent exit/recovery unverified."
+}
